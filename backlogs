@@ -1,0 +1,33 @@
+dashboard-admin
+-make cards clickable
+
+accManagement, FacilityManagement, roomManagement.php
+-Edit Function
+-Delete Function
+-Table headers sort indictor
+
+accManagement
+-Send credentials to newly added user
+
+facilityReservations
+-confirmation in modal
+-Export (All)Reservations(table)
+
+reservations-student
+-export (MY)reservations(table)
+
+reservations-deptHead
+-export (Student)Reservations(table)
+
+room_loads(Chair)
+-Fix exported table
+
+index/login page
+-Forgot Password
+-remember me
+
+settings page
+-Not yet created
+
+***reservations-deptHead has working edit and delete functions***
+
