@@ -1,16 +1,12 @@
-dashboard-admin
--make cards clickable
-
 accManagement
 -success params change
-
 
 accManagement
 -Send credentials to newly added user
 
 facilityReservations
 -confirmation in modal
--edit and delete
+-edit
 -Export (All)Reservations(table)
 
 reservations-student
