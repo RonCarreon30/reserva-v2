@@ -4,10 +4,6 @@ dashboard-admin
 accManagement
 -success params change
 
-roomManagement.php
--Edit Function
--Delete Function
-
 
 accManagement
 -Send credentials to newly added user
