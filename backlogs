@@ -1,16 +1,20 @@
 dashboard-admin
 -make cards clickable
 
-accManagement, FacilityManagement, roomManagement.php
+accManagement
+-success params change
+
+roomManagement.php
 -Edit Function
 -Delete Function
--Table headers sort indictor
+
 
 accManagement
 -Send credentials to newly added user
 
 facilityReservations
 -confirmation in modal
+-edit and delete
 -Export (All)Reservations(table)
 
 reservations-student
@@ -29,5 +33,4 @@ index/login page
 settings page
 -Not yet created
 
-***reservations-deptHead has working edit and delete functions***
-
+**reservations-student.php has working edit and delete functions***
