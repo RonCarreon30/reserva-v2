@@ -1,0 +1,8 @@
+ROOMLOADS
+-Backend
+	-Get saved schedules from db(room_loads) to show to timetable
+	-When submit is clicked saved the db to pending_loads, pending loads need to be approved by registrar.
+	-approved schedules will be saved to (room_loads)
+-Integrate the Room Loads page to room Loading page, (Select a room first and when the button is clicked go/show the Room Loads. 
+-make sure when saving the schedule it will also get the room base on what is selected 
+-show an indicator if a room is full or if it still has space for room loads

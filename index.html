@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PLVScheds</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body
+    class="min-h-screen flex items-center justify-center bg-cover bg-center font-[sans-serif]"
+    style="background-image: url(&quot;img/bg-image.jpg&quot;)"
+  >
+    <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+    <!-- Full-page overlay -->
+    <div
+      class="relative flex flex-col items-center justify-center w-full min-h-screen p-4"
+    >
+      <div
+        class="grid md:grid-cols-2 items-center gap-8 max-w-4xl w-full bg-white bg-opacity-80 rounded-lg shadow-lg overflow-hidden"
+      >
+        <div class="hidden md:block p-8">
+          <h2
+            class="text-4xl lg:text-5xl font-extrabold text-gray-800 leading-tight"
+          >
+            RESERVA
+          </h2>
+          <p class="text-lg mt-4 text-gray-700">
+            Unlocking Effortless Room Assignments and Facility Reservations at
+            Pamantasan ng Lungsod ng Valenzuela!
+          </p>
+        </div>
+        <div class="p-8">
+          <form id="loginForm" class="space-y-6">
+            <h3 class="text-3xl font-extrabold text-gray-800 text-center">
+              Sign in
+            </h3>
+            <div
+              id="error-message"
+              class="hidden text-red-600 text-center"
+            ></div>
+            <div class="mt-4">
+              <input
+                name="email"
+                type="email"
+                autocomplete="email"
+                required
+                class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+                placeholder="Email address"
+              />
+            </div>
+            <div class="mt-4">
+              <input
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+                class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+                placeholder="Password"
+              />
+            </div>
+            <div class="flex items-center justify-between mt-4">
+              <label class="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  class="text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span class="ml-2 text-sm text-gray-600">Remember me</span>
+              </label>
+              <a
+                onclick="showForgetPass()"
+                class="text-sm text-blue-600 hover:text-blue-500 font-semibold cursor-pointer"
+              >
+                Forgot your password?
+              </a>
+            </div>
+            <div class="mt-6">
+              <button
+                type="submit"
+                class="w-full py-3 text-white font-semibold bg-blue-600 rounded-md shadow-lg hover:bg-blue-700 focus:outline-none"
+              >
+                Log in
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forgot Password Dialog -->
+    <div
+      id="forgetPass"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md">
+        <div class="flex flex-col items-center text-center">
+          <img
+            id="forgetPassImage"
+            src="img/forgotPass.svg"
+            alt="Forgot Password"
+            class="w-32 mb-4"
+          />
+          <h2 class="text-xl font-bold text-gray-800 mb-4">Forgot Password</h2>
+          <p class="text-gray-600 mb-6">
+            Please enter the email associated with your account.
+          </p>
+          <form id="forgetPassForm" class="w-full">
+            <div class="mb-4">
+              <label for="email" class="block text-gray-600 mb-2">Email:</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div class="flex justify-between mt-6">
+              <button
+                type="submit"
+                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Submit
+              </button>
+              <button
+                type="button"
+                onclick="hideForgetPass()"
+                class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+          <div
+            id="DoneButton"
+            class="flex hidden justify-center mt-6"
+            onclick="doneForgetPass()"
+          >
+            <button
+              class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          var formData = new FormData(this);
+
+          fetch("login.php", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                window.location.href = data.redirect;
+              } else {
+                document.getElementById("error-message").textContent =
+                  data.message;
+                document
+                  .getElementById("error-message")
+                  .classList.remove("hidden");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        });
+
+      function showForgetPass() {
+        document.getElementById("forgetPass").classList.remove("hidden");
+      }
+
+      function hideForgetPass() {
+        document.getElementById("forgetPass").classList.add("hidden");
+      }
+    </script>
+  </body>
+</html>
