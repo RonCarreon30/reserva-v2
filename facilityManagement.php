@@ -21,6 +21,10 @@ require_once "database/config.php";
 // Fetch the user ID from the session data
 $user_id = $_SESSION['user_id'];
 
+// Fetch buildings for the dropdown
+$buildings_sql = "SELECT DISTINCT building FROM facilities";
+$buildings_result = $conn->query($buildings_sql);
+
 //Query to fetch facility data from the database
 $sql = "SELECT * FROM facilities";
 $result = $conn->query($sql);
@@ -33,29 +37,42 @@ $result = $conn->query($sql);
     <title>PLV: RESERVA</title>
     <link rel="stylesheet" href="css/style.css">
     <script>
-        function filterReservations() {
-            const input = document.getElementById('searchInput');
-            const filter = input.value.toLowerCase();
+        function filterFacilities() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const selectedBuilding = document.getElementById('buildingSelect').value.toLowerCase();
             const table = document.getElementById('facilitiesTable');
             const tr = table.getElementsByTagName('tr');
 
             for (let i = 1; i < tr.length; i++) {
                 let td = tr[i].getElementsByTagName('td');
                 let rowContainsSearchTerm = false;
+                let rowMatchesBuilding = false;
 
+                // Check if the row matches the search input
                 for (let j = 0; j < td.length; j++) {
                     if (td[j]) {
                         const textValue = td[j].textContent || td[j].innerText;
-                        if (textValue.toLowerCase().indexOf(filter) > -1) {
+                        if (textValue.toLowerCase().indexOf(searchInput) > -1) {
                             rowContainsSearchTerm = true;
-                            break;
                         }
                     }
                 }
 
-                tr[i].style.display = rowContainsSearchTerm ? '' : 'none';
+                // Check if the room belongs to the selected building
+                const buildingCell = td[0]; // Assuming Building is the second column (index 1)
+                if (buildingCell && (selectedBuilding === '' || buildingCell.textContent.toLowerCase() === selectedBuilding)) {
+                    rowMatchesBuilding = true;
+                }
+
+                // Show the row if it matches both the search input and the building filter
+                if (rowContainsSearchTerm && rowMatchesBuilding) {
+                    tr[i].style.display = '';
+                } else {
+                    tr[i].style.display = 'none';
+                }
             }
         }
+
 
         function sortTable(columnIndex) {
             const table = document.getElementById('facilitiesTable');
@@ -97,7 +114,15 @@ $result = $conn->query($sql);
             <main class="flex-1 p-4 h-screen">
                 <div class="flex items-center justify-between p-1 rounded-md">
                     <div class="flex items-center space-x-4 mb-4">
-                        <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterReservations()">
+                    <select id="buildingSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterFacilities()">
+                        <option value="">All Buildings</option>
+                        <?php while ($building = $buildings_result->fetch_assoc()): ?>
+                            <option value="<?php echo htmlspecialchars($building['building']); ?>">
+                                <?php echo htmlspecialchars($building['building']); ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+                        <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterFacilities()">
                     </div>
                     <div>
                         <button onclick="showFacilityForm()" class="ml-auto px-4 py-2 bg-plv-blue text-white rounded-md flex items-center justify-center hover:bg-plv-highlight focus:outline-none focus:ring focus:ring-plv-highlight">
@@ -116,14 +141,14 @@ $result = $conn->query($sql);
                         <thead>
                             <tr class="bg-gray-200 border-b">
                                 <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
-                                    <span class="flex items-center">Facility Name
+                                    <span class="flex items-center">Building
                                         <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                         </svg>
                                     </span>
                                 </th>
                                 <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
-                                    <span class="flex items-center">Building
+                                    <span class="flex items-center">Facility Name
                                         <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                         </svg>
@@ -138,8 +163,8 @@ $result = $conn->query($sql);
                             <?php if ($result->num_rows > 0): ?>
                                 <?php while ($row = $result->fetch_assoc()): ?>
                                     <tr>
-                                        <td class="py-3 px-4"><?php echo $row['facility_name']; ?></td>
                                         <td class="py-3 px-4"><?php echo $row['building']; ?></td>
+                                        <td class="py-3 px-4"><?php echo $row['facility_name']; ?></td>
                                         <td class="py-3 px-4"><?php echo $row['status']; ?></td>
                                         <td class="py-3 px-4"><?php echo $row['descri']; ?></td>
                                         <td class="py-3 px-4">
@@ -325,49 +350,47 @@ $result = $conn->query($sql);
                 });
         }
 
-// Save Changes to the User Account
-function saveFacilityChanges() {
+        // Save Changes to the User Account
+        function saveFacilityChanges() {
 
-    // Get the updated data from the form fields
-    const updatedFacilityData = {
-        id: currentFacilityId, // Make sure currentUserId is defined
-        facility_name: document.getElementById('editFacilityName').value,
-        building: document.getElementById('editBuilding').value,
-        status: document.getElementById('editStatus').value,
-        descri: document.getElementById('editDescri').value,
-    };
+            // Get the updated data from the form fields
+            const updatedFacilityData = {
+                id: currentFacilityId, // Make sure currentUserId is defined
+                facility_name: document.getElementById('editFacilityName').value,
+                building: document.getElementById('editBuilding').value,
+                status: document.getElementById('editStatus').value,
+                descri: document.getElementById('editDescri').value,
+            };
 
-    // Make an AJAX request to save the updated user data to the server
-    fetch('handlers/update_facility.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedFacilityData),
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success modal or message
-                showSuccessModal('Facility updated successfully!');
-                setTimeout(() => {
-                    closeSuccessModal();
-                    location.reload(); // Reloads the current page
-                }, 3000); // 3000 milliseconds = 3 seconds
-        // Reload the user list or update the table row
-                closeModal();
-            } else {
-                // Show error message
-                showError(data.error || 'Failed to update Facility.');
-            }
-        })
-        .catch(error => {
-            console.error('Error updating Facility:', error);
-            showError('Error updating Facility.');
-        });
-}
-
-
+            // Make an AJAX request to save the updated user data to the server
+            fetch('handlers/update_facility.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedFacilityData),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success modal or message
+                        showSuccessModal('Facility updated successfully!');
+                        setTimeout(() => {
+                            closeSuccessModal();
+                            location.reload(); // Reloads the current page
+                        }, 3000); // 3000 milliseconds = 3 seconds
+                // Reload the user list or update the table row
+                        closeModal();
+                    } else {
+                        // Show error message
+                        showError(data.error || 'Failed to update Facility.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating Facility:', error);
+                    showError('Error updating Facility.');
+                });
+        }
 
         // Delete User Account
         function deleteFacility(facilityId) {
@@ -399,8 +422,6 @@ function saveFacilityChanges() {
                     showError('Error deleting Facility.');
                 });
         }
-
-
 
         // Close modal
         function closeModal() {

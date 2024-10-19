@@ -16,19 +16,9 @@ if ($_SESSION['role'] !== 'Registrar') {
     exit();
 }
 
-// Fetch reservations from the database for the current user
-$servername = "localhost";
-$username = "root";
-$db_password = ""; // Change this if you have set a password for your database
-$dbname = "reservadb";
 
-// Create connection
-$conn = new mysqli($servername, $username, $db_password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+// connect to db
+include_once 'database/config.php';
 
 // Fetch the user ID from the session data
 $user_id = $_SESSION['user_id'];
@@ -47,6 +37,63 @@ $user_data = $user_result->fetch_assoc();
     <title>PLV: RESERVA</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                headerToolbar: {
+                    left  : 'prev,next today',
+                    center: 'title',
+                    right : 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                initialView: 'dayGridMonth',
+                  views: {
+                        dayGridMonth: {
+                        eventTimeFormat: { // Hide time in Month View
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            omitZeroMinute: false,
+                            meridiem: 'short', 
+                            hour12: true
+                        }
+                        }
+                    },
+                    eventTimeFormat: { // Format for Week/Day views
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        omitZeroMinute: false,
+                        meridiem: 'short',
+                        hour12: true
+                    },
+                hiddenDays: [0], // Hide Sunday
+                selectable: true,
+                eventDisplay: 'block', // Forces events to display as blocks
+                eventClick: function(info) {
+                    // You can show the event details in a modal or alert here
+                    showEventDetails(info.event); // Function to handle showing event details
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    fetch('handlers/fetch_events.php')
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data); // Add this to inspect the fetched data
+                            successCallback(data);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching events:', error);
+                            failureCallback(error);
+                        });
+                },
+
+
+            });
+
+            calendar.render();
+        });
+    </script>
 </head>
 <body>
     <div class="flex h-screen bg-gray-100">
@@ -65,67 +112,89 @@ $user_data = $user_result->fetch_assoc();
                 </div>
             </header>
             <!-- Main Content goes here-->
-            <main class="flex flex-1 p-4">
+            <main class="flex flex-1 p-4 h-screen overflow-y-auto">
                 <div class="w-3/4 pr-4">
-                    <div class="mb-4">
-                        <!--Banner-->
-                        <div class="relative bg-blue-300 text-white p-6 m-2 rounded-md lg:h-32 xl:h-40 md:h-24 sm:h-20 flex justify-between max-h-40 overflow-hidden">
-                            <div class="w-full md:w-3/4">
-                                <h2 class="text-lg lg:text-xl xl:text-2xl font-semibold pb-1">Welcome, <?php echo $user_data['first_name'] . ' ' . $user_data['last_name']; ?></h2>
-                                <p class="text-sm lg:text-base">Welcome to your dashboard! From here, you can efficiently manage room loadings, view schedules, and input essential data for classes and other academic-related management. If you require assistance, please don't hesitate to reach out to our support team.</p>
-                            </div>
-                            <div class="hidden md:block w-1/4">
-                                <img class="h-auto w-full" src="img/undraw_hello_re_3evm.svg" alt="Greeting SVG">
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Widgets -->
-                    <div class="grid grid-cols-2 m-2 gap-4">
-                        <!-- Total Users -->
-                        <div class="flex items-center rounded bg-white p-6 shadow-md h-40">
-                            <i class="fas fa-users fa-3x w-1/4 text-blue-600"></i>
-                            <div class="ml-4 w-3/4">
-                                <h2 class="text-lg font-bold">Total Users</h2>
-                                <p class="text-2xl">100</p>
-                            </div>
-                        </div>
+                    <div id='calendar' class="h-full p-1 text-xs bg-white border border-gray-200 rounded-lg shadow-lg"></div>
+                </div>
 
-                        <!-- Total Rooms -->
-                        <div class="flex items-center rounded bg-white p-6 shadow-md h-40">
-                            <i class="fas fa-door-closed fa-3x w-1/4 text-blue-600"></i>
-                            <div class="ml-4 w-3/4">
-                                <h2 class="text-lg font-bold">Total Rooms</h2>
-                                <p class="text-2xl">50</p>
-                            </div>
-                        </div>
+                <div class="h-full border-l border-gray-300"></div>
 
-                        <!-- Total Facilities -->
-                        <div class="flex items-center rounded bg-white p-6 shadow-md h-40">
-                            <i class="fas fa-building fa-3x w-1/4 text-blue-600"></i>
-                            <div class="ml-4 w-3/4">
-                                <h2 class="text-lg font-bold">Total Facilities</h2>
-                                <p class="text-2xl">20</p>
-                            </div>
-                        </div>
+                <div class="flex flex-col h-full w-1/3 space-y-4">
+                    <div class="h-1/2 p-2">
+                        <div class="grid grid-cols-1 m-2 gap-4">
+                        <!-- Widgets -->
+                            <a href="accManagement.php" class="block">
+                                <!-- Total Users -->
+                                <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
+                                    <i class="fas fa-users fa-2x w-1/4 text-blue-600"></i>
+                                    <div class="ml-4 w-3/4">
+                                        <h2 class="text-lg font-bold">Total Users</h2>
+                                        <?php
+                                            // Fetch count of total facilities
+                                            $user_count_sql = "SELECT COUNT(*) AS count FROM users";
+                                            $user_count_result = $conn->query($user_count_sql);
 
-                        <!-- New Password Requests -->
-                        <div class="flex items-center rounded bg-white p-6 shadow-md h-40">
-                            <i class="fas fa-key fa-3x w-1/4 text-blue-600"></i>
-                            <div class="ml-4 w-3/4">
-                                <h2 class="text-lg font-bold">New Password Requests</h2>
-                                <p class="text-2xl">5</p>
-                            </div>
+                                            if ($user_count_result) {
+                                                $row = $user_count_result->fetch_assoc();
+                                                $user_count = $row['count'];
+                                                echo '<p class="text-2xl">' . $user_count . '</p>';
+                                            } else {
+                                                echo '<p class="text-2xl">0</p>';
+                                            }
+                                        ?>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <a href="roomManagement.php" class="block">
+                                <!-- Total Rooms -->
+                                <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
+                                    <i class="fas fa-door-closed fa-2x w-1/4 text-blue-600"></i>
+                                    <div class="ml-4 w-3/4">
+                                        <h2 class="text-lg font-bold">Total Rooms</h2>
+                                        <?php
+                                            // Fetch count of total facilities
+                                            $room_count_sql = "SELECT COUNT(*) AS count FROM rooms";
+                                            $room_count_result = $conn->query($room_count_sql);
+
+                                            if ($room_count_result) {
+                                                $row = $room_count_result->fetch_assoc();
+                                                $room_count = $row['count'];
+                                                echo '<p class="text-2xl">' . $room_count . '</p>';
+                                            } else {
+                                                echo '<p class="text-2xl">0</p>';
+                                            }
+                                        ?>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <a href="facilityManagement.php" class="block">
+                                <!-- Total Facilities -->
+                                <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
+                                    <i class="fas fa-building fa-2x w-1/4 text-blue-600"></i>
+                                    <div class="ml-4 w-3/4">
+                                        <h2 class="text-lg font-bold">Total Facilities</h2>
+                                        <?php
+                                            // Fetch count of total facilities
+                                            $facility_count_sql = "SELECT COUNT(*) AS count FROM facilities";
+                                            $facility_count_result = $conn->query($facility_count_sql);
+
+                                            if ($facility_count_result) {
+                                                $row = $facility_count_result->fetch_assoc();
+                                                $facility_count = $row['count'];
+                                                echo '<p class="text-2xl">' . $facility_count . '</p>';
+                                            } else {
+                                                echo '<p class="text-2xl">0</p>';
+                                            }
+                                        ?>
+                                    </div>
+                                </div>
+                            </a>
                         </div>
                     </div>
                 </div>
-                <!-- Calendar -->
-                <div class="flex-grow pl-4">
-                  <div class="h-full rounded bg-white p-4 shadow-md">
-                      <h2 class="mb-2 text-lg font-bold">Calendar</h2>
-                    <!-- Calendar component here -->
-                  </div>
-                </div>
-              </main>        
+            </main>     
         </div>
     </div>
 

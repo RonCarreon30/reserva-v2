@@ -10,9 +10,9 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
-    $user = $result->fetch_assoc();
+    $reservation = $result->fetch_assoc();
 
-    echo json_encode($user);
+    echo json_encode($reservation);
 } else {
     echo json_encode(['error' => 'Facility not found']);
 }

@@ -14,9 +14,9 @@
             <!-- Registrar Sidebar Links -->
             <div class="flex flex-col items-center mt-3 border-t border-gray-700">
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-reg.php" title="Dashboard">
-                    <i class="fa-solid fa-dashboard"></i>
+                    <i class="fa-solid fa-home"></i>
                 </a>
-                                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="accManagement.php" title="Account Management">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="accManagement.php" title="Account Management">
                     <i class="fa-solid fa-user"></i>
                 </a>
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dataSetup.php" title="Data Setup">
@@ -75,10 +75,10 @@
                     <i class="fa-solid fa-home"></i>
                 </a>
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="room_loads.php" title="Room Loading">
-                    <i class="fa-solid fa-calendar"></i>
+                    <i class="fa-solid fa-table"></i>
                 </a>
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="reservations-deptHead.php" title="Facility Reservations">
-                    <i class="fa-solid fa-door-open"></i>
+                    <i class="fa-solid fa-calendar"></i>
                 </a>
             </div>
             <?php

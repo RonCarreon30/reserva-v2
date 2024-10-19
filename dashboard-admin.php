@@ -16,7 +16,7 @@ if ($_SESSION['role'] !== 'Admin') {
     exit();
 }
 
-// Fetch reservations from the database for the current user
+// connect to db
 include_once 'database/config.php';
 
 // Fetch the user ID from the session data
@@ -37,7 +37,7 @@ $user_data = $user_result->fetch_assoc();
     <link rel="stylesheet" href="css/style.css">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
-        <script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('calendar');
 
@@ -125,68 +125,74 @@ $user_data = $user_result->fetch_assoc();
                     <div class="h-1/2 p-2">
                         <div class="grid grid-cols-1 m-2 gap-4">
                         <!-- Widgets -->
-                            <!-- Total Users -->
-                            <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
-                                <i class="fas fa-users fa-2x w-1/4 text-blue-600"></i>
-                                <div class="ml-4 w-3/4">
-                                    <h2 class="text-lg font-bold">Total Users</h2>
-                                    <?php
-                                        // Fetch count of total facilities
-                                        $user_count_sql = "SELECT COUNT(*) AS count FROM users";
-                                        $user_count_result = $conn->query($user_count_sql);
+                            <a href="accManagement.php" class="block">
+                                <!-- Total Users -->
+                                <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
+                                    <i class="fas fa-users fa-2x w-1/4 text-blue-600"></i>
+                                    <div class="ml-4 w-3/4">
+                                        <h2 class="text-lg font-bold">Total Users</h2>
+                                        <?php
+                                            // Fetch count of total facilities
+                                            $user_count_sql = "SELECT COUNT(*) AS count FROM users";
+                                            $user_count_result = $conn->query($user_count_sql);
 
-                                        if ($user_count_result) {
-                                            $row = $user_count_result->fetch_assoc();
-                                            $user_count = $row['count'];
-                                            echo '<p class="text-2xl">' . $user_count . '</p>';
-                                        } else {
-                                            echo '<p class="text-2xl">0</p>';
-                                        }
-                                    ?>
+                                            if ($user_count_result) {
+                                                $row = $user_count_result->fetch_assoc();
+                                                $user_count = $row['count'];
+                                                echo '<p class="text-2xl">' . $user_count . '</p>';
+                                            } else {
+                                                echo '<p class="text-2xl">0</p>';
+                                            }
+                                        ?>
+                                    </div>
                                 </div>
-                            </div>
+                            </a>
 
-                            <!-- Total Rooms -->
-                            <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
-                                <i class="fas fa-door-closed fa-2x w-1/4 text-blue-600"></i>
-                                <div class="ml-4 w-3/4">
-                                    <h2 class="text-lg font-bold">Total Rooms</h2>
-                                    <?php
-                                        // Fetch count of total facilities
-                                        $room_count_sql = "SELECT COUNT(*) AS count FROM rooms";
-                                        $room_count_result = $conn->query($room_count_sql);
+                            <a href="roomManagement.php" class="block">
+                                <!-- Total Rooms -->
+                                <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
+                                    <i class="fas fa-door-closed fa-2x w-1/4 text-blue-600"></i>
+                                    <div class="ml-4 w-3/4">
+                                        <h2 class="text-lg font-bold">Total Rooms</h2>
+                                        <?php
+                                            // Fetch count of total facilities
+                                            $room_count_sql = "SELECT COUNT(*) AS count FROM rooms";
+                                            $room_count_result = $conn->query($room_count_sql);
 
-                                        if ($room_count_result) {
-                                            $row = $room_count_result->fetch_assoc();
-                                            $room_count = $row['count'];
-                                            echo '<p class="text-2xl">' . $room_count . '</p>';
-                                        } else {
-                                            echo '<p class="text-2xl">0</p>';
-                                        }
-                                    ?>
+                                            if ($room_count_result) {
+                                                $row = $room_count_result->fetch_assoc();
+                                                $room_count = $row['count'];
+                                                echo '<p class="text-2xl">' . $room_count . '</p>';
+                                            } else {
+                                                echo '<p class="text-2xl">0</p>';
+                                            }
+                                        ?>
+                                    </div>
                                 </div>
-                            </div>
+                            </a>
 
-                            <!-- Total Facilities -->
-                            <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
-                                <i class="fas fa-building fa-2x w-1/4 text-blue-600"></i>
-                                <div class="ml-4 w-3/4">
-                                    <h2 class="text-lg font-bold">Total Facilities</h2>
-                                    <?php
-                                        // Fetch count of total facilities
-                                        $facility_count_sql = "SELECT COUNT(*) AS count FROM facilities";
-                                        $facility_count_result = $conn->query($facility_count_sql);
+                            <a href="facilityManagement.php" class="block">
+                                <!-- Total Facilities -->
+                                <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
+                                    <i class="fas fa-building fa-2x w-1/4 text-blue-600"></i>
+                                    <div class="ml-4 w-3/4">
+                                        <h2 class="text-lg font-bold">Total Facilities</h2>
+                                        <?php
+                                            // Fetch count of total facilities
+                                            $facility_count_sql = "SELECT COUNT(*) AS count FROM facilities";
+                                            $facility_count_result = $conn->query($facility_count_sql);
 
-                                        if ($facility_count_result) {
-                                            $row = $facility_count_result->fetch_assoc();
-                                            $facility_count = $row['count'];
-                                            echo '<p class="text-2xl">' . $facility_count . '</p>';
-                                        } else {
-                                            echo '<p class="text-2xl">0</p>';
-                                        }
-                                    ?>
+                                            if ($facility_count_result) {
+                                                $row = $facility_count_result->fetch_assoc();
+                                                $facility_count = $row['count'];
+                                                echo '<p class="text-2xl">' . $facility_count . '</p>';
+                                            } else {
+                                                echo '<p class="text-2xl">0</p>';
+                                            }
+                                        ?>
+                                    </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                     </div>
                 </div>
