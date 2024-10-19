@@ -57,6 +57,7 @@ if ($all_reservations_result->num_rows > 0) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PLV: RESERVA</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
         <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -64,43 +65,53 @@ if ($all_reservations_result->num_rows > 0) {
             filterReservations();
         });
 
-        function filterReservations() {
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-            const facilityRows = document.querySelectorAll('#eventsTable tbody tr');
+    function filterReservations() {
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+        const facilityRows = document.querySelectorAll('#eventsTable tbody tr');
+        let hasVisibleRows = false; // Flag to check if any rows are visible
 
-            facilityRows.forEach(row => {
-                const facilityName = row.cells[0].textContent.toLowerCase(); // Facility name in the first column
-                const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status in the fifth column
-                
-                // Determine if the row should be shown based on search and status filters
-                const matchesSearch = facilityName.includes(searchQuery);
-                let matchesStatus = false;
+        facilityRows.forEach(row => {
+            const facilityName = row.cells[0].textContent.toLowerCase(); // Facility name in the first column
+            const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status in the fifth column
+            
+            // Determine if the row should be shown based on search and status filters
+            const matchesSearch = facilityName.includes(searchQuery);
+            let matchesStatus = false;
 
-                // Default status filter behavior
-                if (statusFilter === 'all') {
-                    matchesStatus = true; // Show all
-                } else if (statusFilter === 'in review') {
-                    matchesStatus = reservationStatus === 'in review';
-                } else if (statusFilter === 'approved') {
-                    matchesStatus = reservationStatus === 'approved';                    
-                } else if (statusFilter === 'declined') {
-                    matchesStatus = reservationStatus === 'declined';                    
-                } else if (statusFilter === 'expired') {
-                    matchesStatus = reservationStatus === 'expired'; // Show only expired
-                } else {
-                    // Default to showing 'In Review' and 'Reserved' statuses
-                    matchesStatus = (reservationStatus === 'in review' || reservationStatus === 'approved');
-                }
+            // Default status filter behavior
+            if (statusFilter === 'all') {
+                matchesStatus = true; // Show all
+            } else if (statusFilter === 'in review') {
+                matchesStatus = reservationStatus === 'in review';
+            } else if (statusFilter === 'approved') {
+                matchesStatus = reservationStatus === 'approved';                    
+            } else if (statusFilter === 'declined') {
+                matchesStatus = reservationStatus === 'declined';                    
+            } else if (statusFilter === 'expired') {
+                matchesStatus = reservationStatus === 'expired'; // Show only expired
+            } else {
+                // Default to showing 'In Review' and 'Reserved' statuses
+                matchesStatus = (reservationStatus === 'in review' || reservationStatus === 'approved');
+            }
 
-                // Show or hide the row based on matches
-                if (matchesSearch && matchesStatus) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
+            // Show or hide the row based on matches
+            if (matchesSearch && matchesStatus) {
+                row.classList.remove('hidden'); // Show row
+                hasVisibleRows = true; // At least one row is visible
+            } else {
+                row.classList.add('hidden'); // Hide row
+            }
+        });
+
+        // Show or hide the "no results found" message based on visibility of rows
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        if (!hasVisibleRows) {
+            noResultsMessage.classList.remove('hidden'); // Show the message
+        } else {
+            noResultsMessage.classList.add('hidden'); // Hide the message
         }
+    }
 
         function sortTable(columnIndex) {
             const table = document.getElementById('eventsTable');
@@ -328,37 +339,42 @@ if ($all_reservations_result->num_rows > 0) {
                             </thead>
                             <tbody class="divide-y divide-gray-200" id="reservationTableBody">
                                 <?php
-                                // Output reservations for the events list table
-                                $all_reservations_result->data_seek(0); // Reset result pointer
-                                $today = date('Y-m-d');
-                                while ($row = $all_reservations_result->fetch_assoc()) {
-                                    $reservationId = $row["id"];
-                                    $reservationStatus = $row["reservation_status"];
-                                    $reservationDate = $row["reservation_date"];
-                                    $isEditable = ($reservationDate >= $today) || ($reservationStatus === 'In Review' || $reservationStatus === 'Declined');
-                                    
-                                    $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
-                                    echo '<tr class="' . $statusClass . '">';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["facility_name"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["start_time"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["end_time"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_status"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';
-                                    echo '<td class="py-2 px-4">';
-                                    
-                                    if ($isEditable) {
-                                        echo '<button onclick="editReservation(' . $reservationId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
+                                    // Output reservations for the events list table
+                                    $all_reservations_result->data_seek(0); // Reset result pointer
+                                    $today = date('Y-m-d');
+                                    while ($row = $all_reservations_result->fetch_assoc()) {
+                                        $reservationId = $row["id"];
+                                        $reservationStatus = $row["reservation_status"];
+                                        $reservationDate = $row["reservation_date"];
+                                        $isEditable = ($reservationDate >= $today) || ($reservationStatus === 'In Review' || $reservationStatus === 'Declined');
+                                        
+                                        $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
+                                        echo '<tr class="' . $statusClass . '">';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["facility_name"]) . '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["start_time"]) . '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["end_time"]) . '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_status"]) . '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';
+                                        echo '<td class="py-2 px-4">';
+                                        
+                                        if ($isEditable) {
+                                            echo '<button onclick="editReservation(' . $reservationId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
+                                        }
+                                        
+                                        echo '<button onclick="deleteReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
+                                        echo '</td>';
+                                        echo '</tr>';
                                     }
-                                    
-                                    echo '<button onclick="deleteReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
-                                    echo '</td>';
-                                    echo '</tr>';
-                                }
 
                                 ?>
+
                             </tbody>
                         </table>
+                        <div id="noResultsMessage" class="text-center py-4 hidden">
+                            <img src="img/undraw_not_found_re_bh2e.svg" alt="No Reservations Found" class="mx-auto mb-2 opacity-40" style="max-width: 250px;">
+                            <p class="text-gray-500">No results found for the selected filters.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -387,7 +403,11 @@ if ($all_reservations_result->num_rows > 0) {
                                     echo '</li>';
                                 }
                             } else {
-                                echo '<li>No reservations found</li>';
+                                echo '<li class="flex flex-col items-center justify-center text-center space-y-4 py-8">
+                                        <img class="w-1/2 h-1/2 opacity-60" src="img/undraw_winners_re_wr1l.svg" alt="No Reservations">
+                                        <p class="text-gray-600 font-semibold text-lg">No pendings!</p>
+                                    </li>
+                                    ';
                             }
                             ?>
                         </ul>

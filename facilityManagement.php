@@ -35,6 +35,7 @@ $result = $conn->query($sql);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PLV: RESERVA</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script>
         function filterFacilities() {
@@ -42,8 +43,11 @@ $result = $conn->query($sql);
             const selectedBuilding = document.getElementById('buildingSelect').value.toLowerCase();
             const table = document.getElementById('facilitiesTable');
             const tr = table.getElementsByTagName('tr');
+            const noResultsMessage = document.getElementById('noResultsMessage'); // The "nothing found" message element
 
-            for (let i = 1; i < tr.length; i++) {
+            let visibleRows = 0; // Counter for visible rows
+
+            for (let i = 1; i < tr.length; i++) { // Assuming first row is the header
                 let td = tr[i].getElementsByTagName('td');
                 let rowContainsSearchTerm = false;
                 let rowMatchesBuilding = false;
@@ -59,20 +63,27 @@ $result = $conn->query($sql);
                 }
 
                 // Check if the room belongs to the selected building
-                const buildingCell = td[0]; // Assuming Building is the second column (index 1)
+                const buildingCell = td[0]; // Assuming Building is the first column (index 0)
                 if (buildingCell && (selectedBuilding === '' || buildingCell.textContent.toLowerCase() === selectedBuilding)) {
                     rowMatchesBuilding = true;
                 }
 
                 // Show the row if it matches both the search input and the building filter
                 if (rowContainsSearchTerm && rowMatchesBuilding) {
-                    tr[i].style.display = '';
+                    tr[i].style.display = ''; // Show the row
+                    visibleRows++; // Increment the counter for visible rows
                 } else {
-                    tr[i].style.display = 'none';
+                    tr[i].style.display = 'none'; // Hide the row
                 }
             }
-        }
 
+            // Show or hide the "nothing found" message based on visible rows
+            if (visibleRows === 0) {
+                noResultsMessage.classList.remove('hidden'); // Show the message
+            } else {
+                noResultsMessage.classList.add('hidden'); // Hide the message
+            }
+        }
 
         function sortTable(columnIndex) {
             const table = document.getElementById('facilitiesTable');
@@ -132,7 +143,7 @@ $result = $conn->query($sql);
                     </div>
                 </div>
 
-                <div class=" overflow-y-auto max-h-[calc(100vh-200px)]">
+                <div class="min-w-full bg-white rounded-md shadow-md border border-gray-200 overflow-y-auto max-h-[calc(100vh-200px)]">
                     <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
                         <strong class="font-bold">Error!</strong>
                         <span class="block sm:inline">Something went wrong.</span>
@@ -175,11 +186,18 @@ $result = $conn->query($sql);
                                 <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="5" class="py-4 px-4 text-center">No facilities found</td>
+                                    <td colspan="5" class="py-4 px-4 text-center">
+                                        <img src="img/undraw_not_found_re_bh2e.svg" alt="No Reservations Found" class="mx-auto mb-2 opacity-40" style="max-width: 250px;">
+                                        <p class="text-gray-500">No results found for the selected filters.</p>
+                                    </td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
+                    <div id="noResultsMessage" class="text-center py-4 hidden">
+                        <img src="img/undraw_not_found_re_bh2e.svg" alt="No Reservations Found" class="mx-auto mb-2 opacity-40" style="max-width: 250px;">
+                        <p class="text-gray-500">No results found for the selected filters.</p>
+                    </div>
                 </div>
                 
                 <!--Facility Form-->
@@ -236,7 +254,10 @@ $result = $conn->query($sql);
                         </form>
                     </div>
                 </div>
-            </main>            
+            </main>
+            <div id="footer-container">
+                <?php include 'footer.php' ?>
+            </div>            
         </div>
     </div>
 

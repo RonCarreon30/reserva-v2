@@ -50,59 +50,102 @@ if ($count_result->num_rows > 0) {
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
 
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                headerToolbar: {
-                    left  : 'prev,next today',
-                    center: 'title',
-                    right : 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                initialView: 'dayGridMonth',
-                  views: {
-                        dayGridMonth: {
-                        eventTimeFormat: { // Hide time in Month View
-                            hour: '2-digit', 
-                            minute: '2-digit', 
-                            omitZeroMinute: false,
-                            meridiem: 'short', 
-                            hour12: true
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        headerToolbar: {
+            left  : 'prev,next today',
+            center: 'title',
+            right : 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        initialView: 'dayGridMonth',
+        views: {
+            dayGridMonth: {
+                eventTimeFormat: { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    omitZeroMinute: false,
+                    meridiem: 'short', 
+                    hour12: true
+                }
+            }
+        },
+        eventTimeFormat: { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            omitZeroMinute: false,
+            meridiem: 'short',
+            hour12: true
+        },
+        hiddenDays: [0], // Hide Sunday
+        selectable: true,
+        eventDisplay: 'block',
+        eventClick: function(info) {
+            // Check if the event is a holiday by looking at an extended property or a custom property
+            if (info.event.extendedProps.isHoliday) {
+                alert('This is a holiday: ' + info.event.title);
+            } else {
+                // For regular events, show the event details in a modal
+                showEventDetails(info.event);
+            }
+        },
+
+        events: function(fetchInfo, successCallback, failureCallback) {
+            // Fetch facility reservations
+            const facilityReservations = fetch('handlers/fetch_events.php')
+                .then(response => response.json())
+                .catch(error => {
+                    console.error('Error fetching facility reservations:', error);
+                    failureCallback(error); // Handle error fetching reservations
+                });
+
+            // Fetch holidays from Google Calendar API
+            const holidays = fetch('https://www.googleapis.com/calendar/v3/calendars/en.philippines%23holiday%40group.v.calendar.google.com/events?key=AIzaSyCB7rRha3zbgSYH1aD5SECsRvQ3usacZHU')
+                .then(response => response.json())
+                .then(data => {
+                    // Format the holiday events to fit FullCalendar format
+                    return data.items.map(holiday => ({
+                        title: holiday.summary,
+                        start: holiday.start.date, // Use holiday date (all-day event)
+                        color: '#ff0000', // Optional: set a color for holidays
+                        allDay: true,
+                        extendedProps: {
+                            isHoliday: true // Add a flag to identify holidays
                         }
-                        }
-                    },
-                    eventTimeFormat: { // Format for Week/Day views
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        omitZeroMinute: false,
-                        meridiem: 'short',
-                        hour12: true
-                    },
-                hiddenDays: [0], // Hide Sunday
-                selectable: true,
-                eventDisplay: 'block', // Forces events to display as blocks
-                eventClick: function(info) {
-                    // You can show the event details in a modal or alert here
-                    showEventDetails(info.event); // Function to handle showing event details
-                },
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    fetch('handlers/fetch_events.php')
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log(data); // Add this to inspect the fetched data
-                            successCallback(data);
-                        })
-                        .catch(error => {
-                            console.error('Error fetching events:', error);
-                            failureCallback(error);
-                        });
-                },
+                    }));
+                })
+                .catch(error => {
+                    console.error('Error fetching holidays:', error);
+                    failureCallback(error); // Handle error fetching holidays
+                });
 
+            // Combine both promises (facility reservations and holidays)
+            Promise.all([facilityReservations, holidays])
+                .then(results => {
+                    const facilityEvents = results[0]; // Facility reservations
+                    const holidayEvents = results[1];  // Holiday events
+                    // Combine both event arrays
+                    const allEvents = facilityEvents.concat(holidayEvents);
+                    successCallback(allEvents); // Pass combined events to FullCalendar
+                })
+                .catch(error => {
+                    console.error('Error combining events:', error);
+                    failureCallback(error); // Handle any error in the process
+                });
+        },
+                datesSet: function(info) {
+            // Modify the calendar title by adding 'Reservations' to the month
+            const calendarTitle = document.querySelector('.fc-toolbar-title');
+            if (calendarTitle) {
+                calendarTitle.textContent = info.view.title + ' | Events & Reservations';
+            }
+        }
+    });
 
-            });
+    calendar.render();
+});
 
-            calendar.render();
-        });
     </script>
     <style>
         #custom-dialog {

@@ -1,5 +1,15 @@
+URL Should not show filenames and extensions(htaccess?)
+
+reservations, reservations-deptHead -_show the building on the table_ -_no edit(delete?) buttons if expired/Approved, only admin/gso should be able to do that_
+
+reservations-student.php -_no edit(delete?) buttons if expired/Approved, only admin/gso should be able to do that_
+
+reg&admin
+-data management for AY&Sem, Building & Dept.
+
 accManagement
 -success params change
+-dropdown by role
 
 accManagement
 -Send credentials to newly added user
@@ -15,8 +25,20 @@ reservations-student
 reservations-deptHead
 -export (Student)Reservations(table)
 
+dataSetup.php
+-create whole Page or just put data management for AY&SEM, Building, and Dept. into existing pages
+
+loads-deptHead.php(new room_loads.php)
 room_loads(Chair)
 -Fix exported table
+-year, sem, building, room, (Year&Section?) dropdowns?
+-instead of room table just display calendar and load the schedules there based on dropdown
+
+room_select
+-template download
+-dept. dropdown first then AY&Sem, then upload
+-add tooltip
+-change Pending sched table into all sched table just separate the conflicted schedules and non-conflicted
 
 index/login page
 -Forgot Password
@@ -25,4 +47,6 @@ index/login page
 settings page
 -Not yet created
 
-**reservations-student.php has working edit and delete functions***
+**reservations-student.php has working edit and delete functions**
+**facilityReservations.php has "nothingFound"**
+**dashboard-gso.php has holiday events in calendar**
