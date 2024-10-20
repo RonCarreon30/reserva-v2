@@ -81,8 +81,58 @@
             table.querySelector('tbody').append(...rows);
             table.dataset.sortOrder = isAscending ? 'desc' : 'asc';
         }
+        document.addEventListener('DOMContentLoaded', function() {
+            roomId = 1;
+            var calendarEl = document.getElementById('calendar');
 
+            calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    start: '',
+                    center: '',
+                    end: ''
+                },
+                height: '100%',
+                hiddenDays: [0], // Hide Sunday
+                slotMinTime: '07:00:00',
+                slotMaxTime: '22:00:00',
+                slotDuration: '00:30:00',
+                nowIndicator: false,
+                allDaySlot: false,
+                dayHeaderFormat: { weekday: 'short' },
+                views: {
+                    timeGridWeek: {
+                        dayHeaderFormat: { weekday: 'short' }
+                    }
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    fetch(`handlers/fetch_all_sched.php?roomId=${roomId}`)
+                        .then(response => response.json())
+                        .then(data => successCallback(data))
+                        .catch(error => failureCallback(error));
+                },
 
+                // Customize how events are displayed
+                eventDidMount: function(info) {
+                    // Modify event title to include section and instructor
+                    let eventElement = info.el.querySelector('.fc-event-title');
+
+                    if (eventElement) {
+                        eventElement.innerHTML = `
+                            <div><strong>${info.event.title}</strong></div>
+                            <div>Section: ${info.event.extendedProps.section}</div>
+                            <div>Instructor: ${info.event.extendedProps.instructor}</div>
+                        `;
+                    }
+                },
+
+                eventClick: function(info) {
+                    alert(`Event: ${info.event.title}\nInstructor: ${info.event.extendedProps.instructor}\nSection: ${info.event.extendedProps.section}`);
+                }
+            });
+
+            calendar.render();
+        });
     </script>
     <style>
         #custom-dialog {
@@ -93,7 +143,7 @@
         }
     </style>
 </head>
-    <body class="bg-gray-50">
+    <body class=" bg-gray-50">
         <div class="flex h-screen bg-gray-100">
 
             <!-- Sidebar -->
@@ -109,24 +159,16 @@
                     </div>
                 </header>
 
-                <main class="flex-1 p-4 overflow-y-auto">
-                    <div class="rounded-md">
-                        <div class="flex items-center space-x-4 mb-4">
-                            <div id="back-to-roomloading-button" class="">
-                                <button id="add-schedule-button" onclick="window.location.href='room_select.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
-                                    <i class="fa-solid fa-circle-plus"></i>
-                                </button>
-                            </div>
-                            <select id="buildingSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
+                <main class="flex-1 p-4 overflow-y-auto flex ">
+                    
+                    <div class="w-3/4 rounded-lg flex flex-col">
+                        <div class="flex mb-1 space-x-4 items-center ">
+                            <button id="add-schedule-button" onclick="window.location.href='loads_upload.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out" title="Add Schedules">
+                                <i class="fa-solid fa-circle-plus"></i>
+                            </button>
+
+                            <select id="AYSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
                                 <option value="">Academic Year...</option>
-                                <?php while ($building = $buildings_result->fetch_assoc()): ?>
-                                    <option value="<?php echo htmlspecialchars($building['building']); ?>">
-                                        <?php echo htmlspecialchars($building['building']); ?>
-                                    </option>
-                                <?php endwhile; ?>
-                            </select>
-                            <select id="buildingSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
-                                <option value="">Semester</option>
                                 <?php while ($building = $buildings_result->fetch_assoc()): ?>
                                     <option value="<?php echo htmlspecialchars($building['building']); ?>">
                                         <?php echo htmlspecialchars($building['building']); ?>
@@ -149,12 +191,22 @@
                                     </option>
                                 <?php endwhile; ?>
                             </select>
+
+                            <!-- Export button -->
+                            <button id="exportButton" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-150 ease-in-out" onclick="exportSchedule()">
+                                <i class="fa-solid fa-file-export"></i> Export Schedules
+                            </button>
+                        </div>
+
+                        <div id="calendar" class="rounded-lg bg-white p-1 overflow-hidden shadow-md flex-grow h-[500px]">
+                            <!-- Calendar/timetable here -->
                         </div>
                     </div>
                 </main>
+
             </div>
         </div>
-            <!-- Logout confirmation modal -->
+    <!-- Logout confirmation modal -->
     <div id="custom-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
         <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
             <img class="w-36 mb-4" src="img\undraw_warning_re_eoyh.svg" alt="">
@@ -166,5 +218,8 @@
         </div>
     </div> 
     <script src="scripts/logout.js"></script>
+    <script>
+
+    </script>
 </body>
 </html>

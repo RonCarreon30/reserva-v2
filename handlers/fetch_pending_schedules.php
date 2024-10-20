@@ -8,7 +8,7 @@ $user_department = $_SESSION['department'] ?? 'Unknown';
 // Query to fetch pending schedules
 $sql = "SELECT subject_code, section, instructor, start_time, end_time, days, schedule_status 
         FROM schedules_tbl
-        WHERE schedule_status = 'pending' AND user_dept = ?";
+        WHERE user_dept = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $user_department);
 $stmt->execute();

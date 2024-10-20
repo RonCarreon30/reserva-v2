@@ -31,29 +31,35 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Check if the email already exists
+$emailCheckStmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
+$emailCheckStmt->bind_param("s", $email);
+$emailCheckStmt->execute();
+$emailCheckResult = $emailCheckStmt->get_result();
+
+if ($emailCheckResult->num_rows > 0) {
+    // Email already exists
+    echo json_encode(array('success' => false, 'message' => 'A user with this email already exists.'));
+    $emailCheckStmt->close();
+    $conn->close();
+    exit();
+}
+
+// Close email check statement
+$emailCheckStmt->close();
+
 // Prepare SQL statement to insert a new user into the database
 $stmt = $conn->prepare("INSERT INTO users (first_name, last_name, email, contact_number, department, userRole, userPassword) VALUES (?, ?, ?, ?, ?, ?, ?)");
 $stmt->bind_param("sssssss", $firstName, $lastName, $email, $contactNumber, $department, $userRole, $userPassword);
 
 // Execute SQL statement to insert a new user
 if ($stmt->execute()) {
-    // Close prepared statement
-    $stmt->close();
-
-    // Close database connection
-    $conn->close();
-
-    // Redirect back to accMngmnt.php with success parameter
-    header("Location: /reserva/accManagement.php?success=true");
-    exit();
+    echo json_encode(array('success' => true, 'message' => 'User created successfully!'));
 } else {
-    // Return error message as JSON response
     echo json_encode(array('success' => false, 'message' => 'Error creating user: ' . $stmt->error));
-
-    // Close prepared statement
-    $stmt->close();
-
-    // Close database connection
-    $conn->close();
 }
+
+// Close prepared statement and database connection
+$stmt->close();
+$conn->close();
 ?>

@@ -23,3 +23,16 @@ function closeRoomForm() {
 function closeSchedForm() {
   document.getElementById("amyModal").classList.add("hidden");
 }
+
+function togglePasswordVisibility(inputId, iconElement) {
+  const inputField = document.getElementById(inputId);
+  const isPasswordVisible = inputField.type === "text";
+
+  // Toggle input type
+  inputField.type = isPasswordVisible ? "password" : "text";
+
+  // Change the icon class
+  const icon = iconElement.querySelector("i");
+  icon.classList.toggle("fa-eye", isPasswordVisible);
+  icon.classList.toggle("fa-eye-slash", !isPasswordVisible);
+}

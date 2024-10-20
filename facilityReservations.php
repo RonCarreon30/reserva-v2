@@ -462,19 +462,19 @@ if ($all_reservations_result->num_rows > 0) {
 
     <!--Rejection reason modal-->
     <div id="rejectionReasonForm" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-md shadow-md">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-semibold">Enter reason for rejection:</h2>
-                </div>
-                <div>
-                    <form id="reservationForm" class="space-y-4">
-                        <div class="flex flex-col space-y-2">
-                            <textarea id="rejectionReason" name="rejectionReason" rows="3" class="border border-gray-300 rounded-md p-2" required></textarea>
-                        </div>
-                    </form>
-                    <button onclick="hideSuccessModal()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Cancel</button>
-                    <button id="confirmRejectionButton" class="px-4 py-2 mt-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Okay</button>
-                </div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-md shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold">Enter reason for rejection:</h2>
+            </div>
+            <div>
+                <form id="reservationForm" class="space-y-4">
+                    <div class="flex flex-col space-y-2">
+                        <textarea id="rejectionReason" name="rejectionReason" rows="3" class="border border-gray-300 rounded-md p-2" required></textarea>
+                    </div>
+                </form>
+                <button onclick="hideSuccessModal()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Cancel</button>
+                <button id="confirmRejectionButton" class="px-4 py-2 mt-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Okay</button>
+            </div>
         </div>
     </div>
 

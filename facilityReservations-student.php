@@ -221,7 +221,7 @@ $facility_result = $conn->query($facility_sql);
                         </div>
                         <div class="w-1/2">
                             <div class="flex flex-col space-y-2">
-                                <label for="reservationDate" class="text-gray-700">Reservation Date:</label>
+                                <label for="reservationDate" class="text-gray-700">Reservation Date:<span class="text-red-500">*</span></label>
                                 <input type="date" id="reservationDate" name="reservationDate" class="border border-gray-300 rounded-md p-2" required onchange="validateDate()">
                             </div>
                         </div>
@@ -233,8 +233,9 @@ $facility_result = $conn->query($facility_sql);
                     <div class="flex mb-4 gap-2">
                         <div class="w-1/2">
                             <div class="flex flex-col space-y-2">
-                                <label for="startTime" class="text-gray-700">Starting Time:</label>
+                                <label for="startTime" class="text-gray-700">Starting Time:<span class="text-red-500">*</span></label>
                                 <select id="startTime" name="startTime" class="border border-gray-300 rounded-md p-2" required>
+                                    <option value="" readonly></option>
                                     <?php foreach ($timeOptions as $time): ?>
                                         <option value="<?php echo $time; ?>"><?php echo $time; ?></option>
                                     <?php endforeach; ?>
@@ -243,8 +244,9 @@ $facility_result = $conn->query($facility_sql);
                         </div>
                         <div class="w-1/2">
                             <div class="flex flex-col space-y-2">
-                                <label for="endTime" class="text-gray-700">End Time:</label>
+                                <label for="endTime" class="text-gray-700">End Time:<span class="text-red-500">*</span></label>
                                 <select id="endTime" name="endTime" class="border border-gray-300 rounded-md p-2" required>
+                                    <option value="" readonly></option>
                                     <?php foreach ($timeOptions as $time): ?>
                                         <option value="<?php echo $time; ?>"><?php echo $time; ?></option>
                                     <?php endforeach; ?>
@@ -253,17 +255,17 @@ $facility_result = $conn->query($facility_sql);
                         </div>
                     </div>
                     <div class="flex flex-col space-y-2">
-                                <label for="facultyInCharge" class="text-gray-700">Faculty in Charge:</label>
-                                <input type="text" id="facultyInCharge" name="facultyInCharge" class="border border-gray-300 rounded-md p-2" required>
+                        <label for="facultyInCharge" class="text-gray-700">Faculty in Charge:<span class="text-red-500">*</span></label>
+                        <input type="text" id="facultyInCharge" name="facultyInCharge" class="border border-gray-300 rounded-md p-2" required>
                     </div>                                        
                     <div class="flex flex-col space-y-2">
-                        <label for="purpose" class="text-gray-700">Purpose:</label>
+                        <label for="purpose" class="text-gray-700">Purpose:<span class="text-red-500">*</span></label>
                         <input type="text" id="purpose" name="purpose" class="border border-gray-300 rounded-md p-2">
                     </div>
 
                     <div class="flex flex-col space-y-2">
-                        <label for="additionalInfo" class="text-gray-700">Additional Information:</label>
-                        <textarea id="additionalInfo" name="additionalInfo" class="border border-gray-300 rounded-md p-2"></textarea>
+                        <label for="additionalInfo" class="text-gray-700">Additional Information:<span class="text-red-500">*</span></label>
+                        <textarea id="additionalInfo" name="additionalInfo" placeholder="Put N/A if no additional details" class="border border-gray-300 rounded-md p-2"></textarea>
                     </div>
                     <!-- Add more form fields as needed -->
                     <div class="flex justify-between">

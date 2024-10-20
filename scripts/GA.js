@@ -408,15 +408,15 @@ document.getElementById("file-input").addEventListener("change", function () {
 
   if (file) {
     // Display file info and show buttons
-    document.getElementById("file-info").classList.remove("hidden");
-    document.getElementById("file-name-container").textContent =
-      `File: ${file.name}`;
-    document.getElementById("file-size").textContent =
-      `Size: ${(file.size / 1024).toFixed(2)} KB`;
+    //document.getElementById("file-info").classList.remove("hidden");
+    //document.getElementById("file-name-container").textContent =
+    //  `File: ${file.name}`;
+    //document.getElementById("file-size").textContent =
+    `Size: ${(file.size / 1024).toFixed(2)} KB`;
 
     // Show buttons
-    document.getElementById("confirm-upload").classList.remove("hidden");
-    document.getElementById("cancel-upload").classList.remove("hidden");
+    //document.getElementById("confirm-upload").classList.remove("hidden");
+    //document.getElementById("cancel-upload").classList.remove("hidden");
 
     document
       .getElementById("confirm-upload")
@@ -488,10 +488,10 @@ document.getElementById("file-input").addEventListener("change", function () {
 document.getElementById("cancel-action").addEventListener("click", function () {
   // Clear table and reset upload section
   document.getElementById("schedule-table-body").innerHTML = "";
-  document.getElementById("file-info").classList.add("hidden");
+  //document.getElementById("file-info").classList.add("hidden");
   document.getElementById("file-input").value = "";
-  document.getElementById("confirm-upload").classList.add("hidden");
-  document.getElementById("cancel-upload").classList.add("hidden");
+  //document.getElementById("confirm-upload").classList.add("hidden");
+  //document.getElementById("cancel-upload").classList.add("hidden");
   document.getElementById("parsed-sched-modal").classList.add("hidden");
 });
 

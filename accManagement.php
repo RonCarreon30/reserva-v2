@@ -25,6 +25,11 @@ $user_id = $_SESSION['user_id'];
 // Query to fetch user data from the database
 $sql = "SELECT * FROM users";
 $result = $conn->query($sql);
+
+// Fetch roles for the dropdown
+$role_sql = "SELECT DISTINCT userRole FROM users";
+$role_result = $conn->query($role_sql);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,30 +38,38 @@ $result = $conn->query($sql);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PLV: RESERVA</title>
     <link rel="stylesheet" href="css/style.css">
-        <script>
-        function filterReservations() {
-            const input = document.getElementById('searchInput');
-            const filter = input.value.toLowerCase();
+    <script>
+        function filterUser() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const roleFilter = document.getElementById('roleSelect').value.toLowerCase();
             const table = document.getElementById('usersTable');
             const tr = table.getElementsByTagName('tr');
 
             for (let i = 1; i < tr.length; i++) {
                 let td = tr[i].getElementsByTagName('td');
-                let rowContainsSearchTerm = false;
+                let textMatch = false;
+                let roleMatch = false;
 
-                for (let j = 0; j < td.length; j++) {
+                // Text search filter
+                for (let j = 0; j < td.length - 1; j++) { // Ignore the last 'Action' column
                     if (td[j]) {
                         const textValue = td[j].textContent || td[j].innerText;
-                        if (textValue.toLowerCase().indexOf(filter) > -1) {
-                            rowContainsSearchTerm = true;
-                            break;
+                        if (textValue.toLowerCase().indexOf(input) > -1) {
+                            textMatch = true;
                         }
                     }
                 }
 
-                tr[i].style.display = rowContainsSearchTerm ? '' : 'none';
+                // Role filter
+                if (td[4] && (roleFilter === "" || td[4].textContent.toLowerCase().indexOf(roleFilter) > -1)) {
+                    roleMatch = true;
+                }
+
+                // Show row only if both text and role match
+                tr[i].style.display = (textMatch && roleMatch) ? '' : 'none';
             }
         }
+        
 
         function sortTable(columnIndex) {
             const table = document.getElementById('usersTable');
@@ -98,7 +111,15 @@ $result = $conn->query($sql);
             <main class="flex-1 p-4 h-screen">
                 <div class="flex items-center justify-between p-1 rounded-md">
                     <div class="flex items-center space-x-4 mb-4">
-                        <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterReservations()">
+                        <select id="roleSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterUser()">
+                            <option value="">All Roles</option>
+                            <?php while ($role = $role_result->fetch_assoc()): ?>
+                                <option value="<?php echo htmlspecialchars($role['userRole']); ?>">
+                                    <?php echo htmlspecialchars($role['userRole']); ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                        <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterUser()">
                     </div>
                     <div>
                         <button onclick="showUserForm()" class="ml-auto px-4 py-2 bg-plv-blue text-white rounded-md flex items-center justify-center hover:bg-plv-highlight focus:outline-none focus:ring focus:ring-plv-highlight">
@@ -185,7 +206,7 @@ $result = $conn->query($sql);
                 <div id="addUserForm" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
                         <h1 class="text-center mb-10 text-slate-700 font-semibold text-xl">ADD USER ACCOUNT</h1>
-                        <form method="post" action="handlers/create_user.php" id="createUserForm" class="space-y-10">
+                        <form id="createUserForm" class="space-y-10">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
@@ -228,16 +249,26 @@ $result = $conn->query($sql);
                                 </div>
                                 <div>
                                     <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                                    <input id="password" name="password" type="password" required autocomplete="new-password" class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                                    <div class="relative">
+                                        <input id="password" name="password" type="password" required autocomplete="new-password" class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                                        <button type="button" onclick="togglePasswordVisibility('password', this)" class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400">
+                                            <i class="fas fa-eye" id="passwordIcon"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div>
                                     <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                                    <input id="confirmPassword" name="confirmPassword" type="password" required autocomplete="new-password" class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                                    <div class="relative">
+                                        <input id="confirmPassword" name="confirmPassword" type="password" required autocomplete="new-password" class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                                        <button type="button" onclick="togglePasswordVisibility('confirmPassword', this)" class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400">
+                                            <i class="fas fa-eye" id="passwordIcon"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <button onclick="closeForm()" class="col-span-1 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Cancel</button>
-                                <button type="submit" onclick="SubmitForm()" class="col-span-1 px-4 py-2 bg-plv-blue text-white rounded-lg hover:bg-plv-highlight focus:outline-none focus:ring focus:ring-plv-highlight">Create Account</button>
+                                <button type="submit" class="col-span-1 px-4 py-2 bg-plv-blue text-white rounded-lg hover:bg-plv-highlight focus:outline-none focus:ring focus:ring-plv-highlight">Create Account</button>
                             </div>
                         </form>
                     </div>
@@ -356,6 +387,7 @@ $result = $conn->query($sql);
     
     <script src="scripts/logout.js"></script>
     <script src="scripts/accMngmnt.js"></script>
+    <script src="scripts/functions.js"></script>
     <!-- JavaScript for edit and delete actions -->
     <script>
         let currentUserId;  // Declare a variable to store the current user ID
@@ -389,61 +421,59 @@ $result = $conn->query($sql);
                 });
         }
 
-// Save Changes to the User Account
-function saveUserChanges() {
-    // Get the values from the password and confirm password fields
-    const password = document.getElementById('editPassword').value;
-    const confirmPassword = document.getElementById('editConfirmPassword').value;
+        // Save Changes to the User Account
+        function saveUserChanges() {
+            // Get the values from the password and confirm password fields
+            const password = document.getElementById('editPassword').value;
+            const confirmPassword = document.getElementById('editConfirmPassword').value;
 
-    // Check if the password and confirm password match
-    if (password !== confirmPassword) {
-        alert("Passwords do not match. Please try again."); // Show an error message
-        return; // Exit the function if they don't match
-    }
-
-    // Get the updated data from the form fields
-    const updatedUserData = {
-        id: currentUserId, // Make sure currentUserId is defined
-        first_name: document.getElementById('editFirstName').value,
-        last_name: document.getElementById('editLastName').value,
-        email: document.getElementById('editEmail').value,
-        contact_number: document.getElementById('editContactNumber').value,
-        department: document.getElementById('editDepartment').value,
-        role: document.getElementById('editRole').value,
-        password: document.getElementById('editPassword').value // Include password if needed
-    };
-
-    // Make an AJAX request to save the updated user data to the server
-    fetch('handlers/update_user.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedUserData),
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success modal or message
-                showSuccessModal('User updated successfully!');
-                setTimeout(() => {
-                    closeSuccessModal();
-                    location.reload(); // Reloads the current page
-                }, 3000); // 3000 milliseconds = 3 seconds
-        // Reload the user list or update the table row
-                closeModal();
-            } else {
-                // Show error message
-                showError(data.error || 'Failed to update user.');
+            // Check if the password and confirm password match
+            if (password !== confirmPassword) {
+                alert("Passwords do not match. Please try again."); // Show an error message
+                return; // Exit the function if they don't match
             }
-        })
-        .catch(error => {
-            console.error('Error updating user:', error);
-            showError('Error updating user.');
-        });
-}
 
+            // Get the updated data from the form fields
+            const updatedUserData = {
+                id: currentUserId, // Make sure currentUserId is defined
+                first_name: document.getElementById('editFirstName').value,
+                last_name: document.getElementById('editLastName').value,
+                email: document.getElementById('editEmail').value,
+                contact_number: document.getElementById('editContactNumber').value,
+                department: document.getElementById('editDepartment').value,
+                role: document.getElementById('editRole').value,
+                password: document.getElementById('editPassword').value // Include password if needed
+            };
 
+            // Make an AJAX request to save the updated user data to the server
+            fetch('handlers/update_user.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedUserData),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success modal or message
+                        showSuccessModal('User updated successfully!');
+                        setTimeout(() => {
+                            closeSuccessModal();
+                            location.reload(); // Reloads the current page
+                        }, 3000); // 3000 milliseconds = 3 seconds
+                // Reload the user list or update the table row
+                        closeModal();
+                    } else {
+                        // Show error message
+                        showError(data.error || 'Failed to update user.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating user:', error);
+                    showError('Error updating user.');
+                });
+        }
 
         // Delete User Account
         function deleteUser(userId) {
@@ -476,66 +506,45 @@ function saveUserChanges() {
                 });
         }
 
-
-
         // Close modal
         function closeModal() {
             document.getElementById('editUserModal').classList.add('hidden');
+            document.getElementById("createUserForm").reset();
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            // Check if the success parameter is present in the URL
-            var urlParams = new URLSearchParams(window.location.search);
-            var success = urlParams.has('success') && urlParams.get('success') === 'true';
-            if (success) {
-                var successModal = document.getElementById('successModal');
-                // Show modal
-                successModal.classList.remove('hidden');
+        function showSuccessModal(message, isSuccess = true) {
+            const successMessageElement = document.getElementById('successMessage');
+            successMessageElement.textContent = message; // Set the dynamic success or error message
+
+            const successModal = document.getElementById('successModal');
+            
+            if (isSuccess) {
+                // Apply success styling
+                successModal.classList.remove('bg-red-500'); // Remove error styling if present
+                successModal.classList.add('bg-white'); // Success styling
+            } else {
+                // Apply error styling
+                successModal.classList.remove('bg-white'); // Remove success styling
+                successModal.classList.add('bg-red-500'); // Error styling
+            }
+
+            successModal.classList.remove('hidden'); // Show the modal
+
+            // Auto-close modal after 3 seconds for success, or let users manually close it for errors
+            if (isSuccess) {
                 setTimeout(() => {
                     closeSuccessModal();
-                    location.reload(); // Reloads the current page
+                    location.reload(); // Reload the current page after success
                 }, 3000); // 3000 milliseconds = 3 seconds
             }
-        });
-
-        function showSuccessModal(message) {
-            const successMessageElement = document.getElementById('successMessage');
-            successMessageElement.textContent = message; // Set the dynamic success message
-            const successModal = document.getElementById('successModal');
-            successModal.classList.remove('hidden'); // Show the modal
-            setTimeout(() => {
-                closeSuccessModal();
-                location.reload(); // Reloads the current page
-            }, 3000); // 3000 milliseconds = 3 seconds
         }
 
         function closeSuccessModal() {
             var successModal = document.getElementById('successModal');
             // Hide modal
             successModal.classList.add('hidden');
-                
-            // Reset success parameter to false
-            var urlParams = new URLSearchParams(window.location.search);
-            urlParams.set('','');
-            var newUrl = window.location.pathname + '?' + urlParams.toString();
-            window.history.replaceState({}, '', newUrl);
+            document.getElementById("createUserForm").reset();
         }
-
-        function togglePasswordVisibility(inputId, iconElement) {
-            const inputField = document.getElementById(inputId);
-            const isPasswordVisible = inputField.type === "text";
-            
-            // Toggle input type
-            inputField.type = isPasswordVisible ? "password" : "text";
-            
-            // Change the icon class
-            const icon = iconElement.querySelector('i');
-            icon.classList.toggle('fa-eye', isPasswordVisible);
-            icon.classList.toggle('fa-eye-slash', !isPasswordVisible);
-        }
-
-
-        
     </script>
 </body>
 </html>
