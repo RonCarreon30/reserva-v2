@@ -169,19 +169,36 @@
 
                             <select id="AYSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
                                 <option value="">Academic Year...</option>
-                                <?php while ($building = $buildings_result->fetch_assoc()): ?>
-                                    <option value="<?php echo htmlspecialchars($building['building']); ?>">
-                                        <?php echo htmlspecialchars($building['building']); ?>
-                                    </option>
-                                <?php endwhile; ?>
+                                <?php
+                                    // Query to get terms values
+                                    $query = "SELECT * FROM terms_tbl";
+                                    $result = $conn->query($query);
+                                    // Loop through the result and create an <option> element for each building
+                                    if ($result->num_rows > 0) {
+                                        while ($row = $result->fetch_assoc()) {
+                                            echo '<option value="' . $row['terms_id'] . '">' . $row['academic_year'] . ' - ' . $row['semester'] . '</option>';
+                                        }
+                                    } else {
+                                        echo '<option value="">No Data available</option>';
+                                    }
+                                
+                                ?>
                             </select>
                             <select id="buildingSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
                                 <option value="">All Buildings</option>
-                                <?php while ($building = $buildings_result->fetch_assoc()): ?>
-                                    <option value="<?php echo htmlspecialchars($building['building']); ?>">
-                                        <?php echo htmlspecialchars($building['building']); ?>
-                                    </option>
-                                <?php endwhile; ?>
+                                <?php 
+                                    // Query to get terms values
+                                    $query = "SELECT * FROM buildings_tbl";
+                                    $result = $conn->query($query);
+                                    // Loop through the result and create an <option> element for each building
+                                    if ($result->num_rows > 0) {
+                                        while ($row = $result->fetch_assoc()) {
+                                            echo '<option value="' . $row['building_id'] . '">' . $row['building_name'] . '</option>';
+                                        }
+                                    } else {
+                                        echo '<option value="">No buildings available</option>';
+                                    }                                    
+                                ?>
                             </select>
                             <select id="roomSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
                                 <option value="">All Rooms</option>

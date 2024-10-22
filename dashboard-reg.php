@@ -94,14 +94,22 @@ $user_data = $user_result->fetch_assoc();
             calendar.render();
         });
     </script>
+    <style>
+        #custom-dialog {
+            z-index: 10000; /* Ensures the logout modal appears on top of everything */
+        }
+        #confirmation-modal {
+            z-index: 10000; /* Ensures the logout modal appears on top of everything */
+        }
+    </style>
 </head>
 <body>
     <div class="flex h-screen bg-gray-100">
       
         <!-- Load the Sidebar here   -->
         <div id="sidebar-container">
-          <?php include 'sidebar.php'; ?>
-      </div>
+            <?php include 'sidebar.php'; ?>
+        </div>
         
         <!-- Content area -->
         <div class="flex flex-col flex-1">
