@@ -40,6 +40,12 @@
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="accManagement.php" title="Account Management">
                     <i class="fa-solid fa-user"></i>
                 </a>
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dataSetup.php" title="Data Setup">
+                    <i class="fa-solid fa-school"></i>
+                </a>
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityReservations.php" title="Facility Reservations">
+                    <i class="fa-solid fa-calendar"></i>
+                </a>
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityManagement.php" title="Facility Management">
                     <i class="fa-solid fa-building"></i>
                 </a>
@@ -74,7 +80,7 @@
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-deptHead.php" title="Dashboard">
                     <i class="fa-solid fa-home"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="loads-deptHead.php" title="Room Loading">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="room_loads.php" title="Room Loading">
                     <i class="fa-solid fa-table"></i>
                 </a>
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="reservations-deptHead.php" title="Facility Reservations">
@@ -94,7 +100,7 @@
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="reservations-student.php" title="Reservations">
                     <i class="fa-solid fa-calendar"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityReservations-student.php" title="Facility Reservation">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityReservation.php" title="Facility Reservation">
                     <i class="fa-solid fa-building"></i>
                 </a>
             </div>

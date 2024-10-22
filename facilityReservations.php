@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Check if the user has the required role
-if ($_SESSION['role'] !== 'Facility Head') {
+if ($_SESSION['role'] !== 'Facility Head' && $_SESSION['role'] !== 'Admin') {
     // Redirect to a page indicating unauthorized access
     header("Location: index.html");
     exit();
@@ -286,8 +286,13 @@ if ($all_reservations_result->num_rows > 0) {
             </header>
             <!-- Main content area -->
             <main class="flex flex-1 p-4 overflow-y-auto">
-                <div class="w-3/4 p-2">
-                    <div class="flex items-center space-x-4 mb-4">
+                <div class="w-3/4 pr-2">
+                    <div class="flex items-center space-x-4 mb-2">
+                        <div id="facility-reservation" title="Facility Reservation">
+                            <button id="add-schedule-button" onclick="window.location.href='facilityReservation.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
+                                <i class="fa-solid fa-circle-plus"></i>
+                            </button>
+                        </div>
                         <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterReservations()">
                             <option value="" disabled selected>Select Status</option> <!-- Placeholder option -->
                             <option value="all">All</option>
@@ -382,7 +387,7 @@ if ($all_reservations_result->num_rows > 0) {
 
                 <div class="flex flex-col h-full w-1/3 space-y-4 p-2">
                     <div>
-                        <h2 class="font-semibold">Pendings</h2>
+                        <h2 class="font-bold text-lg">Pendings</h2>
                     </div>
                     <div id="PendingList" class="bg-white shadow overflow-y-auto sm:rounded-lg flex-1">
                         <ul id="PendingListUl" class="divide-y divide-gray-200 flex flex-col p-2">
@@ -641,7 +646,7 @@ if ($all_reservations_result->num_rows > 0) {
                     showErrorMessage('There is a reservation conflict. Please select another time slot.');
                 } else {
                     showConfirmation('Are you sure you want to approve this reservation?', function() {
-                        fetch('../reserva/handlers/update_reservation_status.php?id=' + reservationId + '&status=Approved', {
+                        fetch('handlers/update_reservation_status.php?id=' + reservationId + '&status=Approved', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

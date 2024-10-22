@@ -151,8 +151,13 @@ $all_reservations_result = $stmt->get_result();
             </div>
             <!-- For debugging purposes to get session data-->
             <!-- Main content area -->
-            <main class="flex-1 p-6 overflow-y-auto">
-                <div class="flex items-center space-x-4  m-2">
+            <main class="flex-1 p-4 overflow-y-auto">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div id="facility-reservation" title="Facility Reservation">
+                        <button id="add-facility-btn" onclick="window.location.href='facilityReservation.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
+                            <i class="fa-solid fa-circle-plus"></i>
+                        </button>
+                    </div>
                     <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterReservations()">
                         <option value="" disabled selected>Select Status</option> <!-- Placeholder option -->
                         <option value="all">All</option>
@@ -231,10 +236,12 @@ $all_reservations_result = $stmt->get_result();
                                 
                                 
                                 if ($isEditable) {
-                                    echo '<button onclick="editReservation(' . $reservationId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
-                                    echo '<button onclick="deleteReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
+                                    echo '<td><button onclick="editReservation(' . $reservationId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
+                                    echo '<button onclick="deleteReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button></td>';
+                                } else{
+                                    echo '<td class="py-2 px-4">'.'Already Expired'.'</td>';
                                 }
-                                echo '<td class="py-2 px-4">'.'Already Expired'.'</td>';
+
                                 echo '</tr>';
                             }
 

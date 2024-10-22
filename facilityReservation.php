@@ -1,4 +1,4 @@
-    <?php
+<?php
     // Start the session
     session_start();
 
@@ -9,47 +9,27 @@
         exit();
     }
 
-    // Check if the user has the required role
-    if ($_SESSION['role'] !== 'Student Rep') {
-        // Redirect to a page indicating unauthorized access
-        header("Location: index.html");
-        exit();
-    }
 
-    // Fetch reservations from the database for the current user
-    $servername = "localhost";
-    $username = "root";
-    $db_password = ""; // Change this if you have set a password for your database
-    $dbname = "reservadb";
 
-    // Create connection
-    $conn = new mysqli($servername, $username, $db_password, $dbname);
-
-    // Check connection
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-
+    //connect to db
+    include_once 'database/config.php';
     // Query to fetch reservations for the current user
     $user_id = $_SESSION['user_id'];
 
-// Fetch user's department
-$user_id = $_SESSION['user_id'];
-$user_department_sql = "SELECT department FROM users WHERE id = $user_id";
-$user_department_result = $conn->query($user_department_sql);
-$user_department = $user_department_result->fetch_assoc()['department'] ?? '';
+    // Fetch user's department
+    $user_id = $_SESSION['user_id'];
+    $user_department_sql = "SELECT department FROM users WHERE id = $user_id";
+    $user_department_result = $conn->query($user_department_sql);
+    $user_department = $user_department_result->fetch_assoc()['department'] ?? '';
 
-// Fetch buildings for the dropdown
-$buildings_sql = "SELECT DISTINCT building FROM facilities";
-$buildings_result = $conn->query($buildings_sql);
+    // Fetch buildings for the dropdown
+    $buildings_sql = "SELECT DISTINCT building FROM facilities";
+    $buildings_result = $conn->query($buildings_sql);
 
-// Fetch all facilities
-$facility_sql = "SELECT * FROM facilities where status = 'Available'";
-$facility_result = $conn->query($facility_sql);
-
-
-
-    ?>
+    // Fetch all facilities
+    $facility_sql = "SELECT * FROM facilities where status = 'Available'";
+    $facility_result = $conn->query($facility_sql);
+?>
 
     <!DOCTYPE html>
     <html lang="en">
@@ -120,6 +100,11 @@ $facility_result = $conn->query($facility_sql);
         <main class="flex-1 p-6 overflow-y-auto">
             <div class="bg-white p-4 rounded-md shadow-md mb-6">
                 <div class="flex items-center space-x-4 mb-4">
+                    <div id="facility-reservations" title="Reservations">
+                        <button id="view-reservations-btn" onclick="window.history.back()" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
+                            <i class="fa-solid fa-calendar"></i>
+                        </button>
+                    </div>
                     <select id="buildingSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterFacilities()">
                         <option value="">All Buildings</option>
                         <?php while ($building = $buildings_result->fetch_assoc()): ?>
@@ -134,20 +119,20 @@ $facility_result = $conn->query($facility_sql);
                         <thead>
                             <tr class="bg-gray-200 border-b">
                                 <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
+                                    <span class="flex items-center">Building
+                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                        </svg>
+                                    </span>
+                                </th>                                
+                                <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
                                     <span class="flex items-center">Facility Name
                                         <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                         </svg>
                                     </span>
                                 </th>
-                                <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
-                                    <span class="flex items-center">Building
-                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
-                                        </svg>
-                                    </span>
-                                </th>
-                                <th class="py-3 px-4 text-left"    >
+                                <th class="py-3 px-4 text-left">
                                     <span class="flex items-center">Status</span>
                                 </th>
                                 <th class="py-3 px-4 text-left">
@@ -161,8 +146,8 @@ $facility_result = $conn->query($facility_sql);
                         <?php if ($facility_result->num_rows > 0): ?>
                             <?php while ($row = $facility_result->fetch_assoc()): ?>
                                 <tr class="<?php echo $row['status'] === 'Unavailable' ? 'text-red-600 bg-gray-100' : ''; ?>">
-                                    <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>
-                                    <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>
+                                    <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>                                    
+                                    <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>                                    
                                     <td class="py-2 px-4"><?php echo htmlspecialchars($row['status']); ?></td>
                                     <td class="py-2 px-4"><?php echo htmlspecialchars($row['descri']); ?></td>
                                     <td class="py-2 px-4">
@@ -194,23 +179,6 @@ $facility_result = $conn->query($facility_sql);
                         </svg>
                     </button>
                 </div>
-                <?php
-                    function generateTimeOptions() {
-                        $times = [];
-                        $start = strtotime('07:00 AM');
-                        $end = strtotime('10:00 PM');
-                        $interval = 30 * 60; // 30 minutes in seconds
-
-                        for ($current = $start; $current <= $end; $current += $interval) {
-                            $time = date('h:i A', $current);
-                            $times[] = $time;
-                        }
-
-                        return $times;
-                    }
-
-                    $timeOptions = generateTimeOptions();
-                ?>
                 <form id="reservationForm" class="space-y-4">
                     <div class="flex mb-4 gap-2">
                         <div class="w-1/2">
@@ -236,6 +204,23 @@ $facility_result = $conn->query($facility_sql);
                                 <label for="startTime" class="text-gray-700">Starting Time:<span class="text-red-500">*</span></label>
                                 <select id="startTime" name="startTime" class="border border-gray-300 rounded-md p-2" required>
                                     <option value="" readonly></option>
+                                    <?php
+                                        function generateTimeOptions() {
+                                            $times = [];
+                                            $start = strtotime('07:00 AM');
+                                            $end = strtotime('10:00 PM');
+                                            $interval = 30 * 60; // 30 minutes in seconds
+
+                                            for ($current = $start; $current <= $end; $current += $interval) {
+                                                $time = date('h:i A', $current);
+                                                $times[] = $time;
+                                            }
+
+                                            return $times;
+                                        }
+
+                                        $timeOptions = generateTimeOptions();
+                                    ?>
                                     <?php foreach ($timeOptions as $time): ?>
                                         <option value="<?php echo $time; ?>"><?php echo $time; ?></option>
                                     <?php endforeach; ?>
@@ -302,7 +287,7 @@ $facility_result = $conn->query($facility_sql);
         <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div class="bg-white p-8 rounded-md shadow-md">
                 <h2 class="text-xl font-semibold mb-4">Success</h2>
-                <p class="text-green-600">Reservation sent for approval</p>
+                <p id="successMessage" class="text-green-600"></p>
                 <button id="closeSuccessModal" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Close</button>
             </div>
         </div>
@@ -388,6 +373,8 @@ $facility_result = $conn->query($facility_sql);
             if (data.success) {
                 closeModal('reservationModal');
                 const successModal = document.getElementById('successModal');
+                const successMessage = document.getElementById('successMessage'); // Assuming you have an element for success message
+                successMessage.textContent = data.message; // Update the content of the success message
                 successModal.classList.remove('hidden');
                 setTimeout(() => location.reload(), 2000);
             } else {
@@ -396,6 +383,7 @@ $facility_result = $conn->query($facility_sql);
                 errorList.innerHTML = `<li>${data.error}</li>`;
                 errorModal.classList.remove('hidden');
             }
+
         })
         .catch(error => {
             console.error('Error submitting reservation:', error);

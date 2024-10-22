@@ -8,12 +8,6 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Check if the user has the required role
-if ($_SESSION['role'] !== 'Student Rep') {
-    header("Location: index.html");
-    exit();
-}
-
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Validate form data
@@ -59,7 +53,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $facultyInCharge = $_POST['facultyInCharge'];
     $purpose = $_POST['purpose'];
     $additional_info = isset($_POST['additionalInfo']) ? $_POST['additionalInfo'] : '';
-    $reservation_status = 'In Review';
+
+    // Set reservation status based on user role
+    $user_role = $_SESSION['role'];
+    if ($user_role === 'Student Rep' || $user_role === 'Dept. Head') {
+        $reservation_status = 'In Review';
+    } elseif ($user_role === 'Admin' || $user_role === 'Facility Head') {
+        $reservation_status = 'Approved';
+    } else {
+        echo json_encode(array("success" => false, "error" => "Unauthorized role."));
+        exit();
+    }
 
     $facility_id = getFacilityId($facility_name);
 
@@ -75,18 +79,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             die("Connection failed: " . $conn->connect_error);
         }
 
-// Check for overlapping reservations
-$sql = "SELECT id FROM reservations WHERE facility_id = ? AND reservation_date = ? AND ((start_time < ? AND end_time > ?) OR (start_time < ? AND end_time > ?) OR (start_time >= ? AND end_time <= ?))";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("isssssss", $facility_id, $reservation_date, $start_time, $start_time, $end_time, $end_time, $start_time, $end_time);
-$stmt->execute();
-$stmt->store_result();
-if ($stmt->num_rows > 0) {
-    echo json_encode(array("success" => false, "error" => "Overlapping reservation exists"));
-    exit();
-}
-$stmt->close();
-
+        // Check for overlapping reservations
+        $sql = "SELECT id FROM reservations WHERE facility_id = ? AND reservation_date = ? AND ((start_time < ? AND end_time > ?) OR (start_time < ? AND end_time > ?) OR (start_time >= ? AND end_time <= ?))";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("isssssss", $facility_id, $reservation_date, $start_time, $start_time, $end_time, $end_time, $start_time, $end_time);
+        $stmt->execute();
+        $stmt->store_result();
+        if ($stmt->num_rows > 0) {
+            echo json_encode(array("success" => false, "error" => "Overlapping reservation exists"));
+            exit();
+        }
+        $stmt->close();
 
         // Check for duplicate reservations
         $sql = "SELECT id FROM reservations WHERE facility_id = ? AND reservation_date = ? AND start_time = ? AND end_time = ?";
@@ -101,15 +104,24 @@ $stmt->close();
         $stmt->close();
 
         // Prepare and execute SQL statement for inserting reservation
-$sql = "INSERT INTO reservations (user_id, user_department, facility_id, facility_name, reservation_date, start_time, end_time, purpose, additional_info, reservation_status, facultyInCharge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("isissssssss", $user_id, $department, $facility_id, $facility_name, $reservation_date, $start_time, $end_time, $purpose, $additional_info, $reservation_status, $facultyInCharge);
+        $sql = "INSERT INTO reservations (user_id, user_department, facility_id, facility_name, reservation_date, start_time, end_time, purpose, additional_info, reservation_status, facultyInCharge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("isissssssss", $user_id, $department, $facility_id, $facility_name, $reservation_date, $start_time, $end_time, $purpose, $additional_info, $reservation_status, $facultyInCharge);
 
         if ($stmt->execute()) {
-            echo json_encode(array("success" => true));
+            // Prepare a dynamic success message based on user role
+            $success_message = "";
+            if ($user_role === 'Student Rep' || $user_role === 'Dept. Head') {
+                $success_message = "Reservation Sent for Approval";
+            } elseif ($user_role === 'Admin' || $user_role === 'Facility Head') {
+                $success_message = "Reservation Successfully Made!";
+            }
+
+            echo json_encode(array("success" => true, "message" => $success_message));
         } else {
             echo json_encode(array("success" => false, "error" => "Error: " . $conn->error));
         }
+
 
         $stmt->close();
         $conn->close();

@@ -76,17 +76,55 @@ $user_data = $user_result->fetch_assoc();
                     showEventDetails(info.event); // Function to handle showing event details
                 },
                 events: function(fetchInfo, successCallback, failureCallback) {
-                    fetch('handlers/fetch_events.php')
+                    // Fetch facility reservations
+                    const facilityReservations = fetch('handlers/fetch_events.php')
+                        .then(response => response.json())
+                        .catch(error => {
+                            console.error('Error fetching facility reservations:', error);
+                            failureCallback(error); // Handle error fetching reservations
+                        });
+
+                    // Fetch holidays from Google Calendar API
+                    const holidays = fetch('https://www.googleapis.com/calendar/v3/calendars/en.philippines%23holiday%40group.v.calendar.google.com/events?key=AIzaSyCB7rRha3zbgSYH1aD5SECsRvQ3usacZHU')
                         .then(response => response.json())
                         .then(data => {
-                            console.log(data); // Add this to inspect the fetched data
-                            successCallback(data);
+                            // Format the holiday events to fit FullCalendar format
+                            return data.items.map(holiday => ({
+                                title: holiday.summary,
+                                start: holiday.start.date, // Use holiday date (all-day event)
+                                color: '#ff0000', // Optional: set a color for holidays
+                                allDay: true,
+                                extendedProps: {
+                                    isHoliday: true // Add a flag to identify holidays
+                                }
+                            }));
                         })
                         .catch(error => {
-                            console.error('Error fetching events:', error);
-                            failureCallback(error);
+                            console.error('Error fetching holidays:', error);
+                            failureCallback(error); // Handle error fetching holidays
+                        });
+
+                    // Combine both promises (facility reservations and holidays)
+                    Promise.all([facilityReservations, holidays])
+                        .then(results => {
+                            const facilityEvents = results[0]; // Facility reservations
+                            const holidayEvents = results[1];  // Holiday events
+                            // Combine both event arrays
+                            const allEvents = facilityEvents.concat(holidayEvents);
+                            successCallback(allEvents); // Pass combined events to FullCalendar
+                        })
+                        .catch(error => {
+                            console.error('Error combining events:', error);
+                            failureCallback(error); // Handle any error in the process
                         });
                 },
+                        datesSet: function(info) {
+                    // Modify the calendar title by adding 'Reservations' to the month
+                    const calendarTitle = document.querySelector('.fc-toolbar-title');
+                    if (calendarTitle) {
+                        calendarTitle.textContent = info.view.title + ' | Events & Reservations';
+                    }
+                }
 
 
             });
@@ -182,16 +220,16 @@ $user_data = $user_result->fetch_assoc();
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-building fa-2x w-1/4 text-blue-600"></i>
                                     <div class="ml-4 w-3/4">
-                                        <h2 class="text-lg font-bold">Total Facilities</h2>
+                                        <h2 class="text-lg font-bold">Schedules with Room Assignment</h2>
                                         <?php
                                             // Fetch count of total facilities
-                                            $facility_count_sql = "SELECT COUNT(*) AS count FROM facilities";
-                                            $facility_count_result = $conn->query($facility_count_sql);
+                                            $schedule_count_sql = "SELECT COUNT(*) AS count FROM assigned_rooms_tbl";
+                                            $schedule_count_result = $conn->query($schedule_count_sql);
 
-                                            if ($facility_count_result) {
-                                                $row = $facility_count_result->fetch_assoc();
-                                                $facility_count = $row['count'];
-                                                echo '<p class="text-2xl">' . $facility_count . '</p>';
+                                            if ($schedule_count_result) {
+                                                $row = $schedule_count_result->fetch_assoc();
+                                                $schedule_count = $row['count'];
+                                                echo '<p class="text-2xl">' . $schedule_count . '</p>';
                                             } else {
                                                 echo '<p class="text-2xl">0</p>';
                                             }
@@ -202,10 +240,51 @@ $user_data = $user_result->fetch_assoc();
                         </div>
                     </div>
                 </div>
-            </main>     
+            </main> 
+            <div id="footer-container">
+                <?php include 'footer.php' ?>
+            </div>    
         </div>
     </div>
 
+        <!-- Modal Container -->
+    <div id="eventDetailsModal" class="hidden fixed z-10 inset-0 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center border-b pb-2">
+            <h2 id="eventTitle" class="text-2xl font-semibold text-gray-800"></h2>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            </div>
+            <div class="mt-4">
+            <div class="mb-4">
+                <h3 class="text-lg font-medium text-gray-700">Time:</h3>
+                <p id="eventTime" class="text-gray-600"></p>
+            </div>
+            <div class="mb-4">
+                <h3 class="text-lg font-medium text-gray-700">Facility Name:</h3>
+                <p id="eventFacility" class="text-gray-600"></p>
+            </div>
+            <div class="mb-4">
+                <h3 class="text-lg font-medium text-gray-700">Faculty In Charge:</h3>
+                <p id="eventFacultyInCharge" class="text-gray-600"></p>
+            </div>
+            <div class="mb-4">
+                <h3 class="text-lg font-medium text-gray-700">Additional Info:</h3>
+                <p id="eventAdditionalInfo" class="text-gray-600"></p>
+            </div>
+            <div>
+                <h3 class="text-lg font-medium text-gray-700">Description:</h3>
+                <p id="eventDescription" class="text-gray-600"></p>
+            </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+            <button onclick="closeModal()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none">Close</button>
+            </div>
+        </div>
+    </div>
     <!-- Logout Modal -->
     <div id="custom-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
         <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
@@ -218,5 +297,32 @@ $user_data = $user_result->fetch_assoc();
         </div>
     </div> 
     <script src="scripts/logout.js"></script>
+    <script>
+                function showEventDetails(event) {
+            // Populate the modal with event details
+            document.getElementById('eventTitle').innerText = event.title;
+            
+            // Format the start and end time, show both if available
+            var eventTime = event.start.toLocaleString() + 
+                            (event.end ? ' - ' + event.end.toLocaleString() : '');
+            document.getElementById('eventTime').innerText = eventTime;
+            
+            // Show facility_name, FacultyInCharge, and additional_info (use event's extendedProps)
+            document.getElementById('eventFacility').innerText = event.extendedProps.facility_name || 'Not specified';
+            document.getElementById('eventFacultyInCharge').innerText = event.extendedProps.FacultyInCharge || 'Not specified';
+            document.getElementById('eventAdditionalInfo').innerText = event.extendedProps.additional_info || 'No additional information';
+
+            // Show event description if available
+            document.getElementById('eventDescription').innerText = event.extendedProps.description || 'No description provided';
+
+            // Show the modal
+            document.getElementById('eventDetailsModal').classList.remove('hidden');
+        }
+
+                function closeModal() {
+            // Hide the modal
+            document.getElementById('eventDetailsModal').classList.add('hidden');
+        }
+    </script>
 </body>
 </html>

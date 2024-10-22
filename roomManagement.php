@@ -216,18 +216,18 @@ $result = $conn->query($sql);
                                     <label for="building" class="block text-sm font-medium text-gray-700">Building:</label>
                                     <select id="building" name="building" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
                                         <option value="">Select Building</option> <!-- Default empty option -->
-                                        <?php
-                                        // Query to get distinct dept_building values
-                                        $query = "SELECT DISTINCT dept_building FROM dept_tbl";
-                                        $result = $conn->query($query);
-                                        // Loop through the result and create an <option> element for each building
-                                        if ($result->num_rows > 0) {
-                                            while ($row = $result->fetch_assoc()) {
-                                                echo '<option value="' . $row['dept_building'] . '">' . $row['dept_building'] . '</option>';
-                                            }
-                                        } else {
-                                            echo '<option value="">No buildings available</option>';
-                                        }
+                                        <?php 
+                                            // Query to get terms values
+                                            $query = "SELECT * FROM buildings_tbl";
+                                            $result = $conn->query($query);
+                                            // Loop through the result and create an <option> element for each building
+                                            if ($result->num_rows > 0) {
+                                                while ($row = $result->fetch_assoc()) {
+                                                    echo '<option value="' . $row['building_id'] . '">' . $row['building_name'] . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="">No buildings available</option>';
+                                            }                                    
                                         ?>
                                     </select>
                                 </div>
@@ -277,18 +277,18 @@ $result = $conn->query($sql);
                                     <label for="editBuilding" class="block text-sm font-medium text-gray-700">Building:</label>
                                     <select id="editBuilding" name="building" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
                                         <option value="">Select Building</option> <!-- Default empty option -->
-                                        <?php
-                                        // Query to get distinct dept_building values
-                                        $query = "SELECT DISTINCT dept_building FROM dept_tbl";
-                                        $result = $conn->query($query);
-                                        // Loop through the result and create an <option> element for each building
-                                        if ($result->num_rows > 0) {
-                                            while ($row = $result->fetch_assoc()) {
-                                                echo '<option value="' . $row['dept_building'] . '">' . $row['dept_building'] . '</option>';
-                                            }
-                                        } else {
-                                            echo '<option value="">No buildings available</option>';
-                                        }
+                                        <?php 
+                                            // Query to get terms values
+                                            $query = "SELECT * FROM buildings_tbl";
+                                            $result = $conn->query($query);
+                                            // Loop through the result and create an <option> element for each building
+                                            if ($result->num_rows > 0) {
+                                                while ($row = $result->fetch_assoc()) {
+                                                    echo '<option value="' . $row['building_id'] . '">' . $row['building_name'] . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="">No buildings available</option>';
+                                            }                                    
                                         ?>
                                     </select>
                                 </div>

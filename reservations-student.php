@@ -80,7 +80,7 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                     matchesStatus = reservationStatus === 'expired';
                 } else {
                     // Default to showing 'In Review' and 'Reserved' statuses
-                    matchesStatus = (reservationStatus === 'in review' || reservationStatus === 'approved');
+                    matchesStatus = (reservationStatus === 'in review' || reservationStatus === 'approved' || reservationStatus === 'declined');
                 }
 
                 // Show or hide the row based on matches
