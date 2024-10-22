@@ -303,7 +303,7 @@ if ($all_reservations_result->num_rows > 0) {
                         </select>
                         <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterReservations()">
                     </div>
-                    <div id="reservationsList" class="min-w-full bg-white rounded-md shadow-md border border-gray-200">
+                    <div id="reservationsList" class="overflow-y-auto max-h-[calc(100vh-200px)] bg-white rounded-md shadow-md border border-gray-200">
                         <table id="eventsTable" class="w-full divide-y divide-gray-200">
                             <thead>
                                 <tr class="bg-gray-200 border-b">

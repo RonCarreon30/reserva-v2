@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 $room_id = $_GET['id']; 
 
 // Prepare and execute the deletion query
-$stmt = $conn->prepare("DELETE FROM rooms WHERE room_id = ?");
+$stmt = $conn->prepare("DELETE FROM rooms_tbl WHERE room_id = ?");
 $stmt->bind_param("i", $room_id);
 
 if ($stmt->execute()) {

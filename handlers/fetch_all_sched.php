@@ -14,10 +14,12 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Get the room ID from the query parameter
-$roomId = $_GET['roomId'];
+// Get parameters from the query
+$roomId = isset($_GET['roomId']) ? $_GET['roomId'] : null;
+$ayId = isset($_GET['ayId']) ? $_GET['ayId'] : null; // New parameter for academic year
+$buildingId = isset($_GET['buildingId']) ? $_GET['buildingId'] : null; // New parameter for building
 
-// Fetch assigned schedules for the specified room, including instructor and section
+// Start the base query
 $query = "
     SELECT 
         s.days, 
@@ -28,11 +30,31 @@ $query = "
         s.instructor        /* Column for instructor */
     FROM assigned_rooms_tbl ar
     JOIN schedules_tbl s ON ar.schedule_id = s.schedule_id 
+    JOIN rooms_tbl r ON ar.room_id = r.room_id
     WHERE ar.room_id = ? 
     AND s.schedule_status = 'Scheduled'
 ";
+
+// Add conditions based on the received parameters
+$params = [];
+$types = "i"; // For room_id, which is an integer
+$params[] = $roomId;
+
+if ($ayId) {
+    $query .= " AND s.term_id = ?"; // Adjust the column name based on your actual DB schema
+    $params[] = $ayId;
+    $types .= "i"; // Assuming academic_year_id is an integer
+}
+
+if ($buildingId) {
+    $query .= " AND r.building_id = ?"; // Adjust the column name based on your actual DB schema
+    $params[] = $buildingId;
+    $types .= "i"; // Assuming building_id is an integer
+}
+
+// Prepare and execute the query
 $stmt = $conn->prepare($query);
-$stmt->bind_param("i", $roomId); // Assuming room_id is an integer
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
 

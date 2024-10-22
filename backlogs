@@ -1,8 +1,5 @@
 URL Should not show filenames and extensions(htaccess?)
 
-reg&admin
--data management for AY&Sem, Building & Dept.
-
 accManagement
 -Send credentials to newly added user
 
@@ -27,8 +24,6 @@ room_loads(Chair)
 -*instead of room table just display calendar and load the schedules there based on dropdown
 
 room_select
--template download
--dept. dropdown first then AY&Sem, then upload
 -separate the conflicted schedules and non-conflicted on table
 
 index/login page

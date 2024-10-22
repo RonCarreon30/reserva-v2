@@ -26,13 +26,23 @@
     $query = "SELECT * FROM schedules_tbl";
     $result = mysqli_query($conn, $query);
 
-    // Fetch buildings for the dropdown
-    $buildings_sql = "SELECT DISTINCT building FROM rooms";
-    $buildings_result = $conn->query($buildings_sql);
 
-    // Fetch all rooms
-    $get_rooms_sql = "SELECT * FROM rooms WHERE room_status = 'Available'ORDER BY building";
-    $get_rooms_result = $conn->query($get_rooms_sql);
+
+// Fetch buildings
+$buildingsQuery = "SELECT * FROM buildings_tbl";
+$buildingsResult = $conn->query($buildingsQuery);
+
+// Fetch all rooms
+$roomsQuery = "SELECT * FROM rooms_tbl";
+$roomsResult = $conn->query($roomsQuery);
+
+// Organize rooms by building ID
+$roomsByBuilding = [];
+while ($room = $roomsResult->fetch_assoc()) {
+    $roomsByBuilding[$room['building_id']][] = $room;
+}
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -47,92 +57,88 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
     <script>
         function filterRooms() {
-            const selectedBuilding = document.getElementById('buildingSelect').value.toLowerCase();
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-            const roomRows = document.querySelectorAll('#roomTable tbody tr');
+            const buildingId = document.getElementById('buildingSelect').value;
+            const roomSelect = document.getElementById('roomSelect');
+            const roomOptions = roomSelect.getElementsByTagName('option');
 
-            roomRows.forEach(row => {
-                const roomName = row.querySelector('.room_number').textContent.toLowerCase();
-                const building = row.querySelector('.building').textContent.toLowerCase();
-
-                const matchesBuilding = selectedBuilding === '' || building.includes(selectedBuilding);
-                const matchesSearch = roomName.includes(searchQuery);
-
-                row.style.display = matchesBuilding && matchesSearch ? '' : 'none';
-            });
-        }
-
-        function sortTable(columnIndex) {
-            const table = document.getElementById('roomTable');
-            const rows = Array.from(table.querySelectorAll('tbody tr'));
-            const isAscending = table.dataset.sortOrder === 'asc';
-
-            rows.sort((rowA, rowB) => {
-                const cellA = rowA.children[columnIndex].textContent.trim();
-                const cellB = rowB.children[columnIndex].textContent.trim();
-
-                if (isAscending) {
-                    return cellA.localeCompare(cellB);
+            // Show all room options if no building is selected
+            for (let i = 0; i < roomOptions.length; i++) {
+                const option = roomOptions[i];
+                if (buildingId === '' || option.getAttribute('data-building-id') === buildingId) {
+                    option.style.display = ''; // Show this option
                 } else {
-                    return cellB.localeCompare(cellA);
+                    option.style.display = 'none'; // Hide this option
                 }
-            });
-
-            table.querySelector('tbody').append(...rows);
-            table.dataset.sortOrder = isAscending ? 'desc' : 'asc';
+            }
+            
+            // Optionally, reset roomSelect if no rooms are visible
+            const visibleOptions = Array.from(roomOptions).filter(option => option.style.display !== 'none');
+            if (visibleOptions.length === 1) { // Only the default "All Rooms" option is visible
+                roomSelect.value = ''; // Reset to "All Rooms"
+            }
         }
-        document.addEventListener('DOMContentLoaded', function() {
-            roomId = 1;
-            var calendarEl = document.getElementById('calendar');
 
-            calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-                initialView: 'timeGridWeek',
-                headerToolbar: {
-                    start: '',
-                    center: '',
-                    end: ''
-                },
-                height: '100%',
-                hiddenDays: [0], // Hide Sunday
-                slotMinTime: '07:00:00',
-                slotMaxTime: '22:00:00',
-                slotDuration: '00:30:00',
-                nowIndicator: false,
-                allDaySlot: false,
-                dayHeaderFormat: { weekday: 'short' },
-                views: {
-                    timeGridWeek: {
-                        dayHeaderFormat: { weekday: 'short' }
-                    }
-                },
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    fetch(`handlers/fetch_all_sched.php?roomId=${roomId}`)
-                        .then(response => response.json())
-                        .then(data => successCallback(data))
-                        .catch(error => failureCallback(error));
-                },
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
 
-                // Customize how events are displayed
-                eventDidMount: function(info) {
-                    // Modify event title to include section and instructor
-                    let eventElement = info.el.querySelector('.fc-event-title');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+            start: '',
+            center: '',
+            end: ''
+        },
+        height: '100%',
+        hiddenDays: [0], // Hide Sunday
+        slotMinTime: '07:00:00',
+        slotMaxTime: '22:00:00',
+        slotDuration: '00:30:00',
+        nowIndicator: false,
+        allDaySlot: false,
+        dayHeaderFormat: { weekday: 'short' },
+        views: {
+            timeGridWeek: {
+                dayHeaderFormat: { weekday: 'short' }
+            }
+        },
+        events: function(fetchInfo, successCallback, failureCallback) {
+            const ayId = document.getElementById('AYSelect').value;
+            const buildingId = document.getElementById('buildingSelect').value;
+            const roomId = document.getElementById('roomSelect').value;
 
-                    if (eventElement) {
-                        eventElement.innerHTML = `
-                            <div><strong>${info.event.title}</strong></div>
-                            <div>Section: ${info.event.extendedProps.section}</div>
-                            <div>Instructor: ${info.event.extendedProps.instructor}</div>
-                        `;
-                    }
-                },
+            fetch(`handlers/fetch_all_sched.php?roomId=${roomId}&ayId=${ayId}&buildingId=${buildingId}`)
+                .then(response => response.json())
+                .then(data => successCallback(data))
+                .catch(error => failureCallback(error));
+        },
+        eventDidMount: function(info) {
+            let eventElement = info.el.querySelector('.fc-event-title');
+            if (eventElement) {
+                eventElement.innerHTML = `
+                    <div><strong>${info.event.title}</strong></div>
+                    <div>Section: ${info.event.extendedProps.section}</div>
+                    <div>Instructor: ${info.event.extendedProps.instructor}</div>
+                `;
+            }
+        },
+        eventClick: function(info) {
+            alert(`Event: ${info.event.title}\nInstructor: ${info.event.extendedProps.instructor}\nSection: ${info.event.extendedProps.section}`);
+        }
+    });
 
-                eventClick: function(info) {
-                    alert(`Event: ${info.event.title}\nInstructor: ${info.event.extendedProps.instructor}\nSection: ${info.event.extendedProps.section}`);
-                }
-            });
+    calendar.render();
 
-            calendar.render();
-        });
+    // Update calendar when dropdowns change
+    document.getElementById('AYSelect').addEventListener('change', updateCalendar);
+    document.getElementById('buildingSelect').addEventListener('change', updateCalendar);
+    document.getElementById('roomSelect').addEventListener('change', updateCalendar);
+});
+
+// Function to refresh calendar events based on selected filters
+function updateCalendar() {
+    calendar.refetchEvents();
+}
+
     </script>
     <style>
         #custom-dialog {
@@ -186,27 +192,24 @@
                             </select>
                             <select id="buildingSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
                                 <option value="">All Buildings</option>
-                                <?php 
-                                    // Query to get terms values
-                                    $query = "SELECT * FROM buildings_tbl";
-                                    $result = $conn->query($query);
-                                    // Loop through the result and create an <option> element for each building
-                                    if ($result->num_rows > 0) {
-                                        while ($row = $result->fetch_assoc()) {
-                                            echo '<option value="' . $row['building_id'] . '">' . $row['building_name'] . '</option>';
-                                        }
-                                    } else {
-                                        echo '<option value="">No buildings available</option>';
-                                    }                                    
-                                ?>
+                                <?php if ($buildingsResult->num_rows > 0): ?>
+                                    <?php while ($building = $buildingsResult->fetch_assoc()): ?>
+                                        <option value="<?php echo $building['building_id']; ?>"><?php echo $building['building_name']; ?></option>
+                                    <?php endwhile; ?>
+                                <?php else: ?>
+                                    <option value="">No buildings available</option>
+                                <?php endif; ?>
                             </select>
+
                             <select id="roomSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
                                 <option value="">All Rooms</option>
-                                <?php while ($building = $buildings_result->fetch_assoc()): ?>
-                                    <option value="<?php echo htmlspecialchars($building['building']); ?>">
-                                        <?php echo htmlspecialchars($building['building']); ?>
-                                    </option>
-                                <?php endwhile; ?>
+                                <?php foreach ($roomsByBuilding as $buildingId => $rooms): ?>
+                                    <?php foreach ($rooms as $room): ?>
+                                        <option value="<?php echo $room['room_id']; ?>" data-building-id="<?php echo $buildingId; ?>">
+                                            <?php echo $room['room_number']; ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endforeach; ?>
                             </select>
 
                             <!-- Export button -->
@@ -235,8 +238,5 @@
         </div>
     </div> 
     <script src="scripts/logout.js"></script>
-    <script>
-
-    </script>
 </body>
 </html>

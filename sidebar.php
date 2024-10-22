@@ -80,7 +80,7 @@
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-deptHead.php" title="Dashboard">
                     <i class="fa-solid fa-home"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="room_loads.php" title="Room Loading">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="loads-deptHead.php" title="Room Loading">
                     <i class="fa-solid fa-table"></i>
                 </a>
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="reservations-deptHead.php" title="Facility Reservations">

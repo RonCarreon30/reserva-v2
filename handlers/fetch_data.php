@@ -31,7 +31,7 @@ $assignedRoomsResult = $conn->query("SELECT * FROM assigned_rooms_tbl");
 $assignedRooms = $assignedRoomsResult->fetch_all(MYSQLI_ASSOC);
 
 // Fetch rooms
-$roomsResult = $conn->query("SELECT * FROM rooms");
+$roomsResult = $conn->query("SELECT * FROM rooms_tbl");
 $rooms = $roomsResult->fetch_all(MYSQLI_ASSOC);
 
 // Fetch departments
