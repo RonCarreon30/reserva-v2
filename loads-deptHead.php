@@ -23,7 +23,7 @@
             return date('h:i A', $timestamp);
         }
     // Fetch schedules from schedules_tbl
-    $query = "SELECT * FROM schedules_tbl";
+    $query = "SELECT * FROM schedules";
     $result = mysqli_query($conn, $query);
 
 
@@ -106,9 +106,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const buildingId = document.getElementById('buildingSelect').value;
             const roomId = document.getElementById('roomSelect').value;
 
+            // Only fetch events if all dropdowns have a valid selection
+            if (!ayId || !buildingId || !roomId) {
+                successCallback([]); // Return no events if any dropdown is not selected
+                return;
+            }
+
             fetch(`handlers/fetch_all_sched.php?roomId=${roomId}&ayId=${ayId}&buildingId=${buildingId}`)
                 .then(response => response.json())
-                .then(data => successCallback(data))
+                .then(data => {
+                    if (data && data.length > 0) {
+                        successCallback(data); // Display events if data exists
+                    } else {
+                        successCallback([]); // Clear calendar if no events are found
+                    }
+                })
                 .catch(error => failureCallback(error));
         },
         eventDidMount: function(info) {
@@ -136,7 +148,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to refresh calendar events based on selected filters
 function updateCalendar() {
-    calendar.refetchEvents();
+    const ayId = document.getElementById('AYSelect').value;
+    const buildingId = document.getElementById('buildingSelect').value;
+    const roomId = document.getElementById('roomSelect').value;
+
+    if (ayId && buildingId && roomId) {
+        calendar.refetchEvents();
+    } else {
+        calendar.removeAllEvents(); // Clear calendar if dropdowns are not fully selected
+    }
 }
 
     </script>
@@ -182,7 +202,7 @@ function updateCalendar() {
                                     // Loop through the result and create an <option> element for each building
                                     if ($result->num_rows > 0) {
                                         while ($row = $result->fetch_assoc()) {
-                                            echo '<option value="' . $row['terms_id'] . '">' . $row['academic_year'] . ' - ' . $row['semester'] . '</option>';
+                                            echo '<option value="' . $row['term_id'] . '">' . $row['academic_year'] . ' - ' . $row['semester'] . '</option>';
                                         }
                                     } else {
                                         echo '<option value="">No Data available</option>';

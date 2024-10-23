@@ -50,7 +50,7 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@^2.2.15/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen bg-gray-100">
@@ -79,62 +79,116 @@
                         <i class="fa-solid fa-file-download"></i> Download Template
                     </button>
                 </div>
-                <!-- Toast Notification -->
-                <div id="toast" class="fixed right-4 text-white p-4 rounded-lg shadow-lg opacity-0 transform translate-y-4 transition-opacity transition-transform duration-300">
-                    <span id="toast-message"></span>
-                </div>
-                <div id="loading-spinner" class="hidden flex justify-center items-center">
-                    <div class="animate-spin h-8 w-8 border-4 border-t-transparent border-blue-500 rounded-full"></div>
-                </div>
-                <!-- Table for Pending Schedules -->
+                <!-- Table for Schedules -->
                 <div class="mt-6">
                     <h3 class="text-lg font-semibold mb-2">Uploaded Schedules</h3>
                     <div class="overflow-x-auto">
-                        <table id="pending-schedules-table" class="min-w-full divide-y divide-gray-200">
+                        <table id="schedules-table" class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Code</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day/s</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room Assignment</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="pending-schedules-body" class="bg-white divide-y divide-gray-200">
-                                <!-- Rows will be populated here -->
-                            </tbody>
+                            <tbody id="schedules-body" class="bg-white divide-y divide-gray-200">
+                                <?php
+                                // Query to fetch schedules, ordered by created_at
+                                    $query = "
+                                        SELECT 
+                                            schedules.*, 
+                                            room_assignments_tbl.assignment_id, 
+                                            rooms_tbl.room_number, 
+                                            rooms_tbl.room_type, 
+                                            rooms_tbl.building_id, 
+                                            buildings_tbl.building_name, 
+                                            buildings_tbl.building_desc
+                                        FROM schedules
+                                        LEFT JOIN room_assignments_tbl ON schedules.schedule_id = room_assignments_tbl.schedule_id
+                                        LEFT JOIN rooms_tbl ON room_assignments_tbl.room_id = rooms_tbl.room_id
+                                        LEFT JOIN buildings_tbl ON rooms_tbl.building_id = buildings_tbl.building_id
+                                        ORDER BY schedules.created_at DESC
+                                    ";
+
+
+                                    $result = $conn->query($query);
+                                    if ($result->num_rows > 0) {
+                                        // Output data for each row
+                                        while ($row = $result->fetch_assoc()) {
+                                            $schedId = $row["schedule_id"];
+                                            $schedStatus = $row["sched_status"];
+                                            $isEditable = (strtolower($schedStatus) === 'pending' || strtolower($schedStatus) === 'conflicted');
+                                            $isAssigned = (strtolower($schedStatus) === 'assigned');
+                                            echo '<tr>';
+                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['subject_code']) . '</td>';
+                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['section']) . '</td>';
+                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['instructor']) . '</td>';
+                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['start_time']) . ' - ' . htmlspecialchars($row['end_time']) . '</td>';                                   
+                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['days']) . '</td>';
+                                            if ($isAssigned) {
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['building_name']) . ' - ' . htmlspecialchars($row['room_number']) .'</td>'; 
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-green-500">' . htmlspecialchars($row['sched_status']) . '</td>';     
+                                            } else {
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-500">Not Assigned</td>';  
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['sched_status']) . '</td>';
+                                            }
+                                            
+
+                                            if ($isEditable) {
+                                                echo '<td class="py-2 px-4 space-x-2">';
+                                                echo '<button onclick="editSched(' . $schedId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
+                                                echo '<button onclick="deleteSched(' . $schedId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
+                                                echo '</td>';
+                                            } else {
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-red-500">Not Editable</td>';
+                                            }
+                                            echo '</tr>';
+                                        }
+                                    } else {
+                                        echo '<tr><td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">No schedules found.</td></tr>';
+                                    }
+                                    ?>
+                                </tbody>
                         </table>
                     </div>
-                </div> 
-
-                
+                </div>
             </main>
         </div>
     </div>
+    <!-- Modal Structure -->
+    <div id="message-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg p-5">
+            <h2 id="modal-title" class="text-lg font-semibold mb-4">Message</h2>
+            <p id="modal-message" class="text-gray-700"></p>
+            <button id="close-modal" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Close</button>
+        </div>
+    </div>
+
     <!-- Upload Modal -->
-    <div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
         <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col">
             <h1 class="text-xl font-bold mb-4">File Upload</h1>
-
             <div class="mb-4">
                 <label for="aySemester" class="block text-sm font-medium text-gray-700">Academic Year & Semester</label>
                 <select id="aySemester" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="" disabled selected>Select Academic Year & Semester</option>
-                        <?php
-                            // Query to get terms values
-                            $query = "SELECT * FROM terms_tbl";
-                            $result = $conn->query($query);
-                            // Loop through the result and create an <option> element for each building
-                            if ($result->num_rows > 0) {
-                                while ($row = $result->fetch_assoc()) {
-                                    echo '<option value="' . $row['term_id'] . '">' . $row['academic_year'] . ' - ' . $row['semester'] . '</option>';
-                                }
-                            } else {
-                                echo '<option value="">No data available</option>';
-                            }  
-                        ?>
-                    <!-- Add more options as needed -->
+                    <?php
+                        // Query to get terms values
+                        $query = "SELECT * FROM terms_tbl";
+                        $result = $conn->query($query);
+                        if ($result->num_rows > 0) {
+                            while ($row = $result->fetch_assoc()) {
+                                echo '<option value="' . $row['term_id'] . '">' . $row['academic_year'] . ' - ' . $row['semester'] . '</option>';
+                            }
+                        } else {
+                            echo '<option value="">No data available</option>';
+                        }  
+                    ?>
                 </select>
             </div>
 
@@ -146,7 +200,6 @@
                             <?= ($department['dept_name'] == $user_department) ? 'selected' : ''; ?>>
                             <?= htmlspecialchars($department['dept_name']); ?>
                         </option>
-
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -159,149 +212,213 @@
 
             <div class="flex justify-between mt-5">
                 <button id="cancel-upload" onclick="cancelUpload()" class="mr-4 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Cancel</button>
-                <button id="confirm-upload" class="px-4 py-2 bg-plv-blue text-white rounded-lg hover:bg-plv-highlight">Upload</button>
+                <button id="parse-upload" class="px-4 py-2 bg-plv-blue text-white rounded-lg hover:bg-plv-highlight">Upload</button>
             </div>
         </div>
     </div>
-        <!-- Modal Background -->
-<div id="parsed-sched-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 hidden">
-    <div class="flex items-center justify-center h-full">
-        <!-- Modal Content -->
-        <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-4 p-6">
-            <!-- Modal Header -->
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold text-gray-800">Parsed Schedules</h2>
-            </div>
-
-            <!-- Display Academic Year & Semester and Department -->
-            <div id="schedule-table-container" class="overflow-x-auto mb-4">
-                <div id="selected-info" class="mb-4 text-md text-gray-600">
-                    <!-- Selected values will be populated here -->
+    <!-- Modal Background -->
+    <div id="parsed-sched-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center h-full">
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-4 p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Parsed Schedules</h2>
                 </div>
-                <table id="schedule-table" class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Code</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
 
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day/s</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Type</th>
-                        </tr>
-                    </thead>
-                    <tbody id="schedule-table-body" class="bg-white divide-y divide-gray-200">
-                        <!-- Rows will be added here dynamically -->
-                        <span id="user-department" class="hidden"><?php echo htmlspecialchars($user_department); ?></span>
-                    </tbody>
-                </table>
-            </div>
+                <div id="schedule-table-container" class="overflow-x-auto mb-4">
+                    <div id="selected-info" class="mb-4 text-md text-gray-600">
+                        <!-- Selected values will be populated here -->
+                    </div>
+                    <table id="schedule-table" class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Code</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day/s</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Rows will be added here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
 
-            <!-- Buttons for Actions -->
-            <div class="flex justify-end space-x-4">
-                <button id="cancel-action" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-150 ease-in-out">
-                    Cancel
-                </button>
-                <button id="save-action" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 ease-in-out">
-                    Save
-                </button>
+                <div class="flex justify-end space-x-4">
+                    <button id="close-modal" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Close</button>
+                    <button id="save-schedule" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Save Schedule</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-
-    <!-- Logout confirmation modal -->
-    <div id="custom-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
-            <img class="w-36 mb-4" src="img\undraw_warning_re_eoyh.svg" alt="">
-            <p class="text-lg text-slate-700 font-semibold mb-4">Are you sure you want to logout?</p>
-            <div class="flex justify-center mt-5">
-                <button onclick="cancelLogout()" class="mr-4 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Cancel</button>
-                <button onclick="confirmLogout()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-500">Logout</button>
-            </div>
-        </div>
-    </div> 
-    <script src="scripts/logout.js"></script>
 
     <script>
         function showUploadModal() {
-            document.getElementById('uploadModal').classList.remove('hidden');
+            document.getElementById('upload-modal').classList.remove('hidden');
         }
 
         function cancelUpload() {
-            // Handle cancelation if needed
-            document.getElementById('uploadModal').classList.add('hidden');
+            document.getElementById('upload-modal').classList.add('hidden');
+            document.getElementById('file-input').value = ''; // Clear the file input
         }
 
-        document.getElementById("cancel-action").addEventListener("click", function () {
-            document.getElementById("schedule-table-body").innerHTML = "";
-            document.getElementById("selected-info").innerHTML = ""; // Clear the selected info
-            document.getElementById("parsed-sched-modal").classList.add("hidden");
-        });
+        document.getElementById('parse-upload').addEventListener('click', function() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
 
-        document.getElementById("file-input").addEventListener("change", function () {
-            let fileInput = document.getElementById("file-input");
-            let file = fileInput.files[0];
+            if (!file) {
+                alert('Please upload an Excel file.');
+                return;
+            }
 
-            if (file) {
-                document.getElementById("confirm-upload").addEventListener("click", function () {
-                    // Get the selected values from the dropdowns
-                    const aySemester = document.getElementById("aySemester").options[document.getElementById("aySemester").selectedIndex].text;
-                    const department = document.getElementById("department-dropdown").options[document.getElementById("department-dropdown").selectedIndex].text;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-                    // Clear previous entries if any
-                    document.getElementById("schedule-table-body").innerHTML = ""; 
-                    document.getElementById("selected-info").innerHTML = ""; // Clear the selected info
+                // Remove headers
+                jsonData.shift();
 
-                    // Update the modal with selected values
-                    const parsedModalHeader = document.createElement('div');
-                    parsedModalHeader.innerHTML = `
-                        <p class="text-sm text-gray-600">Academic Year & Semester: ${aySemester}</p>
-                        <p class="text-sm text-gray-600">Preferred Department: ${department}</p>
-                    `;
-                    document.getElementById("selected-info").appendChild(parsedModalHeader);
+                // Initialize an array for parsed schedules
+                const parsedSchedules = []; 
 
-                    document.getElementById("parsed-sched-modal").classList.remove("hidden");
-                    
-                    let formData = new FormData();
-                    formData.append("file", file);
-
-                    fetch("handlers/parse.php", {
-                        method: "POST",
-                        body: formData,
-                    })
-                    .then((response) => response.text())
-                    .then((text) => {
-                        try {
-                            let data = JSON.parse(text); // Then attempt to parse it as JSON
-                            console.log("Parsed JSON:", data);
-
-                            if (data.success) {
-                                let schedules = data.schedules;
-
-                                displayTable(schedules);
-                                showToast("Parsed successfully!", "bg-green-500");
-                            } else {
-                                document.getElementById("parsed-sched-modal").classList.add("hidden");
-                                showToast("Failed to upload file. " + (data.error || ""), "bg-red-500");
-                            }
-                        } catch (e) {
-                            console.error("Parsing error:", e);
-                            document.getElementById("parsed-sched-modal").classList.add("hidden");
-                            showToast("An error occurred while processing the file.", "bg-red-500");
-                        }
-                    })
-                    .catch((error) => {
-                        document.getElementById("parsed-sched-modal").classList.add("hidden");
-                        console.error("Error:", error);
-                        showToast("An error occurred.", "bg-red-500");
+                jsonData.forEach(row => {
+                    parsedSchedules.push({
+                        subjectCode: row[0],
+                        subject: row[1],
+                        section: row[2],
+                        instructor: row[3],
+                        startTime: row[4], // Capture Start Time
+                        endTime: row[5],   // Capture End Time
+                        days: row[6],      // Days column
+                        classType: row[7]  // Class Type
                     });
                 });
-            }
+
+                populateScheduleTable(parsedSchedules);
+                document.getElementById('upload-modal').classList.add('hidden');
+                document.getElementById('parsed-sched-modal').classList.remove('hidden');
+            };
+            reader.readAsArrayBuffer(file);
         });
 
+        function populateScheduleTable(parsedSchedules) {
+            const scheduleTableBody = document.getElementById('schedule-table-body');
+            scheduleTableBody.innerHTML = '';
+
+            parsedSchedules.forEach(schedule => {
+                const daysArray = schedule.days.split(',').map(day => day.trim()); // Split days by comma and trim spaces
+                daysArray.forEach(day => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${schedule.subjectCode}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${schedule.subject}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${schedule.section}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${schedule.instructor}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${schedule.startTime}</td> <!-- Start Time -->
+                        <td class="px-6 py-4 whitespace-nowrap">${schedule.endTime}</td> <!-- End Time -->
+                        <td class="px-6 py-4 whitespace-nowrap">${day}</td> <!-- Individual Day -->
+                        <td class="px-6 py-4 whitespace-nowrap">${schedule.classType}</td>
+                    `;
+                    scheduleTableBody.appendChild(row);
+                });
+            });
+        }
+
+        document.getElementById('close-modal').addEventListener('click', function() {
+            document.getElementById('parsed-sched-modal').classList.add('hidden');
+        });
+
+        document.getElementById('save-schedule').addEventListener('click', function() {
+            const schedules = Array.from(document.querySelectorAll('#schedule-table-body tr')).map(row => {
+                return {
+                    subjectCode: row.cells[0].innerText,
+                    subject: row.cells[1].innerText,
+                    section: row.cells[2].innerText,
+                    instructor: row.cells[3].innerText,
+                    startTime: row.cells[4].innerText,
+                    endTime: row.cells[5].innerText,
+                    days: row.cells[6].innerText,
+                    classType: row.cells[7].innerText,
+                };
+            });
+
+            const aySemester = document.getElementById('aySemester').value;
+            const departmentId = document.getElementById('department-dropdown').value;
+
+            $.ajax({
+                type: 'POST',
+                url: 'handlers/save_schedules.php',
+                data: { schedules: JSON.stringify(schedules), aySemester, departmentId },
+                success: function(response) {
+                    const parsedResponse = JSON.parse(response);
+                    
+                    // Set modal title based on response success
+                    document.getElementById('modal-title').innerText = parsedResponse.success ? 'Success' : 'Error';
+                    
+                    if (parsedResponse.success) {
+                        // Function to convert time from 24-hour format to 12-hour format with AM/PM
+                        function convertTo12HourFormat(time24) {
+                            const [hours, minutes] = time24.split(':');
+                            const period = hours >= 12 ? 'PM' : 'AM';
+                            const adjustedHours = hours % 12 || 12; // Convert to 12-hour format
+                            return `${adjustedHours}:${minutes} ${period}`;
+                        }
+                        // Show saved schedules
+                        if (parsedResponse.savedSchedules.length > 0) {
+                            document.getElementById('modal-message').innerText = 
+                                parsedResponse.message + '\nSaved Schedules:\n' + 
+                                parsedResponse.savedSchedules.map(schedule => {
+                                    const startTime12 = convertTo12HourFormat(schedule.startTime);
+                                    const endTime12 = convertTo12HourFormat(schedule.endTime);
+                                    return `${schedule.subjectCode} (${schedule.day}): ${startTime12} - ${endTime12}`;
+                                }).join('\n');
+                        } else {
+                            document.getElementById('modal-message').innerText = parsedResponse.message; // No new schedules saved
+                        }
+
+                        // Show duplicates if any
+                        if (parsedResponse.duplicates.length > 0) {
+                            document.getElementById('modal-message').innerText += 
+                                '\n\nSome schedules were not saved due to duplicates:\n' + 
+                                parsedResponse.duplicates.map(schedule => {
+                                    const startTime12 = convertTo12HourFormat(schedule.startTime);
+                                    const endTime12 = convertTo12HourFormat(schedule.endTime);
+                                    return `${schedule.subjectCode} (${schedule.day}): ${startTime12} - ${endTime12}`;
+                                }).join('\n');
+                        }
+                    } else {
+                        document.getElementById('modal-message').innerText = parsedResponse.message; // Handle errors
+                    }
+
+                    // Show the modal
+                    document.getElementById('message-modal').classList.remove('hidden');
+                    
+                    document.getElementById('parsed-sched-modal').classList.add('hidden');
+                },
+                error: function(xhr, status, error) {
+                    document.getElementById('modal-title').innerText = 'Error';
+                    document.getElementById('modal-message').innerText = 'An error occurred while saving the schedules. Please try again.';
+                    document.getElementById('message-modal').classList.remove('hidden');
+                }
+            });
+
+        });
+
+        // Close modal event
+        document.getElementById('close-modal').addEventListener('click', function() {
+            document.getElementById('message-modal').classList.add('hidden');
+        });
+
+
+
+        /*function loadPendingSchedules() {
+            // Logic to fetch and display pending schedules (if needed)
+        }*/
 
         function showToast(message, bgColor) {
         let toast = document.getElementById("toast");
@@ -345,27 +462,6 @@
             }, 5000);
         }
         }
-
-        function displayTable(schedules) {
-        let tableBody = document.getElementById("schedule-table-body");
-        tableBody.innerHTML = "";
-
-        schedules.forEach((schedule) => {
-            let row = document.createElement("tr");
-            row.innerHTML = `
-                            <td class="px-6 py-4 whitespace-nowrap">${schedule.subject_code}</td>
-                            <td class=" px-6 py-4 whitespace-nowrap">${schedule.subject}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${schedule.section}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${schedule.instructor}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${schedule.start_time} - ${schedule.end_time}</td>
-                            <td class="hidden px-6 py-4 whitespace-nowrap">${schedule.start_time} - ${schedule.end_time}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${schedule.days}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">${schedule.type}</td>
-                            
-                        `;
-            tableBody.appendChild(row);
-        });
-        }
     
         //For displaying Scheds on table
         $(document).ready(function() {
@@ -378,7 +474,7 @@
                     method: 'GET',
                     dataType: 'json',
                     success: function(data) {
-                        const $tbody = $('#pending-schedules-body');
+                        const $tbody = $('#schedules-body');
                         $tbody.empty(); // Clear existing rows
                         data.forEach(schedule => {
                             const row = `<tr>
@@ -398,372 +494,6 @@
                 });
             }
         });
-
-
-        //Not yet done so continue fix
-        document.getElementById("save-action").addEventListener("click", () => {
-            let rows = Array.from(document.querySelectorAll("#schedule-table-body tr"));
-
-            let schedules = rows.map((row) => {
-                let cells = row.children;
-                return {
-                subject_code: cells[0] ? cells[0].textContent : "",
-                subject: cells[1] ? cells[1].textContent : "",
-                section: cells[2] ? cells[2].textContent : "",
-                instructor: cells[3] ? cells[3].textContent : "",
-                start_time: cells[4] ? cells[4].textContent.split(" - ")[0] : "",
-                end_time: cells[5] ? cells[5].textContent.split(" - ")[1] : "",
-                days: cells[6] ? cells[6].textContent : "",
-                type: cells[7] ? cells[7].textContent : "",
-                user_department: document.getElementById("user-department").textContent,
-                };
-            });
-
-            let selectedDepartmentId = document.getElementById(
-                "department-dropdown"
-            ).value;
-            let data = JSON.stringify({ schedules: schedules, selectedDepartmentId });
-
-            // Show loading spinner
-            const loader = document.getElementById("loading-spinner");
-            loader.classList.remove("hidden");
-
-            fetch("handlers/save.php", {
-                method: "POST",
-                headers: {
-                "Content-Type": "application/json",
-                },
-                body: data,
-            })
-                .then((response) => response.json())
-                .then((result) => {
-                loader.classList.add("hidden"); // Hide loading spinner after fetching data
-
-                if (result.success) {
-                    document.getElementById("parsed-sched-modal").classList.add("hidden");
-                    document.getElementById("uploadModal").classList.add("hidden");
-                    showToast("Schedules saved successfully!", "bg-green-500");
-                    document.getElementById("schedule-table-body").innerHTML = "";
-
-                    // Run Genetic Algorithm after saving
-                    showToast("Running genetic algorithm...", "bg-blue-500");
-                    // Trigger the schedule assignment process
-                    runGeneticAlgorithm();
-                } else {
-                    document.getElementById("parsed-sched-modal").classList.add("hidden");
-                    showToast(
-                    "Failed to save schedules. " + (result.error || ""),
-                    "bg-red-500"
-                    );
-                }
-                })
-                .catch((error) => {
-                loader.classList.add("hidden"); // Hide loading spinner on error
-                document.getElementById("parsed-sched-modal").classList.add("hidden");
-                console.error("Error:", error);
-                showToast("An error occurred while saving the schedules.", "bg-red-500");
-            });
-        });
-
-        // Function to fetch data from the PHP backend
-async function fetchData() {
-  try {
-    const response = await fetch("handlers/fetch_data.php");
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Fetch error:", error);
-    showToast("Failed to fetch data from server.", "bg-red-500");
-    return null; // Return null if there's an error
-  }
-}
-
-async function runGeneticAlgorithm() {
-  const data = await fetchData();
-  if (!data) {
-    return; // Exit if fetching data failed
-  }
-
-  // Use the fetched data in your genetic algorithm
-  const assignedRooms = data.assignedRooms;
-  const schedules = data.schedules;
-  const rooms = data.rooms;
-  const departments = data.departments;
-
-  // Function to check if a room assignment overlaps with existing assignments
-  function isOverlap(newSchedule, roomAssignments) {
-    if (!roomAssignments || roomAssignments.length === 0) {
-      return false; // No overlap if there are no existing assignments
-    }
-    return roomAssignments.some((assignment) => {
-      return (
-        assignment.room_id === newSchedule.room_id && // Check same room
-        assignment.day === newSchedule.days && // Check same day
-        !(
-          newSchedule.end_time <= assignment.start_time || // No overlap
-          newSchedule.start_time >= assignment.end_time
-        )
-      );
-    });
-  }
-
-  // Function to evaluate fitness of an assignment
-  // Function to evaluate fitness of an assignment
-  function evaluateFitness(assignments) {
-    let fitness = 0;
-
-    assignments.forEach((assignment) => {
-      const schedule = schedules.find(
-        (s) => s.schedule_id === assignment.schedule_id
-      );
-
-      if (!schedule) {
-        console.error(`Schedule not found for assignment:`, assignment);
-        return; // Skip this assignment if no schedule is found
-      }
-
-      console.log(`Evaluating fitness for schedule ${schedule.schedule_id}`);
-
-      if (assignment.room_id === null) {
-        console.warn(
-          `No room assigned for schedule ID ${schedule.schedule_id}`
-        );
-        return; // Skip if no room is assigned
-      }
-
-      const room = rooms.find((r) => r.room_id === assignment.room_id);
-      if (room && room.room_type === schedule.type) {
-        fitness += 2; // Extra points for matching room type
-      }
-
-      console.log("Departments:", departments); // Log all departments
-      console.log(
-        `Checking for preferred department ID: ${schedule.pref_dept}`
-      );
-
-      // Ensure pref_dept is being compared correctly
-      const preferredDept = departments.find(
-        (dept) => dept.dept_id === schedule.pref_dept.toString()
-      );
-
-      if (!preferredDept) {
-        console.warn(
-          `Preferred department not found for schedule ID ${schedule.schedule_id} with pref_dept ${schedule.pref_dept}`
-        );
-        return; // Skip if preferred department is not found
-      }
-
-      console.log(`Found preferred department:`, preferredDept);
-
-      if (
-        room &&
-        preferredDept &&
-        room.building === preferredDept.dept_building
-      ) {
-        fitness += 3; // Extra points for department match
-      }
-    });
-
-    console.log(`Total fitness score: ${fitness}`);
-    return fitness;
-  }
-
-  // Function to create initial random population
-  function createInitialPopulation(size, departments) {
-    const population = [];
-
-    for (let i = 0; i < size; i++) {
-      const assignments = schedules
-        .map((schedule) => {
-          const availableRooms = rooms.filter(
-            (room) =>
-              room.room_type === schedule.type &&
-              room.room_status === "Available" &&
-              !isOverlap(schedule, assignedRooms) // Ensure no overlap
-          );
-
-          const preferredDept = departments.find(
-            (dept) => dept.dept_id === schedule.pref_dept
-          );
-
-          const preferredDeptRooms = availableRooms.filter(
-            (room) => room.building === preferredDept?.dept_building
-          );
-
-          const roomToAssign =
-            preferredDeptRooms.length > 0
-              ? preferredDeptRooms[
-                  Math.floor(Math.random() * preferredDeptRooms.length)
-                ]
-              : availableRooms.length > 0
-                ? availableRooms[
-                    Math.floor(Math.random() * availableRooms.length)
-                  ]
-                : rooms[Math.floor(Math.random() * rooms.length)]; // Fallback to any room
-
-          return {
-            schedule_id: schedule.schedule_id,
-            room_id: roomToAssign ? roomToAssign.room_id : null,
-            days: schedule.days, // Include additional properties
-            start_time: schedule.start_time,
-            end_time: schedule.end_time,
-            type: schedule.type,
-            instructor: schedule.instructor, // Add more as needed
-            section: schedule.section,
-          };
-        })
-        .filter(Boolean); // Filter out null assignments
-
-      population.push(assignments);
-    }
-
-    return population;
-  }
-
-  // Mutation function to randomly alter an assignment
-  function mutate(assignments, mutationRate) {
-    assignments.forEach((assignment) => {
-      if (Math.random() < mutationRate) {
-        const availableRooms = rooms.filter(
-          (room) =>
-            room.room_type ===
-              schedules.find((s) => s.schedule_id === assignment.schedule_id)
-                .type &&
-            room.room_status === "Available" &&
-            !isOverlap(assignment, assignedRooms)
-        );
-
-        const newRoom =
-          availableRooms.length > 0
-            ? availableRooms[Math.floor(Math.random() * availableRooms.length)]
-            : rooms[Math.floor(Math.random() * rooms.length)];
-
-        assignment.room_id = newRoom.room_id;
-      }
-    });
-  }
-
-  // Function to select parents based on fitness
-  function selectParents(population) {
-    const fitnessScores = population.map((assignments) =>
-      evaluateFitness(assignments)
-    );
-    const totalFitness = fitnessScores.reduce((a, b) => a + b, 0);
-
-    const selectionProbabilities = fitnessScores.map(
-      (fitness) => fitness / totalFitness
-    );
-    const parents = [];
-
-    while (parents.length < population.length) {
-      const randomValue = Math.random();
-      let cumulativeProbability = 0;
-
-      for (let j = 0; j < selectionProbabilities.length; j++) {
-        cumulativeProbability += selectionProbabilities[j];
-        if (randomValue < cumulativeProbability) {
-          parents.push(population[j]);
-          break;
-        }
-      }
-    }
-    return parents;
-  }
-
-  // Crossover function to create new offspring
-  function crossover(parent1, parent2) {
-    const crossoverPoint = Math.floor(Math.random() * parent1.length);
-    const child = parent1
-      .slice(0, crossoverPoint)
-      .concat(parent2.slice(crossoverPoint));
-    return child;
-  }
-
-  // Main Genetic Algorithm function
-  function geneticAlgorithm(generations, populationSize, mutationRate) {
-    let population = createInitialPopulation(populationSize, departments);
-    let bestSolution = null;
-    let bestFitness = 0;
-
-    for (let generation = 0; generation < generations; generation++) {
-      const parents = selectParents(population);
-      const newPopulation = [];
-
-      for (let i = 0; i < parents.length; i += 2) {
-        const parent1 = parents[i];
-        const parent2 = parents[i + 1];
-
-        if (parent2) {
-          const child = crossover(parent1, parent2);
-          mutate(child, mutationRate);
-          newPopulation.push(child);
-        }
-      }
-
-      population = newPopulation;
-
-      population.forEach((assignments) => {
-        const fitness = evaluateFitness(assignments);
-        if (fitness > bestFitness) {
-          bestFitness = fitness;
-          bestSolution = assignments;
-        }
-      });
-    }
-
-    return { bestSolution, bestFitness };
-  }
-
-  // Run the Genetic Algorithm
-  // After running the genetic algorithm
-  try {
-    const result = geneticAlgorithm(100, 50, 0.1);
-    console.log("Best Assignments: ", result.bestSolution);
-    console.log("Best Fitness: ", result.bestFitness);
-    showToast("Genetic Algorithm completed successfully!", "bg-green-500");
-
-    // Now save the best assignments to the database
-    await saveAssignments(result.bestSolution, schedules); // Pass schedules along with assignments
-  } catch (error) {
-    console.error("Algorithm error:", error);
-    showToast("An error occurred while running the algorithm.", "bg-red-500");
-  }
-}
-
-// Function to save the best assignments to the database
-async function saveAssignments(assignments) {
-  try {
-    const response = await fetch("handlers/save_assignments.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(assignments), // Send full assignments as JSON
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      showToast("Assignments saved successfully!", "bg-green-500");
-        setTimeout(() => {
-            location.reload(); // Reloads the current page
-        }, 3000); // 3000 milliseconds = 3 seconds
-    } else {
-      console.error("Failed to save assignments:", result.error);
-      showToast(
-        "Failed to save assignments. " + (result.error || ""),
-        "bg-red-500"
-      );
-    }
-  } catch (error) {
-    console.error("Save assignments error:", error);
-    showToast("An error occurred while saving assignments.", "bg-red-500");
-  }
-}
-
     </script>
 </body>
 </html>

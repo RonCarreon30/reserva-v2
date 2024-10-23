@@ -19,20 +19,9 @@ if ($_SESSION['role'] !== 'Dept. Head') {
 // Fetch reservations from the database for the current user
 require_once 'database/config.php';
 
-// Fetch the user ID from the session data
+// Fetch the user ID and dept from the session data
 $user_id = $_SESSION['user_id'];
-
-// Fetch user's department from the database
-$head_department = '';
-$head_department_sql = "SELECT department FROM users WHERE id = ?";
-$stmt = $conn->prepare($head_department_sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-if ($result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    $head_department = $row['department'];
-}
+$head_department = $_SESSION['department'];
 
 // Query to fetch reservations of the student rep of same department
 $dept_reservation_sql = "SELECT * FROM reservations WHERE user_department = ? ORDER BY created_at DESC";

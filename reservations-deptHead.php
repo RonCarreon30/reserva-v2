@@ -27,14 +27,8 @@ $user_query = "SELECT * FROM users WHERE id = '$user_id'";
 $user_result = $conn->query($user_query);
 $user_data = $user_result->fetch_assoc();
 
-// Fetch user's department from the database
-$head_department = '';
-$head_department_sql = "SELECT department FROM users WHERE id = $user_id";
-$head_department_result = $conn->query($head_department_sql);
-if ($head_department_result->num_rows > 0) {
-    $row = $head_department_result->fetch_assoc();
-    $head_department = $row['department'];
-}
+// Fetch user's department from the session
+$head_department = $_SESSION['department'];
 
 // Query to fetch reservations of the student rep of same department
 $all_reservations_sql = "

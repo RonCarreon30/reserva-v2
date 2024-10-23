@@ -22,13 +22,16 @@ require_once "database/config.php";
 // Fetch the user ID from the session data
 $user_id = $_SESSION['user_id'];
 
-// Query to fetch user data from the database
-$sql = "SELECT * FROM users";
+// Query to fetch user data and department name from the database
+$sql = "SELECT users.*, dept_tbl.dept_name 
+        FROM users 
+        LEFT JOIN dept_tbl ON users.department_id = dept_tbl.dept_id";
 $result = $conn->query($sql);
 
 // Fetch roles for the dropdown
 $role_sql = "SELECT DISTINCT userRole FROM users";
 $role_result = $conn->query($role_sql);
+
 
 ?>
 <!DOCTYPE html>
@@ -184,7 +187,7 @@ $role_result = $conn->query($role_sql);
                                         <td class="py-3 px-4"><?php echo $row['first_name']; ?></td>
                                         <td class="py-3 px-4"><?php echo $row['last_name']; ?></td>
                                         <td class="py-3 px-4"><?php echo $row['email']; ?></td>
-                                        <td class="py-3 px-4"><?php echo $row['department']; ?></td>
+                                        <td class="py-3 px-4"><?php echo $row['dept_name']; ?></td>
                                         <td class="py-3 px-4"><?php echo $row['userRole']; ?></td>
                                         <td class="py-3 px-4">
                                             <button onclick="editUser(<?php echo $row['id']; ?>)" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>
@@ -221,25 +224,32 @@ $role_result = $conn->query($role_sql);
                                     <input id="email" name="email" type="email" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
                                 </div>
                                 <div>
-                                    <label for="contactNumber" class="block text-sm font-medium text-gray-700">Contact Number</label>
-                                    <input id="contactNumber" name="contactNumber" type="tel" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                                    <label for="idNumber" class="block text-sm font-medium text-gray-700">ID Number</label>
+                                    <input id="idNumber" name="idNumber" type="text" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
                                 </div>
                                 <div>
                                     <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
                                     <select id="department" name="department" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
-                                        <option value="Accountancy">Accountancy</option>
-                                        <option value="Business Administration">Business Administration</option>
-                                        <option value="Arts and Sciences">Arts and Sciences</option>
-                                        <option value="Education">Education</option>
-                                        <option value="Public Administration">Public Administration</option>
-                                        <option value="Civil Engineering">Civil Engineering</option>
-                                        <option value="Information Technology">Information Technology</option>
-                                        <option value="N/A">N/A</option>
+                                        <option value="" readonly>Select Department</option> <!-- Default empty option -->
+                                        <?php
+                                        // Query to get distinct dept_building values
+                                        $query = "SELECT * FROM dept_tbl";
+                                        $result = $conn->query($query);
+                                        // Loop through the result and create an <option> element for each building
+                                        if ($result->num_rows > 0) {
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo '<option value="' . $row['dept_id'] . '">' . $row['dept_name'] . '</option>';
+                                            }
+                                        } else {
+                                            echo '<option value="">No department available</option>';
+                                        }
+                                        ?>
                                     </select>
                                 </div>
                                 <div>
                                     <label for="role" class="block text-sm font-medium text-gray-700">User Role</label>
                                     <select id="role" name="role" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                                        <option value="" readonly>Select Role</option> <!-- Default empty option -->
                                         <option value="Admin">Admin</option>
                                         <option value="Registrar">Registrar</option>
                                         <option value="Facility Head">Facility Head</option>
@@ -278,100 +288,118 @@ $role_result = $conn->query($role_sql);
     </div>
 
     <!-- Edit User Modal -->
-<div id="editUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
-        <h1 class="text-center mb-10 text-slate-700 font-semibold text-xl">EDIT USER ACCOUNT</h1>
-        <form id="editUserForm" class="space-y-10">
-            <input type="hidden" id="editUserId" name="userId"> <!-- Hidden field for user ID -->
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label for="editFirstName" class="block text-sm font-medium text-gray-700">First Name</label>
-                    <input id="editFirstName" name="firstName" type="text" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
-                </div>
-                <div>
-                    <label for="editLastName" class="block text-sm font-medium text-gray-700">Last Name</label>
-                    <input id="editLastName" name="lastName" type="text" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
-                </div>
-                <div>
-                    <label for="editEmail" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input id="editEmail" name="email" type="email" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
-                </div>
-                <div>
-                    <label for="editContactNumber" class="block text-sm font-medium text-gray-700">Contact Number</label>
-                    <input id="editContactNumber" name="contactNumber" type="tel" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
-                </div>
-                <div>
-                    <label for="editDepartment" class="block text-sm font-medium text-gray-700">Department</label>
-                    <select id="editDepartment" name="department" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
-                        <option value="Accountancy">Accountancy</option>
-                        <option value="Business Administration">Business Administration</option>
-                        <option value="Arts and Sciences">Arts and Sciences</option>
-                        <option value="Education">Education</option>
-                        <option value="Public Administration">Public Administration</option>
-                        <option value="Civil Engineering">Civil Engineering</option>
-                        <option value="Information Technology">Information Technology</option>
-                        <option value="N/A">N/A</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="editRole" class="block text-sm font-medium text-gray-700">User Role</label>
-                    <select id="editRole" name="role" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
-                        <option value="Admin">Admin</option>
-                        <option value="Registrar">Registrar</option>
-                        <option value="Facility Head">Facility Head</option>
-                        <option value="Dept. Head">Dept. Head</option>
-                        <option value="Student Rep">Student Rep</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="editPassword" class="block text-sm font-medium text-gray-700">New Password</label>
-                    <div class="relative">
-                        <input id="editPassword" name="password" type="password" class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
-                        <button type="button" onclick="togglePasswordVisibility('editPassword', this)" class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400">
-                            <i class="fas fa-eye" id="passwordIcon"></i>
-                        </button>
+    <div id="editUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
+            <h1 class="text-center text-slate-700 font-semibold text-xl">EDIT USER ACCOUNT</h1>
+            <form id="editUserForm" class="space-y-6">
+                <input type="hidden" id="editUserId" name="userId"> <!-- Hidden field for user ID -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="editFirstName" class="block text-sm font-medium text-gray-700">First Name</label>
+                        <input id="editFirstName" name="firstName" type="text" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
                     </div>
-                </div>
-                <div>
-                    <label for="editConfirmPassword" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                    <div class="relative">
-                        <input id="editConfirmPassword" name="confirmPassword" type="password" class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
-                        <button type="button" onclick="togglePasswordVisibility('editConfirmPassword', this)" class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400">
-                            <i class="fas fa-eye" id="confirmPasswordIcon"></i>
-                        </button>
+                    <div>
+                        <label for="editLastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+                        <input id="editLastName" name="lastName" type="text" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
                     </div>
+                    <div>
+                        <label for="editEmail" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input id="editEmail" name="email" type="email" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="editIdNumber" class="block text-sm font-medium text-gray-700">ID Number</label>
+                        <input id="editIdNumber" name="IdNumber" type="text" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label for="editDepartment" class="block text-sm font-medium text-gray-700">Department</label>
+                        <select id="editDepartment" name="department" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                            <option value="" readonly>Select Department</option> <!-- Default empty option -->
+                                <?php
+                                    // Query to get distinct dept_building values
+                                    $query = "SELECT * FROM dept_tbl";
+                                    $result = $conn->query($query);
+                                    // Loop through the result and create an <option> element for each building
+                                    if ($result->num_rows > 0) {
+                                        while ($row = $result->fetch_assoc()) {
+                                            echo '<option value="' . $row['dept_id'] . '">' . $row['dept_name'] . '</option>';
+                                        }
+                                    } else {
+                                        echo '<option value="">No department available</option>';
+                                    }
+                                ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="editRole" class="block text-sm font-medium text-gray-700">User Role</label>
+                        <select id="editRole" name="role" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                            <option value="Admin">Admin</option>
+                            <option value="Registrar">Registrar</option>
+                            <option value="Facility Head">Facility Head</option>
+                            <option value="Dept. Head">Dept. Head</option>
+                            <option value="Student Rep">Student Rep</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="editPassword" class="block text-sm font-medium text-gray-700">New Password</label>
+                        <div class="relative">
+                            <input id="editPassword" name="password" type="password" class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                            <button type="button" onclick="togglePasswordVisibility('editPassword', this)" class="absolute inset-y-0 right-0 flex items-center mr-2 text-gray-400">
+                                <i class="fas fa-eye" id="passwordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="editConfirmPassword" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                        <div class="relative">
+                            <input id="editConfirmPassword" name="confirmPassword" type="password" class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                            <button type="button" onclick="togglePasswordVisibility('editConfirmPassword', this)" class="absolute inset-y-0 right-0 flex items-center mr-2 text-gray-400">
+                                <i class="fas fa-eye" id="confirmPasswordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
-
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <button type="button" onclick="closeModal()" class="col-span-1 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Cancel</button>
-                <button type="button" onclick="saveUserChanges()" class="col-span-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600" >Update Account</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Success Modal -->
-<div id="successModal" class="fixed z-10 inset-0 bg-black bg-opacity-50 overflow-y-auto hidden">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <!-- Background Overlay -->
-        <div class="fixed inset-0 bg-gray-500 opacity-75"></div>
-        <!-- Modal Content -->
-        <div class="bg-white rounded-lg p-8 max-w-sm mx-auto relative">
-            <!-- Green Check Icon -->
-            <img src="img/undraw_completing_re_i7ap.svg" alt="Success Image" class="mx-auto mb-4 w-16 h-20">
-            <!-- Modal Header -->
-            <h2 class="text-lg font-semibold mb-4" id="successMessage">Account Created Successfully!</h2> <!-- Added id for dynamic message -->
-            <!-- Close Button -->
-            <button onclick="closeSuccessModal()" class="absolute top-0 right-0 mt-2 mr-2 focus:outline-none">
-                <svg class="w-6 h-6 text-gray-500 hover:text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
+                <div class="grid grid-cols-2 mt-2 gap-4">
+                    <button type="button" onclick="closeModal()" class="col-span-1 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Cancel</button>
+                    <button type="button" onclick="saveUserChanges()" class="col-span-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600" >Update Account</button>
+                </div>
+            </form>
         </div>
     </div>
-</div>
 
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed z-10 inset-0 bg-black bg-opacity-50 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background Overlay -->
+            <div class="fixed inset-0 bg-gray-500 opacity-75"></div>
+            <!-- Modal Content -->
+            <div class="bg-white rounded-lg p-8 max-w-sm mx-auto relative">
+                <!-- Green Check Icon -->
+                <img src="img/undraw_completing_re_i7ap.svg" alt="Success Image" class="mx-auto mb-4 w-16 h-20">
+                <!-- Modal Header -->
+                <h2 class="text-lg font-semibold mb-4" id="successMessage">Account Created Successfully!</h2> <!-- Added id for dynamic message -->
+                <!-- Close Button -->
+                <button onclick="closeSuccessModal()" class="absolute top-0 right-0 mt-2 mr-2 focus:outline-none">
+                    <svg class="w-6 h-6 text-gray-500 hover:text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmDeleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
+            <h2 class="text-xl font-semibold mb-4">Confirm Deletion</h2>
+            <img class="w-1/2 mb-4" src="img/undraw_throw_away_re_x60k.svg" alt="">
+            <p class="text-lg text-slate-700 font-semibold mb-4">Are you sure you want to delete this user?</p>
+            <div class="flex justify-center mt-5 space-x-4">
+                <button id="cancelDelete" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400" onclick="closeDeleteModal()">Cancel</button>
+                <button id="confirmDelete" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
         
     <!-- confirm logout modal -->
     <div id="custom-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -405,8 +433,8 @@ $role_result = $conn->query($role_sql);
                     document.getElementById('editFirstName').value = data.first_name;
                     document.getElementById('editLastName').value = data.last_name;
                     document.getElementById('editEmail').value = data.email;
-                    document.getElementById('editContactNumber').value = data.contact_number;
-                    document.getElementById('editDepartment').value = data.department;
+                    document.getElementById('editIdNumber').value = data.id_number;
+                    document.getElementById('editDepartment').value = data.dept_id;
                     document.getElementById('editRole').value = data.userRole;
                     document.getElementById('editPassword').value = ''; // Clear password field
                     document.getElementById('editConfirmPassword').value = ''; // Clear confirm password field
@@ -474,37 +502,46 @@ $role_result = $conn->query($role_sql);
                     showError('Error updating user.');
                 });
         }
+ 
+        function deleteUser(userId) {
+            userIdToDelete = userId; // Store the user ID
+            // Show the confirmation modal
+            document.getElementById('confirmDeleteModal').classList.remove('hidden');
+        }
 
         // Delete User Account
-        function deleteUser(userId) {
-            // Confirm before deleting
-            if (!confirm('Are you sure you want to delete this user?')) {
-                return;
-            }
-
+        function confirmDelete() {
             // Make an AJAX request to delete the user from the server
-            fetch(`handlers/delete_user.php?id=${userId}`, {
+            fetch(`handlers/delete_user.php?id=${userIdToDelete}`, {
                 method: 'DELETE',
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Remove the user row from the table
-                        showSuccessModal('User deleted successfully!');
-                        setTimeout(() => {
-                            closeSuccessModal();
-                            location.reload(); // Reloads the current page
-                        }, 3000); // 3000 milliseconds = 3 seconds
-                    } else {
-                        // Show error message
-                        showError(data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting user:', error);
-                    showError('Error deleting user.');
-                });
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    showSuccessModal('User deleted successfully!');
+                    setTimeout(() => {
+                        closeSuccessModal();
+                        location.reload(); // Reloads the current page
+                    }, 3000); // 3000 milliseconds = 3 seconds
+                } else {
+                    // Show error message
+                    showError(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting user:', error);
+                showError('Error deleting user.');
+            });
+
+            // Close the confirmation modal after confirming
+            closeDeleteModal();
         }
+
+        function closeDeleteModal() {
+            document.getElementById('confirmDeleteModal').classList.add('hidden');
+}
+
 
         // Close modal
         function closeModal() {

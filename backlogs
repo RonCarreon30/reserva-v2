@@ -14,8 +14,6 @@ reservations-student
 reservations-deptHead
 -export (Student)Reservations(table)
 
-dataSetup.php
--create whole Page or just put data management for AY&SEM, Building, and Dept. into existing pages
 
 loads-deptHead.php(new room_loads.php)
 room_loads(Chair)

@@ -187,7 +187,7 @@ $user_data = $user_result->fetch_assoc();
                                         <h2 class="text-lg font-bold">Total Rooms</h2>
                                         <?php
                                             // Fetch count of total facilities
-                                            $room_count_sql = "SELECT COUNT(*) AS count FROM rooms";
+                                            $room_count_sql = "SELECT COUNT(*) AS count FROM rooms_tbl";
                                             $room_count_result = $conn->query($room_count_sql);
 
                                             if ($room_count_result) {

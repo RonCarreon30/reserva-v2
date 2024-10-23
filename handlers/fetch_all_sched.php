@@ -22,39 +22,53 @@ $buildingId = isset($_GET['buildingId']) ? $_GET['buildingId'] : null; // New pa
 // Start the base query
 $query = "
     SELECT 
-        s.days, 
-        s.start_time, 
-        s.end_time, 
-        s.subject_code,
-        s.section,          /* Column for section */
-        s.instructor        /* Column for instructor */
-    FROM assigned_rooms_tbl ar
-    JOIN schedules_tbl s ON ar.schedule_id = s.schedule_id 
-    JOIN rooms_tbl r ON ar.room_id = r.room_id
-    WHERE ar.room_id = ? 
-    AND s.schedule_status = 'Scheduled'
-";
+        schedules.*, 
+        room_assignments_tbl.assignment_id, 
+        rooms_tbl.room_number, 
+        rooms_tbl.room_type, 
+        rooms_tbl.building_id, 
+        buildings_tbl.building_name, 
+        buildings_tbl.building_desc
+    FROM schedules
+    LEFT JOIN room_assignments_tbl ON schedules.schedule_id = room_assignments_tbl.schedule_id
+    LEFT JOIN rooms_tbl ON room_assignments_tbl.room_id = rooms_tbl.room_id
+    LEFT JOIN buildings_tbl ON rooms_tbl.building_id = buildings_tbl.building_id
+    WHERE 1=1
+"; // Added 'WHERE 1=1' for easier appending of conditions
 
 // Add conditions based on the received parameters
 $params = [];
-$types = "i"; // For room_id, which is an integer
-$params[] = $roomId;
+$types = "";
 
+// Only add roomId to query if it's not null
+if ($roomId) {
+    $query .= " AND rooms_tbl.room_id = ?";
+    $params[] = $roomId;
+    $types .= "i"; // Assuming room_id is an integer
+}
+
+// Add ayId condition
 if ($ayId) {
-    $query .= " AND s.term_id = ?"; // Adjust the column name based on your actual DB schema
+    $query .= " AND schedules.ay_semester = ?";
     $params[] = $ayId;
     $types .= "i"; // Assuming academic_year_id is an integer
 }
 
+// Add buildingId condition
 if ($buildingId) {
-    $query .= " AND r.building_id = ?"; // Adjust the column name based on your actual DB schema
+    $query .= " AND rooms_tbl.building_id = ?";
     $params[] = $buildingId;
     $types .= "i"; // Assuming building_id is an integer
 }
 
 // Prepare and execute the query
 $stmt = $conn->prepare($query);
-$stmt->bind_param($types, ...$params);
+
+// Only bind params if there are any
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+
 $stmt->execute();
 $result = $stmt->get_result();
 
