@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg
+PUBLIC "-//W3C//DTD SVG 1.1//EN"
+       "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg viewBox="37 -15 1267 724" width="1230px" height="739px" xmlns="http://www.w3.org/2000/svg" version="1.1">
+   <line x1="211" y1="373" x2="221" y2="373" style="stroke:#bbb;stroke-width:1;"/>
+   <line x1="293" y1="617" x2="303" y2="617" style="stroke:#bbb;stroke-width:1;"/>
+   <line x1="221" y1="373" x2="293" y2="617" style="stroke:#bbb;stroke-width:1;"/>
+   <line x1="218.5" y1="373" x2="214.96446609407" y2="376.53553390593" style="stroke:#bbb;stroke-width:2;"/>
+   <line x1="218.5" y1="373" x2="214.96446609407" y2="369.46446609407" style="stroke:#bbb;stroke-width:2;"/>
+   <line x1="298" y1="617" x2="294.46446609407" y2="620.53553390593" style="stroke:#bbb;stroke-width:2;"/>
+   <line x1="298" y1="617" x2="294.46446609407" y2="613.46446609407" style="stroke:#bbb;stroke-width:2;"/>
+   <line x1="1115" y1="50" x2="1105" y2="50" style="stroke:#333;stroke-width:1;"/>
+   <line x1="222" y1="52" x2="212" y2="52" style="stroke:#333;stroke-width:1;"/>
+   <line x1="1105" y1="50" x2="222" y2="52" style="stroke:#333;stroke-width:1;"/>
+   <line x1="1107.5" y1="50" x2="1111.0355339059" y2="53.535533905933" style="stroke:#333;stroke-width:2;"/>
+   <line x1="1107.5" y1="50" x2="1111.0355339059" y2="46.464466094067" style="stroke:#333;stroke-width:2;"/>
+   <line x1="217" y1="52" x2="220.53553390593" y2="55.535533905933" style="stroke:#333;stroke-width:2;"/>
+   <line x1="217" y1="52" x2="220.53553390593" y2="48.464466094067" style="stroke:#333;stroke-width:2;"/>
+   <line x1="1115" y1="90" x2="1105" y2="90" style="stroke:#bbb;stroke-width:1;"/>
+   <line x1="1121" y1="466" x2="1131" y2="466" style="stroke:#bbb;stroke-width:1;"/>
+   <line x1="1105" y1="90" x2="1121" y2="466" style="stroke:#bbb;stroke-width:1;"/>
+   <line x1="1107.5" y1="90" x2="1111.0355339059" y2="93.535533905933" style="stroke:#bbb;stroke-width:2;"/>
+   <line x1="1107.5" y1="90" x2="1111.0355339059" y2="86.464466094067" style="stroke:#bbb;stroke-width:2;"/>
+   <line x1="1126" y1="466" x2="1122.4644660941" y2="469.53553390593" style="stroke:#bbb;stroke-width:2;"/>
+   <line x1="1126" y1="466" x2="1122.4644660941" y2="462.46446609407" style="stroke:#bbb;stroke-width:2;"/>
+   <line x1="740" y1="619" x2="730" y2="619" style="stroke:#cb0;stroke-width:1;"/>
+   <line x1="472" y1="617" x2="462" y2="617" style="stroke:#cb0;stroke-width:1;"/>
+   <line x1="730" y1="619" x2="472" y2="617" style="stroke:#cb0;stroke-width:1;"/>
+   <line x1="732.5" y1="619" x2="736.03553390593" y2="622.53553390593" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="732.5" y1="619" x2="736.03553390593" y2="615.46446609407" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="467" y1="617" x2="470.53553390593" y2="620.53553390593" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="467" y1="617" x2="470.53553390593" y2="613.46446609407" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="786" y1="270" x2="776" y2="270" style="stroke:#c00;stroke-width:1;"/>
+   <line x1="730" y1="599" x2="740" y2="599" style="stroke:#c00;stroke-width:1;"/>
+   <line x1="776" y1="270" x2="730" y2="599" style="stroke:#c00;stroke-width:1;"/>
+   <line x1="778.5" y1="270" x2="782.03553390593" y2="273.53553390593" style="stroke:#c00;stroke-width:2;"/>
+   <line x1="778.5" y1="270" x2="782.03553390593" y2="266.46446609407" style="stroke:#c00;stroke-width:2;"/>
+   <line x1="735" y1="599" x2="731.46446609407" y2="602.53553390593" style="stroke:#c00;stroke-width:2;"/>
+   <line x1="735" y1="599" x2="731.46446609407" y2="595.46446609407" style="stroke:#c00;stroke-width:2;"/>
+   <line x1="786" y1="290" x2="776" y2="290" style="stroke:#0bf;stroke-width:1;"/>
+   <line x1="514" y1="90" x2="504" y2="90" style="stroke:#0bf;stroke-width:1;"/>
+   <line x1="776" y1="290" x2="514" y2="90" style="stroke:#0bf;stroke-width:1;"/>
+   <line x1="778.5" y1="290" x2="782.03553390593" y2="293.53553390593" style="stroke:#0bf;stroke-width:2;"/>
+   <line x1="778.5" y1="290" x2="782.03553390593" y2="286.46446609407" style="stroke:#0bf;stroke-width:2;"/>
+   <line x1="509" y1="90" x2="512.53553390593" y2="93.535533905933" style="stroke:#0bf;stroke-width:2;"/>
+   <line x1="509" y1="90" x2="512.53553390593" y2="86.464466094067" style="stroke:#0bf;stroke-width:2;"/>
+   <line x1="345" y1="290" x2="335" y2="290" style="stroke:#cb0;stroke-width:1;"/>
+   <line x1="360" y1="466" x2="370" y2="466" style="stroke:#cb0;stroke-width:1;"/>
+   <line x1="335" y1="290" x2="360" y2="466" style="stroke:#cb0;stroke-width:1;"/>
+   <line x1="337.5" y1="290" x2="341.03553390593" y2="293.53553390593" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="337.5" y1="290" x2="341.03553390593" y2="286.46446609407" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="365" y1="466" x2="361.46446609407" y2="469.53553390593" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="365" y1="466" x2="361.46446609407" y2="462.46446609407" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="345" y1="310" x2="335" y2="310" style="stroke:#cb0;stroke-width:1;"/>
+   <line x1="221" y1="333" x2="211" y2="333" style="stroke:#cb0;stroke-width:1;"/>
+   <line x1="335" y1="310" x2="221" y2="333" style="stroke:#cb0;stroke-width:1;"/>
+   <line x1="337.5" y1="310" x2="341.03553390593" y2="313.53553390593" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="337.5" y1="310" x2="341.03553390593" y2="306.46446609407" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="216" y1="333" x2="219.53553390593" y2="336.53553390593" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="216" y1="333" x2="219.53553390593" y2="329.46446609407" style="stroke:#cb0;stroke-width:2;"/>
+   <line x1="345" y1="110" x2="335" y2="110" style="stroke:#0b0;stroke-width:1;"/>
+   <line x1="222" y1="52" x2="212" y2="52" style="stroke:#0b0;stroke-width:1;"/>
+   <line x1="335" y1="110" x2="222" y2="52" style="stroke:#0b0;stroke-width:1;"/>
+   <line x1="337.5" y1="110" x2="341.03553390593" y2="113.53553390593" style="stroke:#0b0;stroke-width:2;"/>
+   <line x1="337.5" y1="110" x2="341.03553390593" y2="106.46446609407" style="stroke:#0b0;stroke-width:2;"/>
+   <line x1="217" y1="52" x2="220.53553390593" y2="55.535533905933" style="stroke:#0b0;stroke-width:2;"/>
+   <line x1="217" y1="52" x2="220.53553390593" y2="48.464466094067" style="stroke:#0b0;stroke-width:2;"/>
+   <line x1="53" y1="132" x2="43" y2="132" style="stroke:#c00;stroke-width:1;"/>
+   <line x1="42" y1="333" x2="52" y2="333" style="stroke:#c00;stroke-width:1;"/>
+   <line x1="43" y1="132" x2="42" y2="333" style="stroke:#c00;stroke-width:1;"/>
+   <line x1="45.5" y1="132" x2="49.035533905933" y2="135.53553390593" style="stroke:#c00;stroke-width:2;"/>
+   <line x1="45.5" y1="132" x2="49.035533905933" y2="128.46446609407" style="stroke:#c00;stroke-width:2;"/>
+   <line x1="47" y1="333" x2="43.464466094067" y2="336.53553390593" style="stroke:#c00;stroke-width:2;"/>
+   <line x1="47" y1="333" x2="43.464466094067" y2="329.46446609407" style="stroke:#c00;stroke-width:2;"/>
+   <rect width="159" height="20" x="303" y="587" style="fill:#007;stroke:black;"/>
+   <text width="159" height="20" x="308" y="601" style="fill:#fff;" font-family="Arial" font-size="16px"> buildings_tbl</text>
+   <rect width="159" height="20" x="303" y="607" style="fill:#aea;stroke:black;"/>
+   <text width="159" height="20" x="308" y="621" style="fill:black;" font-family="Arial" font-size="16px">building_id</text>
+   <rect width="159" height="20" x="303" y="627" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="308" y="641" style="fill:black;" font-family="Arial" font-size="16px">building_name</text>
+   <rect width="159" height="20" x="303" y="647" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="308" y="661" style="fill:black;" font-family="Arial" font-size="16px">building_desc</text>
+   <rect width="159" height="20" x="303" y="667" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="308" y="681" style="fill:black;" font-family="Arial" font-size="16px">created_at</text>
+   <rect width="159" height="20" x="52" y="303" style="fill:#007;stroke:black;"/>
+   <text width="159" height="20" x="57" y="317" style="fill:#fff;" font-family="Arial" font-size="16px"> dept_tbl</text>
+   <rect width="159" height="20" x="52" y="323" style="fill:#aea;stroke:black;"/>
+   <text width="159" height="20" x="57" y="337" style="fill:black;" font-family="Arial" font-size="16px">dept_id</text>
+   <rect width="159" height="20" x="52" y="343" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="57" y="357" style="fill:black;" font-family="Arial" font-size="16px">dept_name</text>
+   <rect width="159" height="20" x="52" y="363" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="57" y="377" style="fill:black;" font-family="Arial" font-size="16px">building_id</text>
+   <rect width="159" height="20" x="1131" y="436" style="fill:#007;stroke:black;"/>
+   <text width="159" height="20" x="1136" y="450" style="fill:#fff;" font-family="Arial" font-size="16px"> facilities</text>
+   <rect width="159" height="20" x="1131" y="456" style="fill:#aea;stroke:black;"/>
+   <text width="159" height="20" x="1136" y="470" style="fill:black;" font-family="Arial" font-size="16px">id</text>
+   <rect width="159" height="20" x="1131" y="476" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1136" y="490" style="fill:black;" font-family="Arial" font-size="16px">facility_name</text>
+   <rect width="159" height="20" x="1131" y="496" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1136" y="510" style="fill:black;" font-family="Arial" font-size="16px">building</text>
+   <rect width="159" height="20" x="1131" y="516" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1136" y="530" style="fill:black;" font-family="Arial" font-size="16px">status</text>
+   <rect width="159" height="20" x="1131" y="536" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1136" y="550" style="fill:black;" font-family="Arial" font-size="16px">descri</text>
+   <rect width="159" height="20" x="1115" y="0" style="fill:#007;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="14" style="fill:#fff;" font-family="Arial" font-size="16px"> reservations</text>
+   <rect width="159" height="20" x="1115" y="20" style="fill:#aea;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="34" style="fill:black;" font-family="Arial" font-size="16px">id</text>
+   <rect width="159" height="20" x="1115" y="40" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="54" style="fill:black;" font-family="Arial" font-size="16px">user_id</text>
+   <rect width="159" height="20" x="1115" y="60" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="74" style="fill:black;" font-family="Arial" font-size="16px">user_department</text>
+   <rect width="159" height="20" x="1115" y="80" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="94" style="fill:black;" font-family="Arial" font-size="16px">facility_id</text>
+   <rect width="159" height="20" x="1115" y="100" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="114" style="fill:black;" font-family="Arial" font-size="16px">facility_name</text>
+   <rect width="159" height="20" x="1115" y="120" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="134" style="fill:black;" font-family="Arial" font-size="16px">start_date</text>
+   <rect width="159" height="20" x="1115" y="140" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="154" style="fill:black;" font-family="Arial" font-size="16px">end_date</text>
+   <rect width="159" height="20" x="1115" y="160" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="174" style="fill:black;" font-family="Arial" font-size="16px">reservation_date</text>
+   <rect width="159" height="20" x="1115" y="180" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="194" style="fill:black;" font-family="Arial" font-size="16px">start_time</text>
+   <rect width="159" height="20" x="1115" y="200" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="214" style="fill:black;" font-family="Arial" font-size="16px">end_time</text>
+   <rect width="159" height="20" x="1115" y="220" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="234" style="fill:black;" font-family="Arial" font-size="16px">additional_info</text>
+   <rect width="159" height="20" x="1115" y="240" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="254" style="fill:black;" font-family="Arial" font-size="16px">facultyInCharge</text>
+   <rect width="159" height="20" x="1115" y="260" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="274" style="fill:black;" font-family="Arial" font-size="16px">purpose</text>
+   <rect width="159" height="20" x="1115" y="280" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="294" style="fill:black;" font-family="Arial" font-size="16px">reservation_status</text>
+   <rect width="159" height="20" x="1115" y="300" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="314" style="fill:black;" font-family="Arial" font-size="16px">rejection_reason</text>
+   <rect width="159" height="20" x="1115" y="320" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="1120" y="334" style="fill:black;" font-family="Arial" font-size="16px">created_at</text>
+   <rect width="159" height="20" x="740" y="569" style="fill:#007;stroke:black;"/>
+   <text width="159" height="20" x="745" y="583" style="fill:#fff;" font-family="Arial" font-size="16px"> rooms_tbl</text>
+   <rect width="159" height="20" x="740" y="589" style="fill:#aea;stroke:black;"/>
+   <text width="159" height="20" x="745" y="603" style="fill:black;" font-family="Arial" font-size="16px">room_id</text>
+   <rect width="159" height="20" x="740" y="609" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="745" y="623" style="fill:black;" font-family="Arial" font-size="16px">building_id</text>
+   <rect width="159" height="20" x="740" y="629" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="745" y="643" style="fill:black;" font-family="Arial" font-size="16px">room_number</text>
+   <rect width="159" height="20" x="740" y="649" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="745" y="663" style="fill:black;" font-family="Arial" font-size="16px">room_type</text>
+   <rect width="159" height="20" x="740" y="669" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="745" y="683" style="fill:black;" font-family="Arial" font-size="16px">room_status</text>
+   <rect width="159" height="20" x="740" y="689" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="745" y="703" style="fill:black;" font-family="Arial" font-size="16px">created_at</text>
+   <rect width="159" height="20" x="786" y="220" style="fill:#007;stroke:black;"/>
+   <text width="159" height="20" x="791" y="234" style="fill:#fff;" font-family="Arial" font-size="16px"> room_assignments_tbl</text>
+   <rect width="159" height="20" x="786" y="240" style="fill:#aea;stroke:black;"/>
+   <text width="159" height="20" x="791" y="254" style="fill:black;" font-family="Arial" font-size="16px">assignment_id</text>
+   <rect width="159" height="20" x="786" y="260" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="791" y="274" style="fill:black;" font-family="Arial" font-size="16px">room_id</text>
+   <rect width="159" height="20" x="786" y="280" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="791" y="294" style="fill:black;" font-family="Arial" font-size="16px">schedule_id</text>
+   <rect width="159" height="20" x="786" y="300" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="791" y="314" style="fill:black;" font-family="Arial" font-size="16px">assigned_date</text>
+   <rect width="159" height="20" x="345" y="60" style="fill:#007;stroke:black;"/>
+   <text width="159" height="20" x="350" y="74" style="fill:#fff;" font-family="Arial" font-size="16px"> schedules</text>
+   <rect width="159" height="20" x="345" y="80" style="fill:#aea;stroke:black;"/>
+   <text width="159" height="20" x="350" y="94" style="fill:black;" font-family="Arial" font-size="16px">schedule_id</text>
+   <rect width="159" height="20" x="345" y="100" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="114" style="fill:black;" font-family="Arial" font-size="16px">user_id</text>
+   <rect width="159" height="20" x="345" y="120" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="134" style="fill:black;" font-family="Arial" font-size="16px">subject_code</text>
+   <rect width="159" height="20" x="345" y="140" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="154" style="fill:black;" font-family="Arial" font-size="16px">subject</text>
+   <rect width="159" height="20" x="345" y="160" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="174" style="fill:black;" font-family="Arial" font-size="16px">section</text>
+   <rect width="159" height="20" x="345" y="180" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="194" style="fill:black;" font-family="Arial" font-size="16px">instructor</text>
+   <rect width="159" height="20" x="345" y="200" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="214" style="fill:black;" font-family="Arial" font-size="16px">start_time</text>
+   <rect width="159" height="20" x="345" y="220" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="234" style="fill:black;" font-family="Arial" font-size="16px">end_time</text>
+   <rect width="159" height="20" x="345" y="240" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="254" style="fill:black;" font-family="Arial" font-size="16px">days</text>
+   <rect width="159" height="20" x="345" y="260" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="274" style="fill:black;" font-family="Arial" font-size="16px">class_type</text>
+   <rect width="159" height="20" x="345" y="280" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="294" style="fill:black;" font-family="Arial" font-size="16px">ay_semester</text>
+   <rect width="159" height="20" x="345" y="300" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="314" style="fill:black;" font-family="Arial" font-size="16px">department_id</text>
+   <rect width="159" height="20" x="345" y="320" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="334" style="fill:black;" font-family="Arial" font-size="16px">sched_status</text>
+   <rect width="159" height="20" x="345" y="340" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="354" style="fill:black;" font-family="Arial" font-size="16px">created_at</text>
+   <rect width="159" height="20" x="345" y="360" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="350" y="374" style="fill:black;" font-family="Arial" font-size="16px">updated_at</text>
+   <rect width="159" height="20" x="370" y="436" style="fill:#007;stroke:black;"/>
+   <text width="159" height="20" x="375" y="450" style="fill:#fff;" font-family="Arial" font-size="16px"> terms_tbl</text>
+   <rect width="159" height="20" x="370" y="456" style="fill:#aea;stroke:black;"/>
+   <text width="159" height="20" x="375" y="470" style="fill:black;" font-family="Arial" font-size="16px">term_id</text>
+   <rect width="159" height="20" x="370" y="476" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="375" y="490" style="fill:black;" font-family="Arial" font-size="16px">academic_year</text>
+   <rect width="159" height="20" x="370" y="496" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="375" y="510" style="fill:black;" font-family="Arial" font-size="16px">semester</text>
+   <rect width="159" height="20" x="370" y="516" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="375" y="530" style="fill:black;" font-family="Arial" font-size="16px">term_status</text>
+   <rect width="159" height="20" x="53" y="22" style="fill:#007;stroke:black;"/>
+   <text width="159" height="20" x="58" y="36" style="fill:#fff;" font-family="Arial" font-size="16px"> users</text>
+   <rect width="159" height="20" x="53" y="42" style="fill:#aea;stroke:black;"/>
+   <text width="159" height="20" x="58" y="56" style="fill:black;" font-family="Arial" font-size="16px">id</text>
+   <rect width="159" height="20" x="53" y="62" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="58" y="76" style="fill:black;" font-family="Arial" font-size="16px">first_name</text>
+   <rect width="159" height="20" x="53" y="82" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="58" y="96" style="fill:black;" font-family="Arial" font-size="16px">last_name</text>
+   <rect width="159" height="20" x="53" y="102" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="58" y="116" style="fill:black;" font-family="Arial" font-size="16px">email</text>
+   <rect width="159" height="20" x="53" y="122" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="58" y="136" style="fill:black;" font-family="Arial" font-size="16px">department_id</text>
+   <rect width="159" height="20" x="53" y="142" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="58" y="156" style="fill:black;" font-family="Arial" font-size="16px">id_number</text>
+   <rect width="159" height="20" x="53" y="162" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="58" y="176" style="fill:black;" font-family="Arial" font-size="16px">userRole</text>
+   <rect width="159" height="20" x="53" y="182" style="fill:none;stroke:black;"/>
+   <text width="159" height="20" x="58" y="196" style="fill:black;" font-family="Arial" font-size="16px">userPassword</text>
+</svg>

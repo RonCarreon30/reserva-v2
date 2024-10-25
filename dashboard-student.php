@@ -27,14 +27,8 @@
     $my_reservation_result = $conn->query($my_reservation_sql);
 
 
-    // Fetch user's department from the database
-    $user_department = '';
-    $user_department_sql = "SELECT department FROM users WHERE id = $user_id";
-    $user_department_result = $conn->query($user_department_sql);
-    if ($user_department_result->num_rows > 0) {
-        $row = $user_department_result->fetch_assoc();
-        $user_department = $row['department'];
-    }
+    // Fetch user's department from session
+    $user_department = $_SESSION['department']
     ?>
 
 <!DOCTYPE html>
@@ -84,15 +78,46 @@
                     showEventDetails(info.event); // Function to handle showing event details
                 },
                 events: function(fetchInfo, successCallback, failureCallback) {
-                    fetch('handlers/fetch_events.php')
+                    // Fetch facility reservations
+                    const facilityReservations = fetch('handlers/fetch_events.php')
+                        .then(response => response.json())
+                        .catch(error => {
+                            console.error('Error fetching facility reservations:', error);
+                            failureCallback(error); // Handle error fetching reservations
+                        });
+
+                    // Fetch holidays from Google Calendar API
+                    const holidays = fetch('https://www.googleapis.com/calendar/v3/calendars/en.philippines%23holiday%40group.v.calendar.google.com/events?key=AIzaSyCB7rRha3zbgSYH1aD5SECsRvQ3usacZHU')
                         .then(response => response.json())
                         .then(data => {
-                            console.log(data); // Add this to inspect the fetched data
-                            successCallback(data);
+                            // Format the holiday events to fit FullCalendar format
+                            return data.items.map(holiday => ({
+                                title: holiday.summary,
+                                start: holiday.start.date, // Use holiday date (all-day event)
+                                color: '#ff0000', // Optional: set a color for holidays
+                                allDay: true,
+                                extendedProps: {
+                                    isHoliday: true // Add a flag to identify holidays
+                                }
+                            }));
                         })
                         .catch(error => {
-                            console.error('Error fetching events:', error);
-                            failureCallback(error);
+                            console.error('Error fetching holidays:', error);
+                            failureCallback(error); // Handle error fetching holidays
+                        });
+
+                    // Combine both promises (facility reservations and holidays)
+                    Promise.all([facilityReservations, holidays])
+                        .then(results => {
+                            const facilityEvents = results[0]; // Facility reservations
+                            const holidayEvents = results[1];  // Holiday events
+                            // Combine both event arrays
+                            const allEvents = facilityEvents.concat(holidayEvents);
+                            successCallback(allEvents); // Pass combined events to FullCalendar
+                        })
+                        .catch(error => {
+                            console.error('Error combining events:', error);
+                            failureCallback(error); // Handle any error in the process
                         });
                 },
 

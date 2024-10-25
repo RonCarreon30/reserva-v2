@@ -19,20 +19,9 @@ if ($_SESSION['role'] !== 'Dept. Head') {
 // Fetch reservations from the database for the current user
 require_once 'database/config.php';
 
-// Fetch the user ID from the session data
+// Fetch the user ID and dept from the session data
 $user_id = $_SESSION['user_id'];
-
-// Fetch user's department from the database
-$head_department = '';
-$head_department_sql = "SELECT department FROM users WHERE id = ?";
-$stmt = $conn->prepare($head_department_sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-if ($result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    $head_department = $row['department'];
-}
+$head_department = $_SESSION['department'];
 
 // Query to fetch reservations of the student rep of same department
 $dept_reservation_sql = "SELECT * FROM reservations WHERE user_department = ? ORDER BY created_at DESC";
@@ -101,6 +90,56 @@ $dept_reservation_result = $stmt->get_result();
                             failureCallback(error);
                         });
                 },
+                                events: function(fetchInfo, successCallback, failureCallback) {
+                    // Fetch facility reservations
+                    const facilityReservations = fetch('handlers/fetch_events.php')
+                        .then(response => response.json())
+                        .catch(error => {
+                            console.error('Error fetching facility reservations:', error);
+                            failureCallback(error); // Handle error fetching reservations
+                        });
+
+                    // Fetch holidays from Google Calendar API
+                    const holidays = fetch('https://www.googleapis.com/calendar/v3/calendars/en.philippines%23holiday%40group.v.calendar.google.com/events?key=AIzaSyCB7rRha3zbgSYH1aD5SECsRvQ3usacZHU')
+                        .then(response => response.json())
+                        .then(data => {
+                            // Format the holiday events to fit FullCalendar format
+                            return data.items.map(holiday => ({
+                                title: holiday.summary,
+                                start: holiday.start.date, // Use holiday date (all-day event)
+                                color: '#ff0000', // Optional: set a color for holidays
+                                allDay: true,
+                                extendedProps: {
+                                    isHoliday: true // Add a flag to identify holidays
+                                }
+                            }));
+                        })
+                        .catch(error => {
+                            console.error('Error fetching holidays:', error);
+                            failureCallback(error); // Handle error fetching holidays
+                        });
+
+                    // Combine both promises (facility reservations and holidays)
+                    Promise.all([facilityReservations, holidays])
+                        .then(results => {
+                            const facilityEvents = results[0]; // Facility reservations
+                            const holidayEvents = results[1];  // Holiday events
+                            // Combine both event arrays
+                            const allEvents = facilityEvents.concat(holidayEvents);
+                            successCallback(allEvents); // Pass combined events to FullCalendar
+                        })
+                        .catch(error => {
+                            console.error('Error combining events:', error);
+                            failureCallback(error); // Handle any error in the process
+                        });
+                },
+                        datesSet: function(info) {
+                    // Modify the calendar title by adding 'Reservations' to the month
+                    const calendarTitle = document.querySelector('.fc-toolbar-title');
+                    if (calendarTitle) {
+                        calendarTitle.textContent = info.view.title + ' | Events & Reservations';
+                    }
+                }
 
 
             });

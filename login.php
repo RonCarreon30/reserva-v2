@@ -11,18 +11,9 @@
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'];
 
-    $servername = "localhost";
-    $username = "root";
-    $db_password = ""; // The database password
-    $dbname = "reservadb";
+    include 'database/config.php';
 
-    $conn = new mysqli($servername, $username, $db_password, $dbname);
-
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-
-    $stmt = $conn->prepare("SELECT id, email, userPassword, userRole, department FROM users WHERE email = ?");
+    $stmt = $conn->prepare("SELECT users.*, dept_tbl.* FROM users LEFT JOIN dept_tbl ON users.department_id = dept_tbl.dept_id  WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -33,7 +24,7 @@
             // Login successful
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['role'] = $user['userRole'];
-            $_SESSION['department'] = $user['department']; // Store department in session
+            $_SESSION['department'] = $user['dept_name']; // Store department in session
             
             // Debugging: Output department information            
             switch ($user['userRole']) {

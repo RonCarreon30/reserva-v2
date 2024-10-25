@@ -3,7 +3,11 @@ include '../database/config.php'; // Assuming you have a DB connection file
 
 $room_id = $_GET['id']; // Assuming reservation ID is passed via GET
 
-$query = "SELECT * FROM rooms WHERE room_id = ?";
+$query = "SELECT r.room_id, r.room_name, r.room_type, r.room_status, r.created_at, r.building_id, b.building_name
+          FROM rooms_tbl r
+          JOIN buildings_tbl b ON r.building_id = b.building_id
+          WHERE r.room_id = ?";
+
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $room_id);
 $stmt->execute();

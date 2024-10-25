@@ -1,38 +1,38 @@
     <?php
-    // Start the session
-    session_start();
+        // Start the session
+        session_start();
 
-    // Check if the user is logged in
-    if (!isset($_SESSION['user_id'])) {
-        // Redirect to the login page
-        header("Location: index.html");
-        exit();
-    }
-
-    // Check if the user has the required role
-    if ($_SESSION['role'] !== 'Dept. Head') {
-        // Redirect to a page indicating unauthorized access
-        header("Location: index.html");
-        exit();
-    }
-
-    require_once 'database/config.php';
-
-        function convertTo12HourFormat($time) {
-            $timestamp = strtotime($time);
-            return date('h:i A', $timestamp);
+        // Check if the user is logged in
+        if (!isset($_SESSION['user_id'])) {
+            // Redirect to the login page
+            header("Location: index.html");
+            exit();
         }
-    // Fetch schedules from schedules_tbl
-    $query = "SELECT * FROM schedules_tbl";
-    $result = mysqli_query($conn, $query);
 
-    // Fetch buildings for the dropdown
-    $buildings_sql = "SELECT DISTINCT building FROM rooms";
-    $buildings_result = $conn->query($buildings_sql);
+        // Check if the user has the required role
+        if ($_SESSION['role'] !== 'Dept. Head') {
+            // Redirect to a page indicating unauthorized access
+            header("Location: index.html");
+            exit();
+        }
 
-    // Fetch all rooms
-    $get_rooms_sql = "SELECT * FROM rooms WHERE room_status = 'Available'ORDER BY building";
-    $get_rooms_result = $conn->query($get_rooms_sql);
+        require_once 'database/config.php';
+
+            function convertTo12HourFormat($time) {
+                $timestamp = strtotime($time);
+                return date('h:i A', $timestamp);
+            }
+        // Fetch schedules from schedules_tbl
+        $query = "SELECT * FROM schedules_tbl";
+        $result = mysqli_query($conn, $query);
+
+        // Fetch buildings for the dropdown
+        $buildings_sql = "SELECT DISTINCT building FROM rooms";
+        $buildings_result = $conn->query($buildings_sql);
+
+        // Fetch all rooms
+        $get_rooms_sql = "SELECT * FROM rooms WHERE room_status = 'Available'ORDER BY building";
+        $get_rooms_result = $conn->query($get_rooms_sql);
     ?>
     <!DOCTYPE html>
     <html lang="en">
@@ -174,7 +174,6 @@
                 <header class="bg-white shadow-lg">
                     <div class="flex items-center justify-between px-6 py-3 border-b">
                         <h2 class="text-lg font-semibold">Room Schedules</h2>
-
                     </div>
                 </header>
 

@@ -1,0 +1,69 @@
+maybe you can use that to check for Available rooms like this
+
+step 1: retrieve 'pending' schedules uploaded by the user also make sure you retrieve the dept_tbl data base on the department_id column by using join(?).
+step 2: get rooms that match schedules.class_type with rooms_tbl.room_type and dept_tbl.building_id with rooms_tbl.building_id.
+step 2: get room_assignments_tbl extract room data using rooms_id and schedules data using schedule_id (use join?)
+step 3: check if the rooms(from result of step2) has an assignment. if none, assign the pending schedule there. if there is an assignment then check if that overlaps with pending schedule, if no overlap assign it there, if it overlaps look for other rooms.
+step 4: if absolutely no rooms(from step 2) fit then fetch new rooms but this time only the schedules.class_type with rooms_tbl.room_type should match and dept_tbl.building_id with rooms_tbl.building_id should not match.
+step 5 check if the rooms(from result of step 4) has an assignment. if none, assign the pending schedule there. if there is an assignment, then check if that overlaps with pending schedule. if no overlap assign it there, if it overlaps look for other rooms.
+step 6 when all pending schedules(from step 1) has an assignment then it is now done and return the success message along with the room assignments of the pending schedules
+
+
+To help you out, these are the tables:
+TABLE `schedules` (
+  `schedule_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `subject_code` varchar(50) NOT NULL,
+  `subject` varchar(255) NOT NULL,
+  `section` varchar(50) NOT NULL,
+  `instructor` varchar(255) NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `days` varchar(50) NOT NULL,
+  `class_type` enum('Lecture','Laboratory') NOT NULL,
+  `ay_semester` int(11) NOT NULL,
+  `department_id` int(11) NOT NULL,
+  `sched_status` enum('pending','approved','rejected') DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+TABLE `schedules`
+  ADD CONSTRAINT `fk_ay_semester` FOREIGN KEY (`ay_semester`) REFERENCES `terms_tbl` (`term_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_department_id` FOREIGN KEY (`department_id`) REFERENCES `dept_tbl` (`dept_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+TABLE `rooms_tbl` (
+  `room_id` int(11) NOT NULL,
+  `building_id` int(11) DEFAULT NULL,
+  `room_number` varchar(50) NOT NULL,
+  `room_type` enum('Lecture','Laboratory') NOT NULL,
+  `room_status` enum('Available','Unavailable') NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+TABLE `rooms_tbl`
+  ADD CONSTRAINT `rooms_tbl_ibfk_1` FOREIGN KEY (`building_id`) REFERENCES `buildings_tbl` (`building_id`) ON DELETE CASCADE;
+
+
+TABLE `room_assignments_tbl` (
+  `assignment_id` int(11) NOT NULL,
+  `room_id` int(11) NOT NULL,
+  `schedule_id` int(11) NOT NULL,
+  `assigned_date` timestamp NOT NULL DEFAULT current_timestamp()
+TABLE `room_assignments_tbl`
+  ADD CONSTRAINT `room_assignments_tbl_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `rooms_tbl` (`room_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `room_assignments_tbl_ibfk_2` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`schedule_id`) ON DELETE CASCADE;
+
+
+TABLE `dept_tbl` (
+  `dept_id` int(11) NOT NULL,
+  `dept_name` varchar(100) NOT NULL,
+  `building_id` int(11) NOT NULL
+TABLE `dept_tbl`
+  ADD CONSTRAINT `fk_building` FOREIGN KEY (`building_id`) REFERENCES `buildings_tbl` (`building_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+
+TABLE `buildings_tbl` (
+  `building_id` int(11) NOT NULL,
+  `building_name` varchar(100) NOT NULL,
+  `building_desc` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+TABLE `buildings_tbl`
+  MODIFY `building_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;

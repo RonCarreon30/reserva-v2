@@ -1,5 +1,4 @@
-accManagement
--success params change
+URL Should not show filenames and extensions(htaccess?)
 
 accManagement
 -Send credentials to newly added user
@@ -15,8 +14,8 @@ reservations-student
 reservations-deptHead
 -export (Student)Reservations(table)
 
-room_loads(Chair)
--Fix exported table
+room_select
+-separate the conflicted schedules and non-conflicted on table
 
 index/login page
 -Forgot Password
@@ -25,4 +24,6 @@ index/login page
 settings page
 -Not yet created
 
-**reservations-student.php has working edit and delete functions***
+**reservations-student.php has working edit and delete functions**
+**facilityReservations.php has "nothingFound"**
+**dashboard-gso.php has holiday events in calendar**

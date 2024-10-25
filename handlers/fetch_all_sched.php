@@ -1,38 +1,64 @@
 <?php
 session_start();
 
-// Connect to the database
-$servername = "localhost";
-$username = "root";
-$db_password = "";
-$dbname = "reservadb";
+// Include database configuration
+require_once '../database/config.php';
 
-$conn = new mysqli($servername, $username, $db_password, $dbname);
+// Get parameters from the query
+$roomId = isset($_GET['roomId']) ? $_GET['roomId'] : null;
+$ayId = isset($_GET['ayId']) ? $_GET['ayId'] : null; // New parameter for academic year
+$buildingId = isset($_GET['buildingId']) ? $_GET['buildingId'] : null; // New parameter for building
 
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Get the room ID from the query parameter
-$roomId = $_GET['roomId'];
-
-// Fetch assigned schedules for the specified room, including instructor and section
+// Start the base query
 $query = "
     SELECT 
-        s.days, 
-        s.start_time, 
-        s.end_time, 
-        s.subject_code,
-        s.section,          /* Column for section */
-        s.instructor        /* Column for instructor */
-    FROM assigned_rooms_tbl ar
-    JOIN schedules_tbl s ON ar.schedule_id = s.schedule_id 
-    WHERE ar.room_id = ? 
-    AND s.schedule_status = 'Scheduled'
-";
+        schedules.*, 
+        room_assignments_tbl.assignment_id, 
+        rooms_tbl.room_number, 
+        rooms_tbl.room_type, 
+        rooms_tbl.building_id, 
+        buildings_tbl.building_name, 
+        buildings_tbl.building_desc
+    FROM schedules
+    LEFT JOIN room_assignments_tbl ON schedules.schedule_id = room_assignments_tbl.schedule_id
+    LEFT JOIN rooms_tbl ON room_assignments_tbl.room_id = rooms_tbl.room_id
+    LEFT JOIN buildings_tbl ON rooms_tbl.building_id = buildings_tbl.building_id
+    WHERE 1=1
+"; // Added 'WHERE 1=1' for easier appending of conditions
+
+// Add conditions based on the received parameters
+$params = [];
+$types = "";
+
+// Only add roomId to query if it's not null
+if ($roomId) {
+    $query .= " AND rooms_tbl.room_id = ?";
+    $params[] = $roomId;
+    $types .= "i"; // Assuming room_id is an integer
+}
+
+// Add ayId condition
+if ($ayId) {
+    $query .= " AND schedules.ay_semester = ?";
+    $params[] = $ayId;
+    $types .= "i"; // Assuming academic_year_id is an integer
+}
+
+// Add buildingId condition
+if ($buildingId) {
+    $query .= " AND rooms_tbl.building_id = ?";
+    $params[] = $buildingId;
+    $types .= "i"; // Assuming building_id is an integer
+}
+
+// Prepare and execute the query
 $stmt = $conn->prepare($query);
-$stmt->bind_param("i", $roomId); // Assuming room_id is an integer
+
+// Only bind params if there are any
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -71,8 +97,13 @@ while ($row = $result->fetch_assoc()) {
                     'title' => $row['subject_code'], // Subject code
                     'start' => $startDateTime,        // Start datetime
                     'end' => $endDateTime,            // End datetime
+                    'days' => $row['days'],
                     'section' => $row['section'],     // Course section
-                    'instructor' => $row['instructor'] // Instructor name
+                    'instructor' => $row['instructor'], // Instructor name
+                    'extendedProps' => [
+                        'room' => $row['room_number'],
+                        'building' => $row['building_name']
+                    ]
                 ];
             }
         }

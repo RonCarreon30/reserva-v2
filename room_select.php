@@ -79,7 +79,7 @@ try {
             </header>
             <main class="flex-1 p-4 overflow-y-auto">
                 <!-- Schedule upload -->
-                <div id="schedule-upload-page" class="">
+                <div id="schedule-upload-page">
                     <!-- File Upload Section -->
                     <div class="flex flex-col mb-4">
                         <div class="flex items-center space-x-4">
@@ -149,11 +149,6 @@ try {
                                 <!-- Modal Header -->
                                 <div class="flex justify-between items-center mb-4">
                                     <h2 class="text-lg font-semibold text-gray-800">Parsed Schedules</h2>
-                                    <button id="cancel-action" class="text-gray-400 hover:text-gray-600">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
-                                    </button>
                                 </div>
 
                                 <!-- Table to Display Uploaded Schedules -->
@@ -189,31 +184,29 @@ try {
                             </div>
                         </div>
                     </div>
-
                 </div>
 
-        <!-- Table for Pending Schedules -->
-        <div class="mt-6">
-            <h3 class="text-lg font-semibold mb-2">Pending Schedules</h3>
-            <div class="overflow-x-auto">
-                <table id="pending-schedules-table" class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Code</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day/s</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pending-schedules-body" class="bg-white divide-y divide-gray-200">
-                        <!-- Rows will be populated here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>             
+                <!-- Table for Pending Schedules -->
+                <div class="mt-6">
+                    <h3 class="text-lg font-semibold mb-2">Pending Schedules</h3>
+                    <div class="overflow-x-auto">
+                        <table id="pending-schedules-table" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Code</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day/s</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pending-schedules-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>            
 
             </main>
         </div>

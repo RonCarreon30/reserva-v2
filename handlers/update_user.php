@@ -10,8 +10,8 @@ $user_id = $decodedData['id'] ?? null; // Use null coalescing to avoid undefined
 $firstName = $decodedData['first_name'] ?? null;
 $lastName = $decodedData['last_name'] ?? null;
 $email = $decodedData['email'] ?? null;
-$contactNumber = $decodedData['contact_number'] ?? null;
-$department = $decodedData['department'] ?? null;
+$idNumber = $decodedData['idNumber'] ?? null;
+$department_id = $decodedData['department'] ?? null;
 $role = $decodedData['role'] ?? null;
 $password = $decodedData['password'] ?? null;
 
@@ -38,17 +38,17 @@ try {
     }
 
     // Update the other user fields only if they are provided
-    if (!empty($firstName) || !empty($lastName) || !empty($email) || !empty($contactNumber) || !empty($department) || !empty($role)) {
+    if (!empty($firstName) || !empty($lastName) || !empty($email) || !empty($idNumber) || !empty($department_id) || !empty($role)) {
         $query = "UPDATE users SET 
                     first_name = IFNULL(NULLIF(?, ''), first_name), 
                     last_name = IFNULL(NULLIF(?, ''), last_name), 
                     email = IFNULL(NULLIF(?, ''), email), 
-                    contact_number = IFNULL(NULLIF(?, ''), contact_number), 
-                    department = IFNULL(NULLIF(?, ''), department), 
+                    id_number = IFNULL(NULLIF(?, ''), id_number), 
+                    department_id = IFNULL(NULLIF(?, ''), department_id), 
                     userRole = IFNULL(NULLIF(?, ''), userRole) 
                   WHERE id = ?";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("ssssssi", $firstName, $lastName, $email, $contactNumber, $department, $role, $user_id);
+        $stmt->bind_param("ssssssi", $firstName, $lastName, $email, $idNumber, $department_id, $role, $user_id);
         $stmt->execute();
 
         // Check for errors

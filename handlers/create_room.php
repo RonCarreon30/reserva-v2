@@ -1,79 +1,74 @@
 <?php
-// create_room.php
+// Start the session
+session_start();
 
-// Validate input data (e.g., ensure required fields are present)
-if (!isset($_POST['roomNumber'], $_POST['building'], $_POST['type'], $_POST['roomStatus'])) {
-    // Handle missing fields
-    echo json_encode(array('success' => false, 'message' => 'Missing required fields.'));
+// Check if the user is logged in and has the required role
+if (!isset($_SESSION['user_id'])) {
+    // Redirect to the login page if not logged in
+    header("Location: index.html");
     exit();
 }
 
-// Sanitize input data to prevent SQL injection and other attacks
-$roomNumber = htmlspecialchars($_POST['roomNumber']);
-$building = htmlspecialchars($_POST['building']);
-$type = htmlspecialchars($_POST['type']);
-$roomStatus = htmlspecialchars($_POST['roomStatus']);
-
-
-// Connect to the database
-require_once "../database/config.php";
-
-// Create connection
-$conn = new mysqli($servername, $username, $db_password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Check if the room already exists in the database
-$checkStmt = $conn->prepare("SELECT COUNT(*) FROM rooms WHERE room_number = ? AND building = ?");
-$checkStmt->bind_param("ss", $roomNumber, $building);
-$checkStmt->execute();
-$checkStmt->bind_result($count);
-$checkStmt->fetch();
-$checkStmt->close();
-
-if ($count > 0) {
-    // Redirect back to the referring page with error parameter
-    $referer = $_SERVER['HTTP_REFERER'];
-    header("Location: $referer?success=false&duplicate=true");
-    // Close database connection
-    $conn->close();
+// Check if the user has the required role
+if (!in_array($_SESSION['role'], ['Registrar', 'Admin'])) {
+    // Redirect to a page indicating unauthorized access
+    header("Location: index.html");
     exit();
 }
 
-// Prepare SQL statement to insert a new facility into the database
-$stmt = $conn->prepare("INSERT INTO rooms (room_number, building, room_type, room_status) VALUES (?, ?, ?, ?)");
-$stmt->bind_param("ssss", $roomNumber, $building, $type, $roomStatus);
+require_once '../database/config.php'; // Include your database configuration file
 
-// Execute SQL statement to insert a new facility
-if ($stmt->execute()) {
-    // Close prepared statement
-    $stmt->close();
+// Initialize variables for storing feedback
+$response = [
+    'status' => 'error',
+    'message' => ''
+];
 
-    // Close database connection
-    $conn->close();
+// Check if the form data is submitted
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get the form data and sanitize it
+    $buildingId = isset($_POST['building']) ? intval($_POST['building']) : 0;
+    $roomName = isset($_POST['roomName']) ? trim($_POST['roomName']) : '';
+    $type = isset($_POST['type']) ? trim($_POST['type']) : '';
+    $roomStatus = isset($_POST['roomStatus']) ? trim($_POST['roomStatus']) : '';
 
-    // Return success message as JSON response
-    echo json_encode(array('success' => true, 'message' => 'Room added successfully.'));
+    // Validate inputs
+    if (empty($buildingId) || empty($roomName) || empty($type) || empty($roomStatus)) {
+        $response['message'] = 'All fields are required.';
+    } else {
+        // Check for duplicate room entries
+        $dup_check_stmt = $conn->prepare("SELECT COUNT(*) FROM rooms_tbl WHERE building_id = ? AND room_name = ?");
+        $dup_check_stmt->bind_param("is", $buildingId, $roomName);
+        $dup_check_stmt->execute();
+        $dup_check_stmt->bind_result($count);
+        $dup_check_stmt->fetch();
+        $dup_check_stmt->close();
 
-    // Redirect back to the referring page with success parameter
-    $referer = $_SERVER['HTTP_REFERER'];
-    header("Location: $referer?success=true");
-    exit();
-} else {
-    // Return error message as JSON response
-    echo json_encode(array('success' => false, 'message' => 'Error adding room.'));
-    // Close prepared statement
-    $stmt->close();
+        if ($count > 0) {
+            $response['message'] = 'This room already exists in the selected building.';
+        } else {
+            // Prepare the SQL statement to insert the new room
+            $stmt = $conn->prepare("INSERT INTO rooms_tbl (building_id, room_name, room_type, room_status) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("isss", $buildingId, $roomName, $type, $roomStatus);
 
-    // Close database connection
-    $conn->close();
+            // Execute the statement
+            if ($stmt->execute()) {
+                $response['status'] = 'success';
+                $response['message'] = 'Room created successfully.';
+            } else {
+                $response['message'] = 'Error creating room: ' . $stmt->error; // Use $stmt->error for more accurate error info
+            }
 
-    // Redirect back to the referring page with error parameter
-    $referer = $_SERVER['HTTP_REFERER'];
-    header("Location: $referer?success=false&error=true");
-    exit();
+            // Close the statement
+            $stmt->close();
+        }
+    }
 }
+
+// Close the database connection
+$conn->close();
+
+// Send a JSON response back to the client
+header('Content-Type: application/json');
+echo json_encode($response);
 ?>
