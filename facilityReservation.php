@@ -5,7 +5,7 @@
     // Check if the user is logged in
     if (!isset($_SESSION['user_id'])) {
         // Redirect to the login page
-        header("Location: index.html");
+        header("Location: unauthorized.php");
         exit();
     }
 
