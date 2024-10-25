@@ -1,18 +1,8 @@
 <?php
 session_start();
 
-// Connect to the database
-$servername = "localhost";
-$username = "root";
-$db_password = "";
-$dbname = "reservadb";
-
-$conn = new mysqli($servername, $username, $db_password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+// Include database configuration
+require_once '../database/config.php';
 
 // Get parameters from the query
 $roomId = isset($_GET['roomId']) ? $_GET['roomId'] : null;
@@ -107,8 +97,13 @@ while ($row = $result->fetch_assoc()) {
                     'title' => $row['subject_code'], // Subject code
                     'start' => $startDateTime,        // Start datetime
                     'end' => $endDateTime,            // End datetime
+                    'days' => $row['days'],
                     'section' => $row['section'],     // Course section
-                    'instructor' => $row['instructor'] // Instructor name
+                    'instructor' => $row['instructor'], // Instructor name
+                    'extendedProps' => [
+                        'room' => $row['room_number'],
+                        'building' => $row['building_name']
+                    ]
                 ];
             }
         }

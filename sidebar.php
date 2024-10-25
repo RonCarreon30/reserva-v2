@@ -20,7 +20,10 @@
                     <i class="fa-solid fa-user"></i>
                 </a>
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dataSetup.php" title="Data Setup">
-                    <i class="fa-solid fa-school"></i>
+                    <i class="fa-solid fa-database"></i>
+                </a>
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="loads-deptHead.php" title="Room Loading">
+                    <i class="fa-solid fa-table"></i>
                 </a>
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="roomManagement.php" title="Room Management">
                     <i class="fa-solid fa-door-open"></i>

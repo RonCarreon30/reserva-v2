@@ -6,7 +6,7 @@ require '../database/config.php';
 $data = json_decode(file_get_contents("php://input"), true);
 
 // Extract the data
-$room_number = $data['room_number'];
+$room_name = $data['room_name'];
 $building_id = $data['building']; // Change to building_id
 $room_type = $data['room_type'];
 $room_status = $data['room_status'];
@@ -14,12 +14,12 @@ $roomId = $data['id']; // ID to identify the room
 
 // Prepare the SQL query to update the room
 $sql = "UPDATE rooms_tbl 
-        SET room_number = ?, building_id = ?, room_type = ?, room_status = ?
+        SET room_name = ?, building_id = ?, room_type = ?, room_status = ?
         WHERE room_id = ?";
 
 // Prepare the statement
 $stmt = $conn->prepare($sql);
-$stmt->bind_param('sssii', $room_number, $building_id, $room_type, $room_status, $roomId);
+$stmt->bind_param('sissi', $room_name, $building_id, $room_type, $room_status, $roomId);
 
 // Execute the query
 if ($stmt->execute()) {

@@ -10,7 +10,7 @@
     }
 
     // Check if the user has the required role
-    if ($_SESSION['role'] !== 'Dept. Head') {
+    if (!in_array($_SESSION['role'], ['Dept. Head', 'Admin',  'Registrar'])) {
         // Redirect to a page indicating unauthorized access
         header("Location: index.html");
         exit();
@@ -51,6 +51,80 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@^2.2.15/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script>
+                document.addEventListener('DOMContentLoaded', function() {
+            // Automatically filter reservations on page load
+            filterSchedules();
+        });
+
+        function filterSchedules() {
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+            const facilityRows = document.querySelectorAll('#eventsTable tbody tr');
+            let hasVisibleRows = false; // Flag to check if any rows are visible
+
+            facilityRows.forEach(row => {
+                const facilityName = row.cells[0].textContent.toLowerCase(); // Facility name in the first column
+                const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status in the fifth column
+                
+                // Determine if the row should be shown based on search and status filters
+                const matchesSearch = facilityName.includes(searchQuery);
+                let matchesStatus = false;
+
+                // Default status filter behavior
+                if (statusFilter === 'all') {
+                    matchesStatus = true; // Show all
+                } else if (statusFilter === 'in review') {
+                    matchesStatus = reservationStatus === 'in review';
+                } else if (statusFilter === 'approved') {
+                    matchesStatus = reservationStatus === 'approved';                    
+                } else if (statusFilter === 'declined') {
+                    matchesStatus = reservationStatus === 'declined';                    
+                } else if (statusFilter === 'expired') {
+                    matchesStatus = reservationStatus === 'expired'; // Show only expired
+                } else {
+                    // Default to showing 'In Review' and 'Reserved' statuses
+                    matchesStatus = (reservationStatus === 'in review' || reservationStatus === 'approved');
+                }
+
+                // Show or hide the row based on matches
+                if (matchesSearch && matchesStatus) {
+                    row.classList.remove('hidden'); // Show row
+                    hasVisibleRows = true; // At least one row is visible
+                } else {
+                    row.classList.add('hidden'); // Hide row
+                }
+            });
+
+            // Show or hide the "no results found" message based on visibility of rows
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            if (!hasVisibleRows) {
+                noResultsMessage.classList.remove('hidden'); // Show the message
+            } else {
+                noResultsMessage.classList.add('hidden'); // Hide the message
+            }
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('eventsTable');
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            const isAscending = table.dataset.sortOrder === 'asc';
+
+            rows.sort((rowA, rowB) => {
+                const cellA = rowA.children[columnIndex].textContent.trim();
+                const cellB = rowB.children[columnIndex].textContent.trim();
+
+                if (isAscending) {
+                    return cellA.localeCompare(cellB);
+                } else {
+                    return cellB.localeCompare(cellA);
+                }
+            });
+
+            table.querySelector('tbody').append(...rows);
+            table.dataset.sortOrder = isAscending ? 'desc' : 'asc';
+        }
+    </script>
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen bg-gray-100">
@@ -67,7 +141,7 @@
             </header>
             <main class="flex-1 p-4 overflow-y-auto">
                 <div class="flex items-center space-x-4 justify-between">
-                    <div class="space-x-12">
+                    <div class="space-x-4">
                         <button onclick="window.location.href='loads-deptHead.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out" title="View Room Loads">
                             <i class="fa-solid fa-calendar-check"></i>
                         </button>
@@ -82,10 +156,21 @@
                 <!-- Table for Schedules -->
                 <div class="mt-6">
                     <h3 class="text-lg font-semibold mb-2">Uploaded Schedules</h3>
-                    <div class="overflow-x-auto">
+                        <div class="flex items-center space-x-4 mb-2">
+                        <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterReservations()">
+                            <option value="" disabled selected>Select Status</option> <!-- Placeholder option -->
+                            <option value="all">All</option>
+                            <option value="in review">In Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="declined">Declined</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                        <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterReservations()">
+                    </div>
+                    <div id="schedulesList" class="overflow-x-auto max-h-[calc(100vh-200px)] bg-white rounded-md shadow-md border border-gray-200">
                         <table id="schedules-table" class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
+                            <thead>
+                                <tr class="bg-gray-200 border-b">
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Code</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
@@ -103,7 +188,7 @@
                                         SELECT 
                                             schedules.*, 
                                             room_assignments_tbl.assignment_id, 
-                                            rooms_tbl.room_number, 
+                                            rooms_tbl.room_name, 
                                             rooms_tbl.room_type, 
                                             rooms_tbl.building_id, 
                                             buildings_tbl.building_name, 
@@ -112,49 +197,65 @@
                                         LEFT JOIN room_assignments_tbl ON schedules.schedule_id = room_assignments_tbl.schedule_id
                                         LEFT JOIN rooms_tbl ON room_assignments_tbl.room_id = rooms_tbl.room_id
                                         LEFT JOIN buildings_tbl ON rooms_tbl.building_id = buildings_tbl.building_id
+                                        WHERE schedules.user_id = ?
                                         ORDER BY schedules.created_at DESC
                                     ";
 
+                                    // Prepare the statement
+                                    if ($stmt = $conn->prepare($query)) {
+                                        // Bind the current user ID to the query
+                                        $stmt->bind_param('i', $_SESSION['user_id']);
 
-                                    $result = $conn->query($query);
-                                    if ($result->num_rows > 0) {
-                                        // Output data for each row
-                                        while ($row = $result->fetch_assoc()) {
-                                            $schedId = $row["schedule_id"];
-                                            $schedStatus = $row["sched_status"];
-                                            $isEditable = (strtolower($schedStatus) === 'pending' || strtolower($schedStatus) === 'conflicted');
-                                            $isAssigned = (strtolower($schedStatus) === 'assigned');
-                                            echo '<tr>';
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['subject_code']) . '</td>';
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['section']) . '</td>';
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['instructor']) . '</td>';
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['start_time']) . ' - ' . htmlspecialchars($row['end_time']) . '</td>';                                   
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['days']) . '</td>';
-                                            if ($isAssigned) {
-                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['building_name']) . ' - ' . htmlspecialchars($row['room_number']) .'</td>'; 
-                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-green-500">' . htmlspecialchars($row['sched_status']) . '</td>';     
-                                            } else {
-                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-500">Not Assigned</td>';  
-                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['sched_status']) . '</td>';
-                                            }
-                                            
+                                        // Execute the query
+                                        $stmt->execute();
 
-                                            if ($isEditable) {
-                                                echo '<td class="py-2 px-4 space-x-2">';
-                                                echo '<button onclick="editSched(' . $schedId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
-                                                echo '<button onclick="deleteSched(' . $schedId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
-                                                echo '</td>';
-                                            } else {
-                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-red-500">Not Editable</td>';
+                                        // Get the result
+                                        $result = $stmt->get_result();
+
+                                        if ($result->num_rows > 0) {
+                                            // Output data for each row
+                                            while ($row = $result->fetch_assoc()) {
+                                                $schedId = $row["schedule_id"];
+                                                $schedStatus = $row["sched_status"];
+                                                $isEditable = (strtolower($schedStatus) === 'pending' || strtolower($schedStatus) === 'conflicted');
+                                                $isAssigned = (strtolower($schedStatus) === 'assigned');
+
+                                                echo '<tr>';
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['subject_code']) . '</td>';
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['section']) . '</td>';
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['instructor']) . '</td>';
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['start_time']) . ' - ' . htmlspecialchars($row['end_time']) . '</td>';
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['days']) . '</td>';
+                                                
+                                                if ($isAssigned) {
+                                                    echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['building_name']) . ' - ' . htmlspecialchars($row['room_name']) .'</td>';
+                                                    echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-green-500">' . htmlspecialchars($row['sched_status']) . '</td>';
+                                                } else {
+                                                    echo '<td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-500">Not Assigned</td>';
+                                                    echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['sched_status']) . '</td>';
+                                                }
+
+                                                if ($isEditable) {
+                                                    echo '<td class="py-2 px-4 space-x-2">';
+                                                    echo '<button onclick="editSched(' . $schedId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
+                                                    echo '<button onclick="deleteSched(' . $schedId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
+                                                    echo '</td>';
+                                                } else {
+                                                    echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-red-500">Not Editable</td>';
+                                                }
+                                                echo '</tr>';
                                             }
-                                            echo '</tr>';
+                                        } else {
+                                            echo '<tr><td colspan="8" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">No schedules found.</td></tr>';
                                         }
-                                    } else {
-                                        echo '<tr><td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">No schedules found.</td></tr>';
                                     }
                                     ?>
-                                </tbody>
+                            </tbody>
                         </table>
+                        <div id="noResultsMessage" class="text-center py-4 hidden">
+                            <img src="img/undraw_not_found_re_bh2e.svg" alt="No Reservations Found" class="mx-auto mb-2 opacity-40" style="max-width: 250px;">
+                            <p class="text-gray-500">No results found for the selected filters.</p>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -253,7 +354,18 @@
             </div>
         </div>
     </div>
-
+    <!-- Logout confirmation modal -->
+    <div id="custom-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
+            <img class="w-36 mb-4" src="img\undraw_warning_re_eoyh.svg" alt="">
+            <p class="text-lg text-slate-700 font-semibold mb-4">Are you sure you want to logout?</p>
+            <div class="flex justify-center mt-5">
+                <button onclick="cancelLogout()" class="mr-4 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Cancel</button>
+                <button onclick="confirmLogout()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-500">Logout</button>
+            </div>
+        </div>
+    </div> 
+    <script src="scripts/logout.js"></script>
     <script>
         function showUploadModal() {
             document.getElementById('upload-modal').classList.remove('hidden');
@@ -464,7 +576,7 @@
         }
     
         //For displaying Scheds on table
-        $(document).ready(function() {
+        /*$(document).ready(function() {
             // Fetch pending schedules
             fetchPendingSchedules();
 
@@ -493,7 +605,7 @@
                     }
                 });
             }
-        });
+        });*/
     </script>
 </body>
 </html>

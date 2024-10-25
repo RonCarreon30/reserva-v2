@@ -34,10 +34,10 @@ $buildings_sql = "SELECT * FROM buildings_tbl";
 $buildings_result = $conn->query($buildings_sql);
 
 //Query to fetch rooms data from the database
-$sql = "SELECT r.room_id, r.room_number, r.room_type, r.room_status, r.created_at, b.building_name
+$sql = "SELECT r.room_id, r.room_name, r.room_type, r.room_status, r.created_at, b.building_name
         FROM rooms_tbl r
         JOIN buildings_tbl b ON r.building_id = b.building_id
-        ORDER BY created_at DESC";
+        ORDER BY room_id DESC";
 
 $result = $conn->query($sql);
 ?>
@@ -195,7 +195,7 @@ function filterRooms() {
                                 <?php while ($row = $result->fetch_assoc()): ?>
                                     <tr>
                                         <td class="py-3 px-4"><?php echo $row["building_name"]; ?></td>
-                                        <td class="py-3 px-4"><?php echo $row["room_number"]; ?></td>
+                                        <td class="py-3 px-4"><?php echo $row["room_name"]; ?></td>
                                         <td class="py-3 px-4"><?php echo $row["room_type"]; ?></td>
                                         <td class="py-3 px-4">
                                             <button onclick="editRoom(<?php echo $row['room_id']; ?>)" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>
@@ -255,8 +255,8 @@ function filterRooms() {
                                     </select>
                                 </div>
                                 <div class="w-1/2">
-                                    <label for="roomNumber" class="block text-sm font-medium text-gray-700">Room Number:</label>
-                                    <input type="text" id="roomNumber" name="roomNumber" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
+                                    <label for="roomName" class="block text-sm font-medium text-gray-700">Room Name:</label>
+                                    <input type="text" id="roomName" name="roomName" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
                                 </div>
                             </div>
                             <div class="flex mb-4 gap-2">
@@ -297,8 +297,8 @@ function filterRooms() {
             <form id="ediRoomForm" class="space-y-10">
                 <div class="flex mb-4 gap-2">
                     <div class="w-1/2">
-                        <label for="editRoomNumber" class="block text-sm font-medium text-gray-700">Room Number:</label>
-                        <input type="text" id="editRoomNumber" name="roomNumber" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
+                        <label for="editRoomName" class="block text-sm font-medium text-gray-700">Room Name:</label>
+                        <input type="text" id="editRoomName" name="roomName" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
                     </div>
                     <div class="w-1/2">
                         <label for="editBuilding" class="block text-sm font-medium text-gray-700">Building:</label>
@@ -370,8 +370,8 @@ function filterRooms() {
     <div id="confirmDeleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
         <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
             <h2 class="text-xl font-semibold mb-4">Confirm Deletion</h2>
-            <img class="w-36 mb-4" src="img/undraw_warning_re_eoyh.svg" alt="">
-            <p class="text-lg text-slate-700 font-semibold mb-4">Are you sure you want to delete this facility?</p>
+            <img class="w-1/2 mb-4" src="img/undraw_throw_away_re_x60k.svg" alt="">
+            <p class="text-lg text-slate-700 font-semibold mb-4">Are you sure you want to delete this room?</p>
             <div class="flex justify-center mt-5 space-x-4">
                 <button id="cancelDelete" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400" onclick="closeDeleteModal()">Cancel</button>
                 <button id="confirmDelete" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600" onclick="confirmDelete()">Delete</button>
@@ -447,8 +447,7 @@ function filterRooms() {
             toast.remove();
         }, 5000); // Change this value for longer display time
     }
-    </script>
-    <script> 
+
         let currentRoomId;  // Declare a variable to store the current user ID
 
         // Edit User
@@ -461,7 +460,7 @@ function filterRooms() {
                 .then(response => response.json())
                 .then(data => {
                     // Populate the form fields with the fetched data
-                    document.getElementById('editRoomNumber').value = data.room_number;
+                    document.getElementById('editRoomName').value = data.room_name;
                     document.getElementById('editBuilding').value = data.building_id; // Use building_id here
                     document.getElementById('editType').value = data.room_type;
                     document.getElementById('editRoomStatus').value = data.room_status;
@@ -481,7 +480,7 @@ function filterRooms() {
 
             // Get the updated data from the form fields
             const updatedRoomData = {
-                room_number: document.getElementById('editRoomNumber').value,
+                room_name: document.getElementById('editRoomName').value,
                 building: document.getElementById('editBuilding').value,
                 room_type: document.getElementById('editType').value,
                 room_status: document.getElementById('editRoomStatus').value,

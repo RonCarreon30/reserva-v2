@@ -27,14 +27,8 @@
     $my_reservation_result = $conn->query($my_reservation_sql);
 
 
-    // Fetch user's department from the database
-    $user_department = '';
-    $user_department_sql = "SELECT department FROM users WHERE id = $user_id";
-    $user_department_result = $conn->query($user_department_sql);
-    if ($user_department_result->num_rows > 0) {
-        $row = $user_department_result->fetch_assoc();
-        $user_department = $row['department'];
-    }
+    // Fetch user's department from session
+    $user_department = $_SESSION['department']
     ?>
 
 <!DOCTYPE html>

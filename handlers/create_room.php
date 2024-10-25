@@ -28,17 +28,17 @@ $response = [
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get the form data and sanitize it
     $buildingId = isset($_POST['building']) ? intval($_POST['building']) : 0;
-    $roomNumber = isset($_POST['roomNumber']) ? trim($_POST['roomNumber']) : '';
+    $roomName = isset($_POST['roomName']) ? trim($_POST['roomName']) : '';
     $type = isset($_POST['type']) ? trim($_POST['type']) : '';
     $roomStatus = isset($_POST['roomStatus']) ? trim($_POST['roomStatus']) : '';
 
     // Validate inputs
-    if (empty($buildingId) || empty($roomNumber) || empty($type) || empty($roomStatus)) {
+    if (empty($buildingId) || empty($roomName) || empty($type) || empty($roomStatus)) {
         $response['message'] = 'All fields are required.';
     } else {
         // Check for duplicate room entries
-        $dup_check_stmt = $conn->prepare("SELECT COUNT(*) FROM rooms_tbl WHERE building_id = ? AND room_number = ?");
-        $dup_check_stmt->bind_param("is", $buildingId, $roomNumber);
+        $dup_check_stmt = $conn->prepare("SELECT COUNT(*) FROM rooms_tbl WHERE building_id = ? AND room_name = ?");
+        $dup_check_stmt->bind_param("is", $buildingId, $roomName);
         $dup_check_stmt->execute();
         $dup_check_stmt->bind_result($count);
         $dup_check_stmt->fetch();
@@ -48,8 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $response['message'] = 'This room already exists in the selected building.';
         } else {
             // Prepare the SQL statement to insert the new room
-            $stmt = $conn->prepare("INSERT INTO rooms_tbl (building_id, room_number, room_type, room_status) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("isss", $buildingId, $roomNumber, $type, $roomStatus);
+            $stmt = $conn->prepare("INSERT INTO rooms_tbl (building_id, room_name, room_type, room_status) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("isss", $buildingId, $roomName, $type, $roomStatus);
 
             // Execute the statement
             if ($stmt->execute()) {

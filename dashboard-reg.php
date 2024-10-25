@@ -200,7 +200,7 @@ $user_data = $user_result->fetch_assoc();
                                         <h2 class="text-lg font-bold">Total Rooms</h2>
                                         <?php
                                             // Fetch count of total facilities
-                                            $room_count_sql = "SELECT COUNT(*) AS count FROM rooms";
+                                            $room_count_sql = "SELECT COUNT(*) AS count FROM rooms_tbl";
                                             $room_count_result = $conn->query($room_count_sql);
 
                                             if ($room_count_result) {
@@ -215,7 +215,7 @@ $user_data = $user_result->fetch_assoc();
                                 </div>
                             </a>
 
-                            <a href="facilityManagement.php" class="block">
+                            <a href="loads-deptHead.php" class="block">
                                 <!-- Total Facilities -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-building fa-2x w-1/4 text-blue-600"></i>
@@ -223,7 +223,7 @@ $user_data = $user_result->fetch_assoc();
                                         <h2 class="text-lg font-bold">Schedules with Room Assignment</h2>
                                         <?php
                                             // Fetch count of total facilities
-                                            $schedule_count_sql = "SELECT COUNT(*) AS count FROM assigned_rooms_tbl";
+                                            $schedule_count_sql = "SELECT COUNT(*) AS count FROM room_assignments_tbl";
                                             $schedule_count_result = $conn->query($schedule_count_sql);
 
                                             if ($schedule_count_result) {

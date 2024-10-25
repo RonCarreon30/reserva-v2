@@ -14,13 +14,6 @@ reservations-student
 reservations-deptHead
 -export (Student)Reservations(table)
 
-
-loads-deptHead.php(new room_loads.php)
-room_loads(Chair)
--Fix exported table
--*year, sem, building, room, (Year&Section?) dropdowns?
--*instead of room table just display calendar and load the schedules there based on dropdown
-
 room_select
 -separate the conflicted schedules and non-conflicted on table
 

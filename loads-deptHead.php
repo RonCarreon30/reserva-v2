@@ -10,7 +10,7 @@
     }
 
     // Check if the user has the required role
-    if ($_SESSION['role'] !== 'Dept. Head') {
+    if (!in_array($_SESSION['role'], ['Dept. Head', 'Admin',  'Registrar'])) {
         // Redirect to a page indicating unauthorized access
         header("Location: index.html");
         exit();
@@ -18,10 +18,10 @@
 
     require_once 'database/config.php';
 
-        function convertTo12HourFormat($time) {
-            $timestamp = strtotime($time);
-            return date('h:i A', $timestamp);
-        }
+    function convertTo12HourFormat($time) {
+        $timestamp = strtotime($time);
+        return date('h:i A', $timestamp);
+    }
     // Fetch schedules from schedules_tbl
     $query = "SELECT * FROM schedules";
     $result = mysqli_query($conn, $query);
@@ -130,11 +130,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div><strong>${info.event.title}</strong></div>
                     <div>Section: ${info.event.extendedProps.section}</div>
                     <div>Instructor: ${info.event.extendedProps.instructor}</div>
+                    <div>Room: ${info.event.extendedProps.building} - ${info.event.extendedProps.room}</div>
                 `;
             }
         },
         eventClick: function(info) {
-            alert(`Event: ${info.event.title}\nInstructor: ${info.event.extendedProps.instructor}\nSection: ${info.event.extendedProps.section}`);
+            alert(`Subject: ${info.event.title}
+            \nInstructor: ${info.event.extendedProps.instructor}
+            \nSection: ${info.event.extendedProps.section}
+            \nRoom: ${info.event.extendedProps.building} - ${info.event.extendedProps.room}
+            `);
         }
     });
 
@@ -188,59 +193,70 @@ function updateCalendar() {
                 <main class="flex-1 p-4 overflow-y-auto flex ">
                     
                     <div class="w-3/4 rounded-lg flex flex-col">
-                        <div class="flex mb-1 space-x-4 items-center ">
-                            <button id="add-schedule-button" onclick="window.location.href='loads_upload.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out" title="Add Schedules">
-                                <i class="fa-solid fa-circle-plus"></i>
-                            </button>
+                        <div class="flex justify-between">
+                            <div class="mb-2 items-center">
+                                <button id="add-schedule-button" onclick="window.location.href='loads_upload.php'" class="px-3 py-2 mr-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out" title="Add Schedules">
+                                    <i class="fa-solid fa-circle-plus"></i>
+                                </button>
 
-                            <select id="AYSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
-                                <option value="">Academic Year...</option>
-                                <?php
-                                    // Query to get terms values
-                                    $query = "SELECT * FROM terms_tbl";
-                                    $result = $conn->query($query);
-                                    // Loop through the result and create an <option> element for each building
-                                    if ($result->num_rows > 0) {
-                                        while ($row = $result->fetch_assoc()) {
-                                            echo '<option value="' . $row['term_id'] . '">' . $row['academic_year'] . ' - ' . $row['semester'] . '</option>';
+                                <select id="AYSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
+                                    <option value="">Academic Year...</option>
+                                    <?php
+                                        // Query to get terms values
+                                        $query = "SELECT * FROM terms_tbl";
+                                        $result = $conn->query($query);
+                                        // Loop through the result and create an <option> element for each building
+                                        if ($result->num_rows > 0) {
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo '<option value="' . $row['term_id'] . '">' . $row['academic_year'] . ' - ' . $row['semester'] . '</option>';
+                                            }
+                                        } else {
+                                            echo '<option value="">No Data available</option>';
                                         }
-                                    } else {
-                                        echo '<option value="">No Data available</option>';
-                                    }
-                                
-                                ?>
-                            </select>
-                            <select id="buildingSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
-                                <option value="">All Buildings</option>
-                                <?php if ($buildingsResult->num_rows > 0): ?>
-                                    <?php while ($building = $buildingsResult->fetch_assoc()): ?>
-                                        <option value="<?php echo $building['building_id']; ?>"><?php echo $building['building_name']; ?></option>
-                                    <?php endwhile; ?>
-                                <?php else: ?>
-                                    <option value="">No buildings available</option>
-                                <?php endif; ?>
-                            </select>
+                                    
+                                    ?>
+                                </select>
+                                <select id="buildingSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
+                                    <option value="">All Buildings</option>
+                                    <?php if ($buildingsResult->num_rows > 0): ?>
+                                        <?php while ($building = $buildingsResult->fetch_assoc()): ?>
+                                            <option value="<?php echo $building['building_id']; ?>"><?php echo $building['building_name']; ?></option>
+                                        <?php endwhile; ?>
+                                    <?php else: ?>
+                                        <option value="">No buildings available</option>
+                                    <?php endif; ?>
+                                </select>
 
-                            <select id="roomSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
-                                <option value="">All Rooms</option>
-                                <?php foreach ($roomsByBuilding as $buildingId => $rooms): ?>
-                                    <?php foreach ($rooms as $room): ?>
-                                        <option value="<?php echo $room['room_id']; ?>" data-building-id="<?php echo $buildingId; ?>">
-                                            <?php echo $room['room_number']; ?>
-                                        </option>
+                                <select id="roomSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterRooms()">
+                                    <option value="">All Rooms</option>
+                                    <?php foreach ($roomsByBuilding as $buildingId => $rooms): ?>
+                                        <?php foreach ($rooms as $room): ?>
+                                            <option value="<?php echo $room['room_id']; ?>" data-building-id="<?php echo $buildingId; ?>">
+                                                <?php echo $room['room_name']; ?>
+                                            </option>
+                                        <?php endforeach; ?>
                                     <?php endforeach; ?>
-                                <?php endforeach; ?>
-                            </select>
+                                </select>
+                            </div>
 
-                            <!-- Export button -->
-                            <button id="exportButton" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-150 ease-in-out" onclick="exportSchedule()">
-                                <i class="fa-solid fa-file-export"></i> Export Schedules
-                            </button>
+                            <div>
+                                <button id="exportButton" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-150 ease-in-out" onclick="exportSchedule()">
+                                    <i class="fa-solid fa-file-export"></i> Export Schedules
+                                </button>
+                            </div>
                         </div>
 
                         <div id="calendar" class="rounded-lg bg-white p-1 overflow-hidden shadow-md flex-grow h-[500px]">
                             <!-- Calendar/timetable here -->
                         </div>
+                    </div>
+
+                    <div class=" flex flex-col h-full w-1/4 pl-4 ">
+                        <!-- Image at the bottom part -->
+                        <div class="mt-auto opacity-50">
+                            <img src="img/undraw_schedule_re_2vro.svg" alt="Data Setup" class="w-full h-auto object-cover">
+                        </div>
+
                     </div>
                 </main>
 
@@ -258,5 +274,73 @@ function updateCalendar() {
         </div>
     </div> 
     <script src="scripts/logout.js"></script>
+    <script>
+        function exportSchedule() {
+            const ayId = document.getElementById('AYSelect').value;
+            const buildingId = document.getElementById('buildingSelect').value;
+            const roomId = document.getElementById('roomSelect').value;
+
+            if (!ayId || !buildingId || !roomId) {
+                alert('Please select Academic Year, Building, and Room to export schedules.');
+                return;
+            }
+
+            fetch(`handlers/export_sched.php?roomId=${roomId}&ayId=${ayId}&buildingId=${buildingId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        // Get the actual Academic Year and Semester from the first item in the data array
+                        const academicYear = data[0].extendedProps.AcademicYear;
+                        const semester = data[0].extendedProps.semester;
+                        const building = data[0].extendedProps.building;
+                        const room = data[0].extendedProps.room;
+
+                        // Prepare the worksheet data
+                        const worksheetData = data.map(event => ({
+                            'Subject': event.title,
+                            'Instructor': event.instructor,
+                            'Section': event.section,
+                            'Start Time': event.start,
+                            'End Time': event.end
+                        }));
+
+                        // Create a new workbook
+                        const wb = XLSX.utils.book_new();
+                        
+                        // Create a new worksheet with merged cells
+                        const ws = XLSX.utils.aoa_to_sheet([
+                            ['AY & Sem: ' + academicYear + ' - ' + semester, '', '', '', ''],
+                            ['Room: ' + building + ' ' + room, '', '', '', ''],
+                            [''], // Blank row for spacing
+                            ['Subject', 'Instructor', 'Section', 'Start Time', 'End Time'], // Column headers
+                            ...worksheetData.map(event => [
+                                event.Subject,
+                                event.Instructor,
+                                event.Section,
+                                event['Start Time'],
+                                event['End Time'],
+                            ])
+                        ]);
+
+                        // Define the merge ranges (merging A1 to E1 and A2 to E2)
+                        ws['!merges'] = [
+                            { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Merge A1 to E1
+                            { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }  // Merge A2 to E2
+                        ];
+
+                        // Append the worksheet to the workbook
+                        XLSX.utils.book_append_sheet(wb, ws, 'Schedules');
+
+                        // Write the file
+                        XLSX.writeFile(wb, 'schedules_export.xlsx');
+                    } else {
+                        alert('No schedules found for the selected filters.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error exporting schedules:', error);
+                });
+        }
+    </script>
 </body>
 </html>

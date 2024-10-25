@@ -283,7 +283,10 @@ $role_result = $conn->query($role_sql);
                         </form>
                     </div>
                 </div> 
-            </main> 
+            </main>
+            <div id="footer-container">
+                <?php include 'footer.php' ?>
+            </div>   
         </div>
     </div>
 
@@ -467,7 +470,7 @@ $role_result = $conn->query($role_sql);
                 first_name: document.getElementById('editFirstName').value,
                 last_name: document.getElementById('editLastName').value,
                 email: document.getElementById('editEmail').value,
-                contact_number: document.getElementById('editContactNumber').value,
+                idNumber: document.getElementById('editIdNumber').value,
                 department: document.getElementById('editDepartment').value,
                 role: document.getElementById('editRole').value,
                 password: document.getElementById('editPassword').value // Include password if needed
@@ -581,6 +584,7 @@ $role_result = $conn->query($role_sql);
             // Hide modal
             successModal.classList.add('hidden');
             document.getElementById("createUserForm").reset();
+            location.reload(); // Reload the current page after success
         }
     </script>
 </body>

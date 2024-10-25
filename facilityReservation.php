@@ -9,8 +9,6 @@
         exit();
     }
 
-
-
     //connect to db
     include_once 'database/config.php';
     // Query to fetch reservations for the current user
@@ -18,9 +16,7 @@
 
     // Fetch user's department
     $user_id = $_SESSION['user_id'];
-    $user_department_sql = "SELECT department FROM users WHERE id = $user_id";
-    $user_department_result = $conn->query($user_department_sql);
-    $user_department = $user_department_result->fetch_assoc()['department'] ?? '';
+    $user_department = $_SESSION['department'];
 
     // Fetch buildings for the dropdown
     $buildings_sql = "SELECT DISTINCT building FROM facilities";
@@ -376,7 +372,17 @@
                 const successMessage = document.getElementById('successMessage'); // Assuming you have an element for success message
                 successMessage.textContent = data.message; // Update the content of the success message
                 successModal.classList.remove('hidden');
-                setTimeout(() => location.reload(), 2000);
+                setTimeout(() => {
+                    let role = '<?php echo $_SESSION['role']; ?>';
+                    console.log(department)
+                    if (role === 'Student Rep') {
+                        window.location.href = 'reservations-student.php';
+                    } else if (role === 'Dept. Head') {
+                        window.location.href = 'reservations-deptHead.php';
+                    } else {
+                        window.location.href = 'facilityReservations.php';
+                    } 
+                }, 2000);
             } else {
                 const errorModal = document.getElementById('errorModal');
                 const errorList = document.getElementById('errorList');
