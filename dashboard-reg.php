@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-    header("Location: unauthorized.php");
+    header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if ($_SESSION['role'] !== 'Registrar') {
     // Redirect to a page indicating unauthorized access
-    header("Location: unauthorized.php");
+    header("Location: unauthorized");
     exit();
 }
 
@@ -169,7 +169,7 @@ $user_data = $user_result->fetch_assoc();
                     <div class="h-1/2 p-2">
                         <div class="grid grid-cols-1 m-2 gap-4">
                         <!-- Widgets -->
-                            <a href="accManagement.php" class="block">
+                            <a href="accManagement" class="block">
                                 <!-- Total Users -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-users fa-2x w-1/4 text-blue-600"></i>
@@ -192,7 +192,7 @@ $user_data = $user_result->fetch_assoc();
                                 </div>
                             </a>
 
-                            <a href="roomManagement.php" class="block">
+                            <a href="roomManagement" class="block">
                                 <!-- Total Rooms -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-door-closed fa-2x w-1/4 text-blue-600"></i>
@@ -215,7 +215,7 @@ $user_data = $user_result->fetch_assoc();
                                 </div>
                             </a>
 
-                            <a href="loads-deptHead.php" class="block">
+                            <a href="loads-deptHead" class="block">
                                 <!-- Total Facilities -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-building fa-2x w-1/4 text-blue-600"></i>

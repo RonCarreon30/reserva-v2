@@ -1,9 +1,9 @@
 <?php
 include '../database/config.php'; // Assuming you have a DB connection file
 
-$facility_id = $_GET['id']; // Assuming reservation ID is passed via GET
+$facility_id = $_GET['facility_id']; // Assuming reservation ID is passed via GET
 
-$query = "SELECT * FROM facilities WHERE id = ?";
+$query = "SELECT * FROM facilities WHERE facility_id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $facility_id);
 $stmt->execute();

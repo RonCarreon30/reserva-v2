@@ -11,6 +11,7 @@ module.exports = {
         "plv-blue": "#001663",
         "plv-highlight": "#4c4c70",
         "persian-blue": "#002ccc",
+        "danger-red": "",
       },
       // Define background images
       backgroundImage: {

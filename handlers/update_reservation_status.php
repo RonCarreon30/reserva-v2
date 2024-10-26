@@ -3,23 +3,22 @@ header('Content-Type: application/json');
 
 // Check if the request method is POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get the request body
-    $json = file_get_contents('php://input');
-    $data = json_decode($json, true);
+// Get the request body
+$json = file_get_contents('php://input');
+$data = json_decode($json, true);
 
-    // Check if reservation ID and status are provided
-    if (!isset($data['id']) || !isset($data['status'])) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Missing parameters']);
-        exit();
-    }
+// Check if reservation ID and status are provided
+if (!isset($data['id']) || !isset($data['status'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing parameters']);
+    exit();
+}
 
-    // Get reservation ID and status from the request
-    $reservationId = intval($data['id']);
-    $status = $data['status'];
+// Get reservation ID and status from the request
+$reservationId = intval($data['id']);
+$status = $data['status'];
+$rejectionReason = isset($data['reason']) ? $data['reason'] : '';
 
-    // Fetch the rejection reason from the request
-    $rejectionReason = isset($data['reason']) ? $data['reason'] : '';
 
     require '../database/config.php';
 

@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-    header("Location: unauthorized.php");
+    header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if ($_SESSION['role'] !== 'Facility Head') {
     // Redirect to a page indicating unauthorized access
-    header("Location: unauthorized.php");
+    header("Location: unauthorized");
     exit();
 }
 
@@ -182,7 +182,7 @@ if ($count_result->num_rows > 0) {
                     <div class="h-1/2 p-2">
                         <!--Widgets-->
                         <div class="grid grid-cols-1 m-2 gap-4">
-                            <a href="facilityManagement.php" class="block">
+                            <a href="facilityManagement" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-building fa-2x w-1/4 text-blue-600"></i>
                                     <div class="w-3/4">
@@ -204,7 +204,7 @@ if ($count_result->num_rows > 0) {
                                 </div>
                             </a>
 
-                            <a href="FacilityReservations.php" class="block">
+                            <a href="FacilityReservations" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-calendar-check fa-2x w-1/4 text-green-600"></i>
                                     <div class="w-3/4">

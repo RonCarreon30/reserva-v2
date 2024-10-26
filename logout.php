@@ -6,6 +6,6 @@
     session_destroy(); // Destroy the session
 
     // Redirect to the login page
-    header("Location: index.html");
+    header("Location: index");
     exit();
 ?>

@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-        header("Location: unauthorized.php");
+        header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if (!in_array($_SESSION['role'], ['Registrar', 'Admin'])) {
     // Redirect to a page indicating unauthorized access
-        header("Location: unauthorized.php");
+        header("Location: unauthorized");
     exit();
 }
 

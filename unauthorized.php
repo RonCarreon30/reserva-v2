@@ -9,7 +9,7 @@
   // Determine the message and redirection based on authorization
   if (!$isLoggedIn) {
       $message = "You need to log in.";
-      $redirectURL = "index.html";
+      $redirectURL = "index";
   } elseif (!$isAuthorized) {
       $message = "You don't have the privilege to access this page.";
       $redirectURL = "back"; // Placeholder to use `window.history.back()`

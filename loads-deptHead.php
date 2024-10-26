@@ -5,14 +5,14 @@
     // Check if the user is logged in
     if (!isset($_SESSION['user_id'])) {
         // Redirect to the login page
-        header("Location: unauthorized.php");
+        header("Location: unauthorized");
         exit();
     }
 
     // Check if the user has the required role
     if (!in_array($_SESSION['role'], ['Dept. Head', 'Admin',  'Registrar'])) {
         // Redirect to a page indicating unauthorized access
-        header("Location: unauthorized.php");
+        header("Location: unauthorized");
         exit();
     }
 
@@ -195,7 +195,7 @@ function updateCalendar() {
                     <div class="w-3/4 rounded-lg flex flex-col">
                         <div class="flex justify-between">
                             <div class="mb-2 items-center">
-                                <button id="add-schedule-button" onclick="window.location.href='loads_upload.php'" class="px-3 py-2 mr-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out" title="Add Schedules">
+                                <button id="add-schedule-button" onclick="window.location.href='loads_upload'" class="px-3 py-2 mr-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out" title="Add Schedules">
                                     <i class="fa-solid fa-circle-plus"></i>
                                 </button>
 

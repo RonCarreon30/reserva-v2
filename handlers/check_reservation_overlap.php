@@ -1,20 +1,7 @@
 <?php
 header('Content-Type: application/json');
 
-// Database connection details
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "reservadb";
-
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    echo json_encode(["error" => "Connection failed: " . $conn->connect_error]);
-    exit();
-}
+include '../database/config.php';
 
 // Get reservation ID from query parameters
 $reservationId = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -37,7 +24,7 @@ if (!$reservation) {
     exit();
 }
 
-$facility_name = $reservation['facility_name'];
+$facility_id = $reservation['facility_id'];
 $reservation_date = $reservation['reservation_date'];
 $start_time = $reservation['start_time'];
 $end_time = $reservation['end_time'];
@@ -47,7 +34,7 @@ $sql = "
     SELECT COUNT(*) as overlap 
     FROM reservations 
     WHERE id != ? 
-    AND facility_name = ? 
+    AND facility_id = ? 
     AND reservation_date = ? 
     AND (
         (start_time < ? AND end_time > ?) 
@@ -61,7 +48,7 @@ $stmt = $conn->prepare($sql);
 $stmt->bind_param(
     "issssssss", 
     $reservationId, 
-    $facility_name, 
+    $facility_id, 
     $reservation_date, 
     $end_time, 
     $start_time, 

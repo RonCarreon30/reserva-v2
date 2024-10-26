@@ -16,7 +16,7 @@ $facilityId = $data['id']; // Ensure that this ID is passed to identify the rese
 // Prepare the SQL query to update the reservation
 $sql = "UPDATE facilities 
         SET facility_name = ?, building = ?, status = ?, descri = ?
-        WHERE id = ?";
+        WHERE facility_id = ?";
 
 // Prepare the statement
 $stmt = $conn->prepare($sql);

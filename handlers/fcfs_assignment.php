@@ -2,6 +2,8 @@
 // Start the session
 session_start();
 
+$user_id = $_SESSION['user_id'];
+echo $user_id;
 include '../database/config.php';
 
 // Step 1: Retrieve pending schedules and their department details
@@ -9,7 +11,7 @@ $sqlPendingSchedules = "
     SELECT s.*, d.building_id, d.dept_name
     FROM schedules s
     JOIN dept_tbl d ON s.department_id = d.dept_id
-    WHERE s.sched_status = 'pending';
+    WHERE s.sched_status = 'pending' AND s.user_id = $user_id;
 ";
 
 $resultPendingSchedules = $conn->query($sqlPendingSchedules);

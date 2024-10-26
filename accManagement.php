@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-    header("Location: unauthorized.php");
+    header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if ($_SESSION['role'] !== 'Admin' && $_SESSION['role'] !== 'Registrar') {
     // Redirect to a page indicating unauthorized access
-    header("Location: unauthorized.php");
+    header("Location: unauthorized");
     exit();
 }
 
@@ -190,7 +190,7 @@ $role_result = $conn->query($role_sql);
                                         <td class="py-3 px-4"><?php echo $row['dept_name']; ?></td>
                                         <td class="py-3 px-4"><?php echo $row['userRole']; ?></td>
                                         <td class="py-3 px-4">
-                                            <button onclick="editUser(<?php echo $row['id']; ?>)" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>
+                                            <button onclick="editUser(<?php echo $row['id']; ?>)" class="bg-plv-blue text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>
                                             <button onclick="deleteUser(<?php echo $row['id']; ?>)" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>
                                         </td>
                                     </tr>
@@ -213,7 +213,7 @@ $role_result = $conn->query($role_sql);
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
-                                    <input id="firstName" name="firstName" type="text" required class="shadow-sm p-1 focus:ring-blue-500 focus:border-blue-500 block w-full border border-gray-300 rounded-md">
+                                    <input id="firstName" name="firstName" type="text" required class="shadow-sm p-1 focus:ring-plv-blue focus:border-plv-blue block w-full border border-gray-300 rounded-md">
                                 </div>
                                 <div>
                                     <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>

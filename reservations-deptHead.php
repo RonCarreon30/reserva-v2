@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-        header("Location: unauthorized.php");
+        header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if ($_SESSION['role'] !== 'Dept. Head') {
     // Redirect to a page indicating unauthorized access
-        header("Location: unauthorized.php");
+        header("Location: unauthorized");
     exit();
 }
 
@@ -148,7 +148,7 @@ $all_reservations_result = $stmt->get_result();
             <main class="flex-1 p-4 overflow-y-auto">
                 <div class="flex items-center space-x-4 mb-4">
                     <div id="facility-reservation" title="Facility Reservation">
-                        <button id="add-facility-btn" onclick="window.location.href='facilityReservation.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
+                        <button id="add-facility-btn" onclick="window.location.href='facilityReservation'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
                             <i class="fa-solid fa-circle-plus"></i>
                         </button>
                     </div>

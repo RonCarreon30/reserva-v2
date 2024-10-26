@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-    header("Location: unauthorized.php");
+    header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if ($_SESSION['role'] !== 'Dept. Head') {
     // Redirect to a page indicating unauthorized access
-    header("Location: unauthorized.php");
+    header("Location: unauthorized");
     exit();
 }
 
@@ -186,7 +186,7 @@ $dept_reservation_result = $stmt->get_result();
                     <div class="h-1/2 p-2">
                         <!--Widgets-->
                         <div class="grid grid-cols-1 m-2 gap-4">
-                            <a href="reservations-deptHead.php" class="block">
+                            <a href="reservations-deptHead" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-calendar-check fa-2x w-1/4 text-green-600"></i>
                                     <div class="w-3/4">
@@ -214,7 +214,7 @@ $dept_reservation_result = $stmt->get_result();
                                 </div>
                             </a>
 
-                            <a href="reservations-deptHead.php" class="block">
+                            <a href="reservations-deptHead" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-calendar-alt fa-2x text-blue-600 w-1/4"></i>
                                     <div class="w-3/4">
@@ -239,7 +239,7 @@ $dept_reservation_result = $stmt->get_result();
                                 </div>
                             </a>
 
-                            <a href="reservations-deptHead.php" class="block">
+                            <a href="reservations-deptHead" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-calendar-times fa-2x w-1/4 text-red-600"></i>
                                     <div class="w-3/4">

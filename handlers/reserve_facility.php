@@ -4,7 +4,7 @@ error_log(print_r($_POST, true)); // Log all POST data
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: index.html");
+    header("Location: index");
     exit();
 }
 
@@ -15,28 +15,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo json_encode(array("success" => false, "error" => "All required fields must be filled."));
         exit();
     }
+    $facility_id = $_POST['facilityId'];
+    // Use $facilityId in your SQL INSERT statement for the reservations table.
 
     $reservation_date = $_POST['reservationDate'];
-    $start_time = $_POST['startTime'];
-    $end_time = $_POST['endTime'];
-
-    $today = new DateTime();
-    $reservationDateTime = new DateTime("$reservation_date $start_time");
-    $currentDateTime = new DateTime();
-
-    // Check if reservation date is in the past
-    if ($reservationDateTime < $currentDateTime) {
-        echo json_encode(array("success" => false, "error" => "Reservation date cannot be in the past."));
-        exit();
-    }
-
-    // Check if reservation date is today and end time is not after the start time
-    if ($reservation_date === $today->format('Y-m-d')) {
-        if ($end_time <= $start_time) {
-            echo json_encode(array("success" => false, "error" => "End time must be later than start time and reservation cannot be made for the current day."));
-            exit();
-        }
-    }
+    // Convert start and end times to military format (24-hour format)
+    $start_time = DateTime::createFromFormat('h:i A', $_POST['startTime'])->format('H:i');
+    $end_time = DateTime::createFromFormat('h:i A', $_POST['endTime'])->format('H:i');
 
     // Convert times for checking overlapping reservations
     $startDateTime = new DateTime("$reservation_date $start_time");
@@ -48,8 +33,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     $user_id = $_SESSION['user_id'];
-    $facility_name = $_POST['facilityName'];
-    $department = $_POST['department'];
     $facultyInCharge = $_POST['facultyInCharge'];
     $purpose = $_POST['purpose'];
     $additional_info = isset($_POST['additionalInfo']) ? $_POST['additionalInfo'] : '';
@@ -65,31 +48,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
-    $facility_id = getFacilityId($facility_name);
 
     if ($facility_id !== false) {
-        $servername = "localhost";
-        $username = "root";
-        $db_password = "";
-        $dbname = "reservadb";
-
-        $conn = new mysqli($servername, $username, $db_password, $dbname);
-
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
+        include '../database/config.php';
 
         // Check for overlapping reservations
-        $sql = "SELECT id FROM reservations WHERE facility_id = ? AND reservation_date = ? AND ((start_time < ? AND end_time > ?) OR (start_time < ? AND end_time > ?) OR (start_time >= ? AND end_time <= ?))";
+        $sql = "SELECT facility_id FROM reservations 
+        WHERE facility_id = ? 
+        AND reservation_date = ? 
+        AND (
+            (start_time < ? AND end_time > ?) OR
+            (start_time < ? AND end_time > ?) OR
+            (start_time > ? AND start_time < ?)
+        )";
+
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("isssssss", $facility_id, $reservation_date, $start_time, $start_time, $end_time, $end_time, $start_time, $end_time);
+        $stmt->bind_param("isssssss", $facilityId, $reservation_date, $start_time, $end_time, $start_time, $end_time, $start_time, $end_time);
         $stmt->execute();
         $stmt->store_result();
+
         if ($stmt->num_rows > 0) {
             echo json_encode(array("success" => false, "error" => "Overlapping reservation exists"));
             exit();
         }
         $stmt->close();
+
 
         // Check for duplicate reservations
         $sql = "SELECT id FROM reservations WHERE facility_id = ? AND reservation_date = ? AND start_time = ? AND end_time = ?";
@@ -104,9 +87,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->close();
 
         // Prepare and execute SQL statement for inserting reservation
-        $sql = "INSERT INTO reservations (user_id, user_department, facility_id, facility_name, reservation_date, start_time, end_time, purpose, additional_info, reservation_status, facultyInCharge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO reservations (user_id, facility_id, reservation_date, start_time, end_time, purpose, additional_info, reservation_status, facultyInCharge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("isissssssss", $user_id, $department, $facility_id, $facility_name, $reservation_date, $start_time, $end_time, $purpose, $additional_info, $reservation_status, $facultyInCharge);
+        $stmt->bind_param("iisssssss", $user_id, $facility_id, $reservation_date, $start_time, $end_time, $purpose, $additional_info, $reservation_status, $facultyInCharge);
 
         if ($stmt->execute()) {
             // Prepare a dynamic success message based on user role
@@ -130,32 +113,5 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 } else {
     echo json_encode(array("success" => false, "error" => "Invalid request method"));
-}
-
-// Function to get facility ID based on facility name
-function getFacilityId($facility_name) {
-    $servername = "localhost";
-    $username = "root";
-    $db_password = "";
-    $dbname = "reservadb";
-
-    $conn = new mysqli($servername, $username, $db_password, $dbname);
-
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-
-    $sql = "SELECT id FROM facilities WHERE facility_name = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $facility_name);
-
-    $stmt->execute();
-    $stmt->bind_result($facility_id);
-    $stmt->fetch();
-
-    $stmt->close();
-    $conn->close();
-
-    return isset($facility_id) ? $facility_id : false;
 }
 ?>

@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 $facility_id = $_GET['id']; 
 
 // Prepare and execute the deletion query
-$stmt = $conn->prepare("DELETE FROM facilities WHERE id = ?");
+$stmt = $conn->prepare("DELETE FROM facilities WHERE facility_id = ?");
 $stmt->bind_param("i", $facility_id);
 
 if ($stmt->execute()) {
