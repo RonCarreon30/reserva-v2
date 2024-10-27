@@ -300,6 +300,7 @@ function updateCalendar() {
                             'Subject': event.title,
                             'Instructor': event.instructor,
                             'Section': event.section,
+                            'Day': event.days,
                             'Start Time': event.start,
                             'End Time': event.end
                         }));
@@ -312,11 +313,12 @@ function updateCalendar() {
                             ['AY & Sem: ' + academicYear + ' - ' + semester, '', '', '', ''],
                             ['Room: ' + building + ' ' + room, '', '', '', ''],
                             [''], // Blank row for spacing
-                            ['Subject', 'Instructor', 'Section', 'Start Time', 'End Time'], // Column headers
+                            ['Subject', 'Instructor', 'Section', 'Day', 'Start Time', 'End Time'], // Column headers
                             ...worksheetData.map(event => [
                                 event.Subject,
                                 event.Instructor,
                                 event.Section,
+                                event.Day,
                                 event['Start Time'],
                                 event['End Time'],
                             ])
@@ -337,9 +339,10 @@ function updateCalendar() {
                         alert('No schedules found for the selected filters.');
                     }
                 })
-                .catch(error => {
-                    console.error('Error exporting schedules:', error);
-                });
+            .catch(error => {
+                console.error('Error exporting schedules:', error);
+            });
+            
         }
     </script>
 </body>

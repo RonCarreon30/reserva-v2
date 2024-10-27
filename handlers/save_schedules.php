@@ -1,5 +1,6 @@
 <?php
 session_start(); // Start the session
+
 $data = json_decode($_POST['schedules'], true);
 error_log(print_r($data, true)); // Log the incoming data for debugging
 
@@ -36,7 +37,6 @@ $checkDuplicate = $conn->prepare("
     AND days = ? 
     AND class_type = ? 
     AND ay_semester = ? 
-    AND department_id = ?
 ");
 
 // Initialize arrays to hold successful saves and duplicates
@@ -62,7 +62,7 @@ foreach ($data as $schedule) {
         $day = trim($day); // Trim whitespace
 
         // Check for duplicates using the entire row
-        $checkDuplicate->bind_param("ssssssssii", $subjectCode, $subject, $section, $instructor, $startTime, $endTime, $day, $classType, $aySemester, $departmentId);
+        $checkDuplicate->bind_param("ssssssssi", $subjectCode, $subject, $section, $instructor, $startTime, $endTime, $day, $classType, $aySemester);
         $checkDuplicate->execute();
         $checkDuplicate->store_result(); // Store result to avoid out-of-sync errors
         $checkDuplicate->bind_result($duplicateCount);
@@ -105,13 +105,15 @@ foreach ($data as $schedule) {
 // Determine success message
 if (count($savedSchedules) > 0) {
     $successMessage = 'Schedules processed successfully.';
+} else if (count($duplicateSchedules) > 0) {
+    $successMessage = 'No new schedules were saved. Some duplicates were detected.';
 } else {
-    $successMessage = 'No new schedules were saved.';
+    $successMessage = 'No new schedules were saved and no duplicates were detected.';
 }
 
 // Return success response with saved schedules and duplicates
 echo json_encode([
-    'success' => true,
+    'success' => count($savedSchedules) > 0, // Set success based on whether any schedules were saved
     'message' => $successMessage,
     'savedSchedules' => $savedSchedules,
     'duplicates' => $duplicateSchedules // Return details of duplicates

@@ -215,7 +215,7 @@ $user_data = $user_result->fetch_assoc();
                                 </div>
                             </a>
 
-                            <a href="loads-deptHead" class="block">
+                            <a href="loads" class="block">
                                 <!-- Total Facilities -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-building fa-2x w-1/4 text-blue-600"></i>

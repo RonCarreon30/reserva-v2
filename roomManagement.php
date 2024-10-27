@@ -198,7 +198,7 @@ function filterRooms() {
                                         <td class="py-3 px-4"><?php echo $row["room_name"]; ?></td>
                                         <td class="py-3 px-4"><?php echo $row["room_type"]; ?></td>
                                         <td class="py-3 px-4">
-                                            <button onclick="editRoom(<?php echo $row['room_id']; ?>)" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>
+                                            <button onclick="editRoom(<?php echo $row['room_id']; ?>)" class="bg-plv-blue text-white rounded-md px-4 py-2 hover:bg-plv-highlight">Edit</button>
                                             <button onclick="deleteFacility(<?php echo $row['room_id']; ?>)" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>
                                         </td>
                                     </tr>

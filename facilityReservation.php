@@ -86,91 +86,88 @@
                 table.dataset.sortOrder = isAscending ? 'desc' : 'asc';
             }
 
-document.addEventListener("DOMContentLoaded", function() {
-    const holidayAPIUrl = "https://www.googleapis.com/calendar/v3/calendars/en.philippines%23holiday%40group.v.calendar.google.com/events?key=AIzaSyCB7rRha3zbgSYH1aD5SECsRvQ3usacZHU"; // Your API endpoint
+            document.addEventListener("DOMContentLoaded", function() {
+                const holidayAPIUrl = "https://www.googleapis.com/calendar/v3/calendars/en.philippines%23holiday%40group.v.calendar.google.com/events?key=AIzaSyCB7rRha3zbgSYH1aD5SECsRvQ3usacZHU"; // Your API endpoint
 
-    fetch(holidayAPIUrl)
-        .then(response => response.json())
-        .then(data => {
-            console.log(data);
-            // Extract holiday dates from the API response
-            const holidayDates = data.items.map(holiday => holiday.start.date);
+                fetch(holidayAPIUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data);
+                        // Extract holiday dates from the API response
+                        const holidayDates = data.items.map(holiday => holiday.start.date);
 
-            // Initialize Flatpickr with disabled holiday dates
-            flatpickr("#reservationDate", {
-                dateFormat: "Y-m-d",
-                enableTime: false,
+                        // Initialize Flatpickr with disabled holiday dates
+                        flatpickr("#reservationDate", {
+                            dateFormat: "Y-m-d",
+                            enableTime: false,
 
-                onDayCreate: function(dObj, dStr, fp, dayElem) {
-                    const date = dayElem.dateObj; // Get the date of the current day element
-                    const dateString = dayElem.dateObj.toISOString().split('T')[0]; // Get date in YYYY-MM-DD format
+                            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                                const date = dayElem.dateObj; // Get the date of the current day element
+                                const dateString = dayElem.dateObj.toISOString().split('T')[0]; // Get date in YYYY-MM-DD format
 
-                    // Add custom class for holidays
-                    if (holidayDates.includes(dateString)) {
-                        dayElem.classList.add("holiday"); // Add class for holidays
-                    }
+                                // Add custom class for holidays
+                                if (holidayDates.includes(dateString)) {
+                                    dayElem.classList.add("holiday"); // Add class for holidays
+                                }
 
-                    // Add custom class for Sundays
-                    if (date.getDay() === 0) {
-                        dayElem.classList.add("sunday"); // Add class for Sundays
-                    }
-                },
-                onChange: function(selectedDates, dateStr, instance) {
-                    const selectedDate = new Date(dateStr); // Convert selected date string to Date object
-                    const today = new Date(); // Get today's date
-                    today.setHours(0, 0, 0, 0); // Reset hours, minutes, seconds for comparison
+                                // Add custom class for Sundays
+                                if (date.getDay() === 0) {
+                                    dayElem.classList.add("sunday"); // Add class for Sundays
+                                }
+                            },
+                            onChange: function(selectedDates, dateStr, instance) {
+                                const selectedDate = new Date(dateStr); // Convert selected date string to Date object
+                                const today = new Date(); // Get today's date
+                                today.setHours(0, 0, 0, 0); // Reset hours, minutes, seconds for comparison
 
-                    // Create a new Date object for the selected date without time components
-                    const selectedDateNoTime = new Date(selectedDate);
-                    selectedDateNoTime.setHours(0, 0, 0, 0); // Reset hours, minutes, seconds for comparison
+                                // Create a new Date object for the selected date without time components
+                                const selectedDateNoTime = new Date(selectedDate);
+                                selectedDateNoTime.setHours(0, 0, 0, 0); // Reset hours, minutes, seconds for comparison
 
-                    console.log("Today: ", today);
-                    console.log("Selected date (no time): ", selectedDateNoTime);
+                                console.log("Today: ", today);
+                                console.log("Selected date (no time): ", selectedDateNoTime);
 
-                    // Check if selected date is a holiday
-                    if (holidayDates.includes(dateStr)) {
-                        showToast(`${dateStr} is a holiday and cannot be selected.`); // Show toast for holiday
-                        instance.clear(); // Optionally clear the selection
-                    } 
-                    // Check if the selected date is today
-                    else if (selectedDateNoTime.getTime() === today.getTime()) {
-                        showToast("Same day reservations are not allowed."); // Show toast for same day reservation
-                        instance.clear(); // Optionally clear the selection
-                    } 
-                    // Check if the selected date is in the past
-                    else if (selectedDateNoTime < today) {
-                        showToast(`${dateStr} is a past date and cannot be selected.`); // Show toast for past dates
-                        instance.clear(); // Optionally clear the selection
-                    }     // Check if the selected date is a Sunday
-                    else if (selectedDate.getDay() === 0) { // Sunday is represented by 0
-                        showToast(`${dateStr} falls on a Sunday and cannot be selected.`); // Show toast for Sunday
-                        instance.clear(); // Optionally clear the selection
-                    } else {
-                        console.log("Selected date: ", dateStr); // Handle the selected date
-                    }
+                                // Check if selected date is a holiday
+                                if (holidayDates.includes(dateStr)) {
+                                    showToast(`${dateStr} is a holiday and cannot be selected.`); // Show toast for holiday
+                                    instance.clear(); // Optionally clear the selection
+                                } 
+                                // Check if the selected date is today
+                                else if (selectedDateNoTime.getTime() === today.getTime()) {
+                                    showToast("Same day reservations are not allowed."); // Show toast for same day reservation
+                                    instance.clear(); // Optionally clear the selection
+                                } 
+                                // Check if the selected date is in the past
+                                else if (selectedDateNoTime < today) {
+                                    showToast(`${dateStr} is a past date and cannot be selected.`); // Show toast for past dates
+                                    instance.clear(); // Optionally clear the selection
+                                }     // Check if the selected date is a Sunday
+                                else if (selectedDate.getDay() === 0) { // Sunday is represented by 0
+                                    showToast(`${dateStr} falls on a Sunday and cannot be selected.`); // Show toast for Sunday
+                                    instance.clear(); // Optionally clear the selection
+                                } else {
+                                    console.log("Selected date: ", dateStr); // Handle the selected date
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Error fetching holiday data:", error);
+                    });
+
+                function showToast(message) {
+                    const toast = document.getElementById("toast");
+                    const toastMessage = document.getElementById("toastMessage");
+
+                    toastMessage.textContent = message; // Set the toast message
+                    toast.classList.remove("hidden"); // Show the toast
+
+                    // Hide the toast after 3 seconds
+                    setTimeout(() => {
+                        toast.classList.add("hidden");
+                    }, 3000);
                 }
             });
-        })
-        .catch(error => {
-            console.error("Error fetching holiday data:", error);
-        });
-
-    function showToast(message) {
-        const toast = document.getElementById("toast");
-        const toastMessage = document.getElementById("toastMessage");
-
-        toastMessage.textContent = message; // Set the toast message
-        toast.classList.remove("hidden"); // Show the toast
-
-        // Hide the toast after 3 seconds
-        setTimeout(() => {
-            toast.classList.add("hidden");
-        }, 3000);
-    }
-});
-
-
-
         </script>
         <style>
             /* Custom styles for holidays */
@@ -184,9 +181,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 background-color: #ccf2ff; /* Light blue background */
                 color: #007bff; /* Blue text */
             }
-        #custom-dialog, #toast {
-            z-index: 10000; /* Ensures the logout modal appears on top of everything */
-        }
+            #custom-dialog, #toast {
+                z-index: 10000; /* Ensures the logout modal appears on top of everything */
+            }
 
         </style>
 </head>
@@ -205,77 +202,72 @@ document.addEventListener("DOMContentLoaded", function() {
                 </div>
             </header>
         <!-- Main Section -->
-        <main class="flex-1 p-6 overflow-y-auto">
-
-            
-
-            <div class="bg-white p-4 rounded-md shadow-md mb-6">
-                <div class="flex items-center space-x-4 mb-4">
-                    <div id="facility-reservations" title="Reservations">
-                        <button id="view-reservations-btn" onclick="window.history.back()" class="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
-                            <i class="fa-solid fa-calendar"></i>
-                        </button>
-                    </div>
-                    <select id="buildingSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterFacilities()">
-                        <option value="">All Buildings</option>
-                        <?php while ($building = $buildings_result->fetch_assoc()): ?>
-                            <option value="<?php echo htmlspecialchars($building['building']); ?>">
-                                <?php echo htmlspecialchars($building['building']); ?>
-                            </option>
-                        <?php endwhile; ?>
-                    </select>
-                    <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search facilities..." onkeyup="filterFacilities()">
+        <main class="flex-1 p-4 overflow-y-auto">
+            <div class="flex items-center space-x-4 mb-4">
+                <div id="facility-reservations" title="Reservations">
+                    <button id="view-reservations-btn" onclick="window.history.back()" class="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
+                        <i class="fa-solid fa-calendar"></i>
+                    </button>
                 </div>
-                    <table id="facilityTable" class="min-w-full bg-white rounded-md shadow-md border border-gray-200" data-sort-order="asc">
-                        <thead>
-                            <tr class="bg-gray-200 border-b">
-                                <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
-                                    <span class="flex items-center">Building
-                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
-                                        </svg>
-                                    </span>
-                                </th>                                
-                                <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
-                                    <span class="flex items-center">Facility Name
-                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
-                                        </svg>
-                                    </span>
-                                </th>
-                                <th class="py-3 px-4 text-left">
-                                    <span class="flex items-center">Status</span>
-                                </th>
-                                <th class="py-3 px-4 text-left">
-                                    <span class="flex items-center">Description</span>
-                                </th>
-                                <th class="py-3 px-4 text-left">Action</th>
-                            </tr>
-                        </thead>
-
-                    <tbody class="divide-y divide-gray-200">
-                        <?php if ($facility_result->num_rows > 0): ?>
-                            <?php while ($row = $facility_result->fetch_assoc()): ?>
-                                <tr class="<?php echo $row['status'] === 'Unavailable' ? 'text-red-600 bg-gray-100' : ''; ?>">
-                                    <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>                                    
-                                    <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>                                    
-                                    <td class="py-2 px-4"><?php echo htmlspecialchars($row['status']); ?></td>
-                                    <td class="py-2 px-4"><?php echo htmlspecialchars($row['descri']); ?></td>
-                                    <td class="py-2 px-4">
-                                        <?php if ($row['status'] !== 'Unavailable'): ?>
-                                            <button onclick="showReservationForm('<?php echo htmlspecialchars($row['facility_name']); ?>', '<?php echo  htmlspecialchars($row['facility_id']); ?>')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Reserve</button>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="5" class="text-center py-4">No facilities found</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                <select id="buildingSelect" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterFacilities()">
+                    <option value="">All Buildings</option>
+                    <?php while ($building = $buildings_result->fetch_assoc()): ?>
+                        <option value="<?php echo htmlspecialchars($building['building']); ?>">
+                            <?php echo htmlspecialchars($building['building']); ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+                <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search facilities..." onkeyup="filterFacilities()">
             </div>
+            <table id="facilityTable" class="min-w-full bg-white rounded-md shadow-md border border-gray-200" data-sort-order="asc">
+                <thead>
+                    <tr class="bg-gray-200 border-b">
+                        <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
+                            <span class="flex items-center">Building
+                                <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                </svg>
+                            </span>
+                        </th>                                
+                        <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
+                            <span class="flex items-center">Facility Name
+                                <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                </svg>
+                            </span>
+                        </th>
+                        <th class="py-3 px-4 text-left">
+                            <span class="flex items-center">Status</span>
+                        </th>
+                        <th class="py-3 px-4 text-left">
+                            <span class="flex items-center">Description</span>
+                        </th>
+                        <th class="py-3 px-4 text-left">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-200">
+                    <?php if ($facility_result->num_rows > 0): ?>
+                        <?php while ($row = $facility_result->fetch_assoc()): ?>
+                            <tr class="<?php echo $row['status'] === 'Unavailable' ? 'text-red-600 bg-gray-100' : ''; ?>">
+                                <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>                                    
+                                <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>                                    
+                                <td class="py-2 px-4"><?php echo htmlspecialchars($row['status']); ?></td>
+                                <td class="py-2 px-4"><?php echo htmlspecialchars($row['descri']); ?></td>
+                                <td class="py-2 px-4">
+                                    <?php if ($row['status'] !== 'Unavailable'): ?>
+                                        <button onclick="showReservationForm('<?php echo htmlspecialchars($row['facility_name']); ?>', '<?php echo  htmlspecialchars($row['facility_id']); ?>')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Reserve</button>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5" class="text-center py-4">No facilities found</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </main>
     </div>
     <div id="toast" class="fixed top-4 right-4 bg-red-400 text-white text-sm p-3 rounded-lg hidden">

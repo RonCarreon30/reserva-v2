@@ -41,6 +41,7 @@ $role_result = $conn->query($role_sql);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PLV: RESERVA</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script>
         function filterUser() {
             const input = document.getElementById('searchInput').value.toLowerCase();
@@ -139,7 +140,7 @@ $role_result = $conn->query($role_sql);
                         <span class="block sm:inline">Something went wrong.</span>
                     </div>
                     <table id="usersTable" class="min-w-full bg-white rounded-md shadow-md border border-gray-200">
-                        <thead>
+                        <thead class="">
                             <tr class="bg-gray-200 border-b">
                                 <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
                                     <span class="flex items-center">First Name

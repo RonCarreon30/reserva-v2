@@ -22,10 +22,6 @@ require_once 'database/config.php';
 // Fetch the user ID from the session data
 $user_id = $_SESSION['user_id'];
 
-// Fetch the user data from the database
-$user_query = "SELECT * FROM users WHERE id = '$user_id'";
-$user_result = $conn->query($user_query);
-$user_data = $user_result->fetch_assoc();
 
 // Fetch user's department from the session
 $head_department = $_SESSION['department'];
@@ -34,16 +30,19 @@ $head_department = $_SESSION['department'];
 $all_reservations_sql = "
     SELECT 
         r.*, 
+        d.dept_name, 
         f.facility_name, 
         f.building 
     FROM 
         reservations r 
     JOIN 
-        facilities f 
-    ON 
-        r.facility_id = f.id
+        users u ON r.user_id = u.id 
+    JOIN 
+        dept_tbl d ON u.department_id = d.dept_id 
+    JOIN 
+        facilities f ON r.facility_id = f.facility_id 
     WHERE 
-        r.user_department = ?
+        d.dept_name = ?
     ORDER BY 
         r.created_at DESC";
 $stmt = $conn->prepare($all_reservations_sql);
@@ -390,7 +389,7 @@ $all_reservations_result = $stmt->get_result();
         <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
             <p id="errorMessageContent" class="text-lg text-red-700 font-semibold mb-4"></p>
             <div class="flex justify-center mt-5">
-                <button onclick="hideErrorMessage()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">OK</button>
+                <button onclick="location.reload()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">OK</button>
             </div>
         </div>
     </div>

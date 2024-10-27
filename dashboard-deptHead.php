@@ -24,7 +24,21 @@ $user_id = $_SESSION['user_id'];
 $head_department = $_SESSION['department'];
 
 // Query to fetch reservations of the student rep of same department
-$dept_reservation_sql = "SELECT * FROM reservations WHERE user_department = ? ORDER BY created_at DESC";
+$dept_reservation_sql = "
+SELECT 
+    r.*, 
+    d.dept_name 
+FROM 
+    reservations r 
+JOIN 
+    users u ON r.user_id = u.id 
+JOIN 
+    dept_tbl d ON u.department_id = d.dept_id 
+WHERE 
+    d.dept_id = ? 
+ORDER BY 
+    r.created_at DESC";
+
 $stmt = $conn->prepare($dept_reservation_sql);
 $stmt->bind_param("s", $head_department);
 $stmt->execute();
