@@ -86,7 +86,25 @@
             #confirmation-modal {
                 z-index: 10000; /* Ensures the logout modal appears on top of everything */
             }
+
+            #toastContainer {
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                z-index: 10000;
+                max-width: 300px;
+            }
+
+            .toast {
+                transition: opacity 0.3s ease;
+                opacity: 1;
+            }
+
+            .fade {
+                opacity: 0;
+            }
         </style>
+
     </head>
 <body class="bg-gray-50">
     <div class="flex h-screen bg-gray-100">
@@ -172,6 +190,7 @@
 
                                         while ($row = $result->fetch_assoc()) {
                                             echo "<tr>";
+                                            echo "<tr data-term-id='{$row['term_id']}'>";
                                             echo "<td class='border px-4 py-2'>{$row['academic_year']}</td>";
                                             echo "<td class='border px-4 py-2'>{$row['semester']}</td>";
                                             echo "<td class='border px-4 py-2'>{$row['term_status']}</td>";
@@ -218,9 +237,11 @@
 
                                         while ($row = $result->fetch_assoc()) {
                                             echo "<tr>";
+                                            echo "<tr data-building-id='{$row['building_id']}'>";
                                             echo "<td class='border px-4 py-2'>{$row['building_name']}</td>";
                                             echo "<td class='border px-4 py-2'>{$row['building_desc']}</td>";
-                                            echo "<td class='border px-4 py-2'><button class='px-2 py-1 bg-red-500 text-white rounded'>Delete</button></td>";
+                                            echo "<td class='border px-4 py-2'><button class='px-2 py-1 bg-blue-500 text-white rounded'>Edit</button>
+                                            <button class='px-2 py-1 bg-red-500 text-white rounded'>Delete</button></td>";
                                             echo "</tr>";
                                         }
                                     ?>
@@ -272,15 +293,17 @@
                                 <tbody id="departmentTableBody">
                                     <!-- Data will be dynamically inserted here -->
                                     <?php
-                                        $query = "SELECT d.dept_name, b.building_name FROM dept_tbl d JOIN buildings_tbl b ON d.building_id = b.building_id";
+                                        $query = "SELECT d.dept_id, d.dept_name, b.building_name FROM dept_tbl d JOIN buildings_tbl b ON d.building_id = b.building_id";
 
                                         $result = $conn->query($query);
 
                                         while ($row = $result->fetch_assoc()) {
                                             echo "<tr>";
+                                            echo "<tr data-dept-id='{$row['dept_id']}'>";
                                             echo "<td class='border px-4 py-2'>{$row['dept_name']}</td>";
                                             echo "<td class='border px-4 py-2'>{$row['building_name']}</td>";
-                                            echo "<td class='border px-4 py-2'><button class='px-2 py-1 bg-red-500 text-white rounded'>Delete</button></td>";
+                                            echo "<td class='border px-4 py-2'><button class='px-2 py-1 bg-blue-500 text-white rounded'>Edit</button>
+                                            <button class='px-2 py-1 bg-red-500 text-white rounded'>Delete</button></td>";
                                             echo "</tr>";
                                         }
                                     ?>
@@ -293,6 +316,93 @@
             </main>
         </div>
     </div>
+
+
+    <!-- Edit Modal for Academic Year & Semester -->
+<div id="editAYModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded shadow-lg p-4 w-1/3">
+        <h2 class="text-lg font-semibold mb-2">Edit Academic Year & Semester</h2>
+        <form id="editAYForm">
+            <input type="hidden" id="editAYTermId" name="term_id">
+            <div class="mb-4">
+                <label for="editAYAcademicYear" class="block mb-1">Academic Year</label>
+                <input type="text" id="editAYAcademicYear" name="academic_year" class="border w-full px-2 py-1" required>
+            </div>
+            <div class="mb-4">
+                <label for="editAYSemester" class="block mb-1">Semester</label>
+                <input type="text" id="editAYSemester" name="semester" class="border w-full px-2 py-1" required>
+            </div>
+            <div class="mb-4">
+                <label for="editAYTermStatus" class="block mb-1">Set Status</label>
+                <input type="text" id="editAYTermStatus" name="term_status" class="border w-full px-2 py-1" required>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" id="closeAYModal" class="mr-2 px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal for Buildings -->
+<div id="editBuildingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded shadow-lg p-4 w-1/3">
+        <h2 class="text-lg font-semibold mb-2">Edit Building</h2>
+        <form id="editBuildingForm">
+            <input type="hidden" id="editBuildingId" name="building_id">
+            <div class="mb-4">
+                <label for="editBuildingName" class="block mb-1">Building Name</label>
+                <input type="text" id="editBuildingName" name="building_name" class="border w-full px-2 py-1" required>
+            </div>
+            <div class="mb-4">
+                <label for="editBuildingDesc" class="block mb-1">Description</label>
+                <input type="text" id="editBuildingDesc" name="building_desc" class="border w-full px-2 py-1" required>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" id="closeBuildingModal" class="mr-2 px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal for Departments -->
+<div id="editDeptModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded shadow-lg p-4 w-1/3">
+        <h2 class="text-lg font-semibold mb-2">Edit Department</h2>
+        <form id="editDeptForm">
+            <input type="hidden" id="editDeptId" name="dept_id">
+            <div class="mb-4">
+                <label for="editDeptName" class="block mb-1">Department Name</label>
+                <input type="text" id="editDeptName" name="dept_name" class="border w-full px-2 py-1" required>
+            </div>
+            <div class="mb-4">
+                <label for="editDeptBuilding" class="block mb-1">Building</label>
+                <select id="editDeptBuilding" name="building_id" required class="border w-full px-2 py-1">
+                    <option value="" readonly>Select Building</option> <!-- Default empty option -->
+                    <?php
+                    // Query to get distinct buildings
+                    $query = "SELECT * FROM buildings_tbl";
+                    $result = $conn->query($query);
+                    // Loop through the result and create an <option> element for each building
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {
+                            echo '<option value="' . $row['building_id'] . '">' . $row['building_name'] . '</option>';
+                        }
+                    } else {
+                        echo '<option value="">No buildings available</option>';
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" id="closeDeptModal" class="mr-2 px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
     <!-- Logout Modal -->
     <div id="custom-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
         <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
@@ -305,14 +415,223 @@
         </div>
     </div> 
     <script src="scripts/logout.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Academic Year & Semester Modals
+        const editAYModal = document.getElementById('editAYModal');
+        const closeAYModal = document.getElementById('closeAYModal');
+        const editAYForm = document.getElementById('editAYForm');
+
+        // Buildings Modals
+        const editBuildingModal = document.getElementById('editBuildingModal');
+        const closeBuildingModal = document.getElementById('closeBuildingModal');
+        const editBuildingForm = document.getElementById('editBuildingForm');
+
+        // Departments Modals
+        const editDeptModal = document.getElementById('editDeptModal');
+        const closeDeptModal = document.getElementById('closeDeptModal');
+        const editDeptForm = document.getElementById('editDeptForm');
+
+        // Function to open the Academic Year & Semester edit modal
+        function openAYEditModal(termId, academicYear, semester, termStatus) {
+            document.getElementById('editAYTermId').value = termId;
+            document.getElementById('editAYAcademicYear').value = academicYear;
+            document.getElementById('editAYSemester').value = semester;
+            document.getElementById('editAYTermStatus').value = termStatus;
+            editAYModal.classList.remove('hidden');
+        }
+
+        // Function to open the Building edit modal
+        function openBuildingEditModal(buildingId, buildingName, buildingDesc) {
+            document.getElementById('editBuildingId').value = buildingId;
+            document.getElementById('editBuildingName').value = buildingName;
+            document.getElementById('editBuildingDesc').value = buildingDesc;
+            editBuildingModal.classList.remove('hidden');
+        }
+
+            // Function to open the Department edit modal
+            function openDeptEditModal(deptId, deptName, buildingId) {
+                document.getElementById('editDeptId').value = deptId;
+                document.getElementById('editDeptName').value = deptName;
+                document.getElementById('editDeptBuilding').value = buildingId; // Change this to use buildingId
+                editDeptModal.classList.remove('hidden');
+            }
+
+
+        // Event listeners for edit buttons in Academic Year & Semester table
+        document.querySelectorAll('#academicYearTableBody .bg-blue-500').forEach(button => {
+            button.addEventListener('click', function () {
+                const row = this.closest('tr');
+                const termId = row.dataset.termId;
+                const academicYear = row.children[0].textContent;
+                const semester = row.children[1].textContent;
+                const termStatus = row.children[2].textContent;
+
+                openAYEditModal(termId, academicYear, semester, termStatus);
+            });
+        });
+
+        // Event listeners for edit buttons in Buildings table
+        document.querySelectorAll('#buildingTableBody .bg-blue-500').forEach(button => {
+            button.addEventListener('click', function () {
+                const row = this.closest('tr');
+                const buildingId = row.dataset.buildingId; // Add data attributes
+                const buildingName = row.children[0].textContent;
+                const buildingDesc = row.children[1].textContent;
+
+                openBuildingEditModal(buildingId, buildingName, buildingDesc);
+            });
+        });
+
+        // Event listeners for edit buttons in Departments table
+        document.querySelectorAll('#departmentTableBody .bg-blue-500').forEach(button => {
+            button.addEventListener('click', function () {
+                const row = this.closest('tr');
+                const deptId = row.dataset.deptId; // Add data attributes
+                const deptName = row.children[0].textContent;
+                const building = row.children[1].textContent;
+
+                openDeptEditModal(deptId, deptName, building);
+            });
+        });
+
+        // Event listener for delete buttons in Academic Year & Semester table
+        document.querySelectorAll('#academicYearTableBody .bg-red-500').forEach(button => {
+            button.addEventListener('click', function () {
+                const row = this.closest('tr');
+                const termId = row.dataset.termId; // Add data attributes
+
+                if (confirm('Are you sure you want to delete this entry?')) {
+                    // Call your delete function via AJAX
+                    deleteEntry('handlers/delete_ay.php', { term_id: termId });
+                }
+            });
+        });
+
+        // Event listener for delete buttons in Buildings table
+        document.querySelectorAll('#buildingTableBody .bg-red-500').forEach(button => {
+            button.addEventListener('click', function () {
+                const row = this.closest('tr');
+                const buildingId = row.dataset.buildingId; // Add data attributes
+
+                if (confirm('Are you sure you want to delete this entry?')) {
+                    // Call your delete function via AJAX
+                    deleteEntry('handlers/delete_building.php', { building_id: buildingId });
+                }
+            });
+        });
+
+        // Event listener for delete buttons in Departments table
+        document.querySelectorAll('#departmentTableBody .bg-red-500').forEach(button => {
+            button.addEventListener('click', function () {
+                const row = this.closest('tr');
+                const deptId = row.dataset.deptId; // Add data attributes
+
+                if (confirm('Are you sure you want to delete this entry?')) {
+                    // Call your delete function via AJAX
+                    deleteEntry('handlers/delete_department.php', { dept_id: deptId });
+                }
+            });
+        });
+
+        // Close modals
+        closeAYModal.addEventListener('click', () => editAYModal.classList.add('hidden'));
+        closeBuildingModal.addEventListener('click', () => editBuildingModal.classList.add('hidden'));
+        closeDeptModal.addEventListener('click', () => editDeptModal.classList.add('hidden'));
+
+        // Submit forms for editing entries
+        editAYForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            // Implement AJAX to submit the form
+            submitForm('handlers/edit_ay.php', new FormData(this));
+        });
+
+        editBuildingForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            // Implement AJAX to submit the form
+            submitForm('handlers/edit_building.php', new FormData(this));
+        });
+
+        editDeptForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            // Implement AJAX to submit the form
+            submitForm('handlers/edit_department.php', new FormData(this));
+        });
+    });
+
+    function deleteEntry(url, data) {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                editAYModal.classList.add('hidden');
+                editBuildingModal.classList.add('hidden');
+                editDeptModal.classList.add('hidden');
+                showToast('Entry deleted successfully!', 'success');
+                // Refresh the table or remove the row
+                setTimeout(() => {
+                    location.reload(); // Reloads the current page
+                }, 3000); // 3000 milliseconds = 3 seconds
+            } else {
+                showToast('Error deleting entry: ' + data.error, 'error');
+            }
+        })
+        .catch(error => showToast('Error deleting entry: ' + error.message, 'error'));
+    }
+
+    function submitForm(url, formData) {
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                editAYModal.classList.add('hidden');
+                editBuildingModal.classList.add('hidden');
+                editDeptModal.classList.add('hidden');
+                showToast('Changes saved successfully!', 'success');
+                setTimeout(() => {
+                    location.reload(); // Reloads the current page
+                }, 3000); // 3000 milliseconds = 3 seconds
+            } else {
+                showToast('Error saving changes: ' + data.error, 'error');
+            }
+        })
+        .catch(error => showToast('Error saving changes: ' + error.message, 'error'));
+    }
+
+    function showToast(message, type) {
+        const toastContainer = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white p-4 rounded-md shadow-md mb-4`;
+        toast.textContent = message;
+
+        // Append toast to container
+        toastContainer.appendChild(toast);
+
+        // Automatically hide the toast after a few seconds
+        setTimeout(() => {
+            toast.classList.add('fade');
+            setTimeout(() => {
+                toastContainer.removeChild(toast);
+            }, 300); // Delay for fade-out effect
+        }, 3000); // Display duration
+    }
+</script>
+
     <script>
         // Get references to the buttons and forms
         const academicYearBtn = document.getElementById('academicYearBtn');
         const buildingBtn = document.getElementById('buildingBtn');
         const departmentBtn = document.getElementById('departmentBtn');
-
-        
-                
+   
         // Event listeners to show the respective forms
         academicYearBtn.addEventListener('click', function() {
             document.getElementById('academicYearForm').classList.remove('hidden');
@@ -395,36 +714,35 @@
             }
         });
 
-// Save Building
-document.getElementById('saveBuildingBtn').addEventListener('click', async function () {
-    const building_name = document.getElementById('building_name').value; // Corrected variable name
-    const building_desc = document.getElementById('building_desc').value; // Corrected variable name
+        // Save Building
+        document.getElementById('saveBuildingBtn').addEventListener('click', async function () {
+            const building_name = document.getElementById('building_name').value; // Corrected variable name
+            const building_desc = document.getElementById('building_desc').value; // Corrected variable name
 
-    const formData = new FormData();
-    formData.append('building_name', building_name); // Use the correct variable
-    formData.append('building_desc', building_desc); // Use the correct variable
+            const formData = new FormData();
+            formData.append('building_name', building_name); // Use the correct variable
+            formData.append('building_desc', building_desc); // Use the correct variable
 
-    try {
-        const response = await fetch('handlers/save_building.php', {
-            method: 'POST',
-            body: formData
+            try {
+                const response = await fetch('handlers/save_building.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') { // Corrected property check
+                    showToast('Building saved successfully!', 'success');
+                    setTimeout(() => {
+                        location.reload(); // Reload the page after 3 seconds
+                    }, 2000); // 3000 milliseconds = 3 seconds
+                } else {
+                    showToast('Failed to save Building!', 'error');
+                }
+            } catch (error) {
+                showToast('Error occurred while saving data!', 'error');
+            }
         });
-
-        const result = await response.json();
-
-        if (result.status === 'success') { // Corrected property check
-            showToast('Building saved successfully!', 'success');
-            setTimeout(() => {
-                location.reload(); // Reload the page after 3 seconds
-            }, 2000); // 3000 milliseconds = 3 seconds
-        } else {
-            showToast('Failed to save Building!', 'error');
-        }
-    } catch (error) {
-        showToast('Error occurred while saving data!', 'error');
-    }
-});
-
 
         // Save Department
         document.getElementById('saveDepartmentBtn').addEventListener('click', async function () {
