@@ -229,7 +229,7 @@
                             </table>
                         </div>
 
-                        <!-- Table to display Department data -->
+                        <!-- Table to display Building data -->
                         <div id="buildingTableContainer" class="hidden">
                             <h3 class="text-lg font-semibold mb-4">Saved Buildings</h3>
                             <table class="w-full table-auto border-collapse border border-gray-300">
@@ -241,25 +241,23 @@
                                     </tr>
                                 </thead>
                                 <tbody id="buildingTableBody">
-                                    <!-- Data will be dynamically inserted here -->
                                     <?php
                                         $query = "SELECT * FROM buildings_tbl";
                                         $result = $conn->query($query);
 
                                         while ($row = $result->fetch_assoc()) {
-                                            echo "<tr>";
+                                            echo "<tr data-id='{$row['building_id']}'>";
                                             echo "<td class='border px-4 py-2'>{$row['building_name']}</td>";
                                             echo "<td class='border px-4 py-2'>{$row['building_desc']}</td>";
                                             echo "<td class='border px-4 py-2'>
-                                                    <button class='px-2 py-1 bg-blue-500 text-white rounded'>Edit</button>
-                                                    <button class='px-2 py-1 bg-red-500 text-white rounded'>Delete</button></td>";
+                                                    <button class='edit-building-btn px-2 py-1 bg-blue-500 text-white rounded'>Edit</button>
+                                                    <button class='delete-building-btn px-2 py-1 bg-red-500 text-white rounded' data-id='{$row['building_id']}'>Delete</button></td>";
                                             echo "</tr>";
                                         }
                                     ?>
-
                                 </tbody>
                             </table>
-                        </div>                        
+                        </div>
 
                         <!-- Table to display Department data -->
                         <div id="deptTableContainer" class="hidden">
@@ -273,25 +271,24 @@
                                     </tr>
                                 </thead>
                                 <tbody id="departmentTableBody">
-                                    <!-- Data will be dynamically inserted here -->
                                     <?php
                                         $query = "SELECT d.dept_id, d.dept_name, b.building_name FROM dept_tbl d JOIN buildings_tbl b ON d.building_id = b.building_id";
-
                                         $result = $conn->query($query);
 
                                         while ($row = $result->fetch_assoc()) {
-                                            echo "<tr>";
+                                            echo "<tr data-id='{$row['dept_id']}'>";
                                             echo "<td class='border px-4 py-2'>{$row['dept_name']}</td>";
                                             echo "<td class='border px-4 py-2'>{$row['building_name']}</td>";
-                                            echo "<td class='border px-4 py-2'><button class='px-2 py-1 bg-blue-500 text-white rounded'>Edit</button>
-                                            <button class='px-2 py-1 bg-red-500 text-white rounded'>Delete</button></td>";
+                                            echo "<td class='border px-4 py-2'>
+                                                    <button class='edit-department-btn px-2 py-1 bg-blue-500 text-white rounded'>Edit</button>
+                                                    <button class='delete-department-btn px-2 py-1 bg-red-500 text-white rounded' data-id='{$row['dept_id']}'>Delete</button></td>";
                                             echo "</tr>";
                                         }
                                     ?>
-
                                 </tbody>
                             </table>
                         </div>
+
                     </div>
                 </div>
             </main>
@@ -394,7 +391,7 @@
             }, 3000);
         }
 
-        // Save Building
+        /*/ Save Building
         document.getElementById('saveBuildingBtn').addEventListener('click', async function () {
             const building_name = document.getElementById('building_name').value; // Corrected variable name
             const building_desc = document.getElementById('building_desc').value; // Corrected variable name
@@ -452,9 +449,11 @@
             } catch (error) {
                 showToast('Error occurred while saving data!', 'error');
             }
-        });
+        });*/
 
     </script>
+
+    <!--edit and delete AY-->
     <script>
         // Get references to buttons and the form
         const saveAcademicYearBtn = document.getElementById('saveAcademicYearBtn');
@@ -569,6 +568,176 @@
                 }
             });
         });
+
+    </script>
+    <script>
+        // Function to handle editing building
+document.querySelectorAll('.edit-building-btn').forEach(button => {
+    button.addEventListener('click', function () {
+        const row = button.closest('tr');
+        const rowId = row.getAttribute('data-id');
+
+        fetch(`handlers/fetch_building.php?id=${rowId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('building_name').value = data.building_name;
+                document.getElementById('building_desc').value = data.building_desc;
+                document.getElementById('buildingForm').classList.remove('hidden');
+                saveBuildingBtn.textContent = 'Update';
+                document.getElementById('buildingForm').setAttribute('data-edit-id', rowId);
+            })
+            .catch(error => console.error('Error fetching building data:', error));
+    });
+});
+
+// Function to handle saving or updating building
+saveBuildingBtn.addEventListener('click', async function () {
+    const form = document.getElementById('buildingForm');
+    const editId = form.getAttribute('data-edit-id');
+
+    const buildingName = document.getElementById('building_name').value;
+    const buildingDesc = document.getElementById('building_desc').value;
+
+    const formData = new FormData();
+    formData.append('building_name', buildingName);
+    formData.append('building_desc', buildingDesc);
+
+    if (editId) {
+        formData.append('id', editId);
+        fetch('handlers/update_building.php', {
+            method: 'POST',
+            body: formData
+        }).then(response => response.json()).then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        });
+    } else {
+        try {
+            const response = await fetch('handler/save_building.php', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast('Building saved successfully!', 'success');
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                showToast('Failed to save building!', 'error');
+            }
+        } catch (error) {
+            showToast('Error occurred while saving building data!', 'error');
+        }
+    }
+});
+
+// Function to handle deleting building
+document.querySelectorAll('.delete-building-btn').forEach(button => {
+    button.addEventListener('click', function () {
+        const rowId = button.getAttribute('data-id');
+        if (confirm("Are you sure you want to delete this building?")) {
+            fetch('handlers/delete_building.php', {
+                method: 'POST',
+                body: JSON.stringify({ id: rowId }),
+                headers: { 'Content-Type': 'application/json' }
+            }).then(response => response.json()).then(data => {
+                if (data.status === 'success') {
+                    showToast(data.message, 'success');
+                    setTimeout(() => location.reload(), 3000);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+        }
+    });
+});
+
+// Function to handle editing department
+document.querySelectorAll('.edit-department-btn').forEach(button => {
+    button.addEventListener('click', function () {
+        const row = button.closest('tr');
+        const rowId = row.getAttribute('data-id');
+
+        fetch(`handlers/fetch_department.php?id=${rowId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('departmentName').value = data.dept_name;
+                document.getElementById('building').value = data.building_id; // Assuming this is a dropdown
+                document.getElementById('departmentForm').classList.remove('hidden');
+                saveDepartmentBtn.textContent = 'Update';
+                document.getElementById('departmentForm').setAttribute('data-edit-id', rowId);
+            })
+            .catch(error => console.error('Error fetching department data:', error));
+    });
+});
+
+// Function to handle saving or updating department
+saveDepartmentBtn.addEventListener('click', async function () {
+    const form = document.getElementById('departmentForm');
+    const editId = form.getAttribute('data-edit-id');
+
+    const departmentName = document.getElementById('departmentName').value;
+    const buildingId = document.getElementById('building').value;
+
+    const formData = new FormData();
+    formData.append('departmentName', departmentName);
+    formData.append('buildingId', buildingId);
+
+    if (editId) {
+        formData.append('id', editId);
+        fetch('handlers/update_department.php', {
+            method: 'POST',
+            body: formData
+        }).then(response => response.json()).then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        });
+    } else {
+        try {
+            const response = await fetch('handlers/save_department.php', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast('Department saved successfully!', 'success');
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                showToast('Failed to save department!', 'error');
+            }
+        } catch (error) {
+            showToast('Error occurred while saving department data!', 'error');
+        }
+    }
+});
+
+// Function to handle deleting department
+document.querySelectorAll('.delete-department-btn').forEach(button => {
+    button.addEventListener('click', function () {
+        const rowId = button.getAttribute('data-id');
+        if (confirm("Are you sure you want to delete this department?")) {
+            fetch('handlers/delete_department.php', {
+                method: 'POST',
+                body: JSON.stringify({ id: rowId }),
+                headers: { 'Content-Type': 'application/json' }
+            }).then(response => response.json()).then(data => {
+                if (data.status === 'success') {
+                    showToast(data.message, 'success');
+                    setTimeout(() => location.reload(), 3000);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+        }
+    });
+});
 
     </script>
 </body>
