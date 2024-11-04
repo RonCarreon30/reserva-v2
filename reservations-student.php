@@ -67,7 +67,7 @@ $all_reservations_result = $conn->query($all_reservations_sql);
 
             facilityRows.forEach(row => {
                 const facilityName = row.cells[1].textContent.toLowerCase(); // Facility name
-                const reservationStatus = row.cells[5].textContent.toLowerCase(); // Reservation status
+                const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status
                 const buildingName = row.cells[0].textContent.toLowerCase(); // Building name
 
                 // Apply filters
@@ -284,12 +284,9 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                                     </span>
                                 </th>
                                 <th class="py-3 px-4">
-                                    <span class="flex items-center">Start Time</span>
+                                    <span class="flex items-center">Time</span>
                                 </th>
-                                <th class="py-3 px-4">
-                                    <span class="flex items-center">End Time</span>
-                                </th>
-                                <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(5)">
+                                <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(4)">
                                     <span class="flex items-center">Status
                                         <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
@@ -313,6 +310,14 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                                     $reservationId = $row["id"];
                                     $reservationStatus = $row["reservation_status"];
                                     $reservationDate = $row["reservation_date"];
+
+                                    // Convert start and end times to 12-hour format with AM/PM
+                                    $startTime = new DateTime($row["start_time"]);
+                                    $formattedStartTime = $startTime->format('g:i A');
+
+                                    $endTime = new DateTime($row["end_time"]);
+                                    $formattedEndTime = $endTime->format('g:i A');
+
                                     $isEditable = ($reservationDate >= $today) || ($reservationStatus === 'In Review' || $reservationStatus === 'Declined');
                                     
                                     $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
@@ -320,8 +325,7 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                                     echo '<td class="py-2 px-4">' . htmlspecialchars($row["building"]) . '</td>'; // Display the building
                                     echo '<td class="py-2 px-4">' . htmlspecialchars($row["facility_name"]) . '</td>'; // Display the facility name
                                     echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["start_time"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["end_time"]) . '</td>';
+                                    echo '<td class="py-2 px-4">' . htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime) . '</td>';
                                     echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_status"]) . '</td>';
                                     echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';                                   
                                     if ($isEditable) {
@@ -400,6 +404,7 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                         <span id="rejectionReason" class="ml-1 text-red-600"></span>
                     </label>
                 </div>
+                <input type="hidden" id="facilityId" />
 
 
                 <div class="flex mb-4 gap-2">
@@ -456,7 +461,7 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                 </div>
                 <div class="flex flex-col space-y-2">
                     <label for="additionalInfo" class="text-gray-700">Additional Information:</label>
-                    <textarea id="additionalInfo" name="additionalInfo" class="border border-gray-300 rounded-md p-2"></textarea>
+                    <textarea id="additionalInfo" name="additionalInfo" class="border border-gray-300 rounded-md p-2" required></textarea>
                 </div>
                 <div class="flex justify-between">
                     <button type="button" id="saveChangesButton" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600" onclick="saveChanges()">Save Changes</button>
@@ -492,7 +497,7 @@ $all_reservations_result = $conn->query($all_reservations_sql);
             <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
                 <p id="errorMessageContent" class="text-lg text-red-700 font-semibold mb-4"></p>
                 <div class="flex justify-center mt-5">
-                    <button onclick="hideErrorMessage()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">OK</button>
+                    <button onclick="hideModal('errorMessageModal')" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">OK</button>
                 </div>
             </div>
         </div>
@@ -527,6 +532,8 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                         document.getElementById('facultyInCharge').value = data.facultyInCharge;
                         document.getElementById('purpose').value = data.purpose;
                         document.getElementById('additionalInfo').value = data.additional_info;
+                         // Add facilityId to a hidden input field or another appropriate way to capture it
+                        document.getElementById('facilityId').value = data.facility_id;
 
                         if (data.reservation_status === 'Declined') {
                             document.getElementById('rejectionReasonContainer').style.display = 'block';
@@ -556,9 +563,11 @@ $all_reservations_result = $conn->query($all_reservations_sql);
             const rejectionReason = document.getElementById('rejectionReason').textContent;
 
             const updatedReservationStatus = 'In Review';
+            const facilityId = document.getElementById('facilityId').value; // Get facilityId from the hidden input
 
             const updatedReservation = {
                 reservationId: currentReservationId,
+                facilityId: facilityId,                
                 facilityName: facilityName,
                 reservationDate: reservationDate,
                 startTime: startTime,

@@ -23,6 +23,7 @@ if ($result->num_rows > 0) {
     $reservation['start_time'] = date('h:i A', strtotime($reservation['start_time']));
     $reservation['end_time'] = date('h:i A', strtotime($reservation['end_time']));
 
+
     echo json_encode($reservation);
 } else {
     echo json_encode(['error' => 'Reservation not found']);

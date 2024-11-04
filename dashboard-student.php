@@ -131,6 +131,28 @@
         #custom-dialog {
             z-index: 10000; /* Ensures the logout modal appears on top of everything */
         }
+                .fc-toolbar-title {
+            font-size:large !important; /* Adjust this size as needed */
+            font-weight: normal; /* Optional: adjust font weight */
+        }
+
+        /* Make navigation buttons smaller */
+        .fc-prev-button,
+        .fc-next-button,
+        .fc-today-button,
+        .fc-dayGridMonth-button,
+        .fc-timeGridWeek-button,
+        .fc-timeGridDay-button {
+            font-size: 12px !important; /* Adjust font size */
+            padding: 5px 8px !important; /* Adjust padding for size */
+        }
+
+        /* Optional: Adjust the overall toolbar padding */
+        .fc-toolbar {
+            padding: 5px !important; /* Adjust padding if needed */
+            margin-bottom: 1px !important;
+        }
+
     </style>
 </head>
 <body>

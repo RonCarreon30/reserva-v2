@@ -134,7 +134,7 @@ if ($count_result->num_rows > 0) {
                             failureCallback(error); // Handle any error in the process
                         });
                 },
-                        datesSet: function(info) {
+                datesSet: function(info) {
                     // Modify the calendar title by adding 'Reservations' to the month
                     const calendarTitle = document.querySelector('.fc-toolbar-title');
                     if (calendarTitle) {
@@ -151,6 +151,28 @@ if ($count_result->num_rows > 0) {
         #custom-dialog {
             z-index: 10000; /* Ensures the logout modal appears on top of everything */
         }
+        .fc-toolbar-title {
+            font-size:large !important; /* Adjust this size as needed */
+            font-weight: normal; /* Optional: adjust font weight */
+        }
+
+        /* Make navigation buttons smaller */
+        .fc-prev-button,
+        .fc-next-button,
+        .fc-today-button,
+        .fc-dayGridMonth-button,
+        .fc-timeGridWeek-button,
+        .fc-timeGridDay-button {
+            font-size: 12px !important; /* Adjust font size */
+            padding: 5px 8px !important; /* Adjust padding for size */
+        }
+
+        /* Optional: Adjust the overall toolbar padding */
+        .fc-toolbar {
+            padding: 5px !important; /* Adjust padding if needed */
+            margin-bottom: 1px !important;
+        }
+
     </style>
 </head>
 <body>
@@ -260,10 +282,10 @@ if ($count_result->num_rows > 0) {
                                     <?php
                                     // Fetch count of facilities with no reservations
                                     $no_reservations_sql = "
-                                        SELECT COUNT(*) AS count 
+                                        SELECT COUNT(DISTINCT f.facility_id) AS count 
                                         FROM facilities f 
-                                        LEFT JOIN reservations r ON f.facility_name = r.facility_name 
-                                        WHERE r.facility_name IS NULL";
+                                        LEFT JOIN reservations r ON f.facility_id = r.facility_id
+                                        WHERE r.facility_id IS NULL";
                                     $no_reservations_result = $conn->query($no_reservations_sql);
 
                                     if ($no_reservations_result) {

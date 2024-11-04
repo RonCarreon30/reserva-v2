@@ -54,16 +54,51 @@ $review_reservation_result = $conn->query($review_reservation_sql);
 
 $all_reservations_sql = "SELECT 
     r.*,
+    u.first_name,
+    u.last_name,  -- Example of a column from the users table
     f.building,
     f.facility_name
 FROM
     reservations r
+JOIN 
+    users u ON r.user_id = u.id
 JOIN
     facilities f ON r.facility_id = f.facility_id
 ORDER BY 
     CASE WHEN r.reservation_status = 'In Review' THEN 0 ELSE 1 END,
     r.created_at DESC";
 $all_reservations_result = $conn->query($all_reservations_sql);
+/* Check if there are results
+if ($all_reservations_result && $all_reservations_result->num_rows > 0) {
+    // Start the output (you could also build an HTML table)
+    echo "<table border='1'>
+            <tr>
+                <th>Reservation ID</th>
+                <th>User First Name</th>
+                <th>User Last Name</th>
+                <th>Building</th>
+                <th>Facility Name</th>
+                <th>Reservation Status</th>
+                <th>Created At</th>
+            </tr>";
+
+    // Loop through the results
+    while ($row = $all_reservations_result->fetch_assoc()) {
+        echo "<tr>
+                <td>{$row['id']}</td>
+                <td>{$row['first_name']}</td>
+                <td>{$row['last_name']}</td>
+                <td>{$row['building']}</td>
+                <td>{$row['facility_name']}</td>
+                <td>{$row['reservation_status']}</td>
+                <td>{$row['created_at']}</td>
+              </tr>";
+    }
+
+    echo "</table>";
+} else {
+    echo "No reservations found.";
+}*/
 
 
 // Fetch reservations and encode them for FullCalendar
@@ -101,7 +136,7 @@ if ($all_reservations_result->num_rows > 0) {
 
         facilityRows.forEach(row => {
             const facilityName = row.cells[0].textContent.toLowerCase(); // Facility name in the first column
-            const reservationStatus = row.cells[5].textContent.toLowerCase(); // Reservation status in the fifth column
+            const reservationStatus = row.cells[6].textContent.toLowerCase(); // Reservation status in the fifth column
             
             // Determine if the row should be shown based on search and status filters
             const matchesSearch = facilityName.includes(searchQuery);
@@ -219,8 +254,11 @@ function sortTable(columnIndex) {
                                     </th>
                                     <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100">
                                         <span class="flex items-center">Faculty In Charge</span>
-                                    </th>                                    
-                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(3)">
+                                    </th>       
+                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100">
+                                        <span class="flex items-center">Reserved By</span>
+                                    </th>                                
+                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(4)">
                                         <span class="flex items-center">Reservation Date
                                             <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
@@ -230,7 +268,7 @@ function sortTable(columnIndex) {
                                     <th class="py-3 px-4">
                                         <span class="flex items-center">Time</span>
                                     </th>
-                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(5)">
+                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(6)">
                                         <span class="flex items-center">Status
                                             <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
@@ -293,6 +331,7 @@ function sortTable(columnIndex) {
                                         echo '<td class="py-2 px-4">' . htmlspecialchars($row["building"]) . ' ' . htmlspecialchars($row["facility_name"]) . '</td>';
                                         echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';
                                         echo '<td class="py-2 px-4">' . htmlspecialchars($row["facultyInCharge"]) . '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["first_name"]) . ' ' . htmlspecialchars($row["last_name"]) .  '</td>';
                                         echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
 
                                         echo '<td class="py-2 px-4">' . htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime) . '</td>';
@@ -378,7 +417,7 @@ function sortTable(columnIndex) {
                         <span id="rejectionReason" class="ml-1 text-red-600"></span>
                     </label>
                 </div>
-
+                <input type="hidden" id="facilityId" />
 
                 <div class="flex mb-4 gap-2">
                     <div class="w-1/2">
@@ -469,7 +508,7 @@ function sortTable(columnIndex) {
             <div>
                 <form id="reservationForm" class="space-y-4">
                     <div class="flex flex-col space-y-2">
-                        <textarea id="rejectionReason" name="rejectionReason" rows="3" class="border border-gray-300 rounded-md p-2" required></textarea>
+                        <textarea id="rejectionReasonText" name="rejectionReasonText" rows="3" class="border border-gray-300 rounded-md p-2" required></textarea>
                     </div>
                 </form>
                 <button onclick="hideSuccessModal()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Cancel</button>
@@ -534,7 +573,7 @@ function sortTable(columnIndex) {
                     document.getElementById('facultyInCharge').value = data.facultyInCharge;
                     document.getElementById('purpose').value = data.purpose;
                     document.getElementById('additionalInfo').value = data.additional_info;
-
+                        document.getElementById('facilityId').value = data.facility_id;
                     // If the status is 'Rejected', show the rejection reason
                     if (data.reservation_status === 'Declined') {
                         document.getElementById('rejectionReasonContainer').style.display = 'block';
@@ -567,10 +606,12 @@ function sortTable(columnIndex) {
 
             // Update reservation status to 'In Review'
             const updatedReservationStatus = 'Approved';
+            const facilityId = document.getElementById('facilityId').value; // Get facilityId from the hidden input
 
             // Construct the reservation data object, including the reservation ID
             const updatedReservation = {
                 reservationId: currentReservationId,  // Include the ID of the reservation
+                facilityId: facilityId,     
                 facilityName: facilityName,
                 reservationDate: reservationDate,
                 startTime: startTime,
@@ -808,7 +849,8 @@ function sortTable(columnIndex) {
 
             const confirmButton = document.getElementById('confirmRejectionButton');
             confirmButton.onclick = function() {
-                const rejectionReason = document.getElementById('rejectionReason').value;
+                const rejectionReason = document.getElementById('rejectionReasonText').value;
+console.log('Sending rejection reason:', rejectionReason);
 
                 showConfirmation('Are you sure you want to decline this reservation?', function() {
                     // Send reservation ID, status, and rejection reason in the request body
@@ -822,7 +864,10 @@ function sortTable(columnIndex) {
                             status: 'Declined',          // Include status as Declined
                             reason: rejectionReason       // Include rejection reason
                         })
+                        
+                        
                     })
+                    
                     .then(response => {
                         if (response.ok) {
                             location.reload(); // Reload on success
