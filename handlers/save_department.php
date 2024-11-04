@@ -3,7 +3,7 @@ include '../database/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dept_name = $_POST['departmentName'];
-    $building_id = $_POST['building'];
+    $building_id = $_POST['buildingId'];
 
     // Validate inputs
     if (empty($dept_name) || empty($building_id)) {  // Corrected variable names here

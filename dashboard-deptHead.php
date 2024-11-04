@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-    header("Location: index.html");
+    header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if ($_SESSION['role'] !== 'Dept. Head') {
     // Redirect to a page indicating unauthorized access
-    header("Location: index.html");
+    header("Location: unauthorized");
     exit();
 }
 
@@ -24,7 +24,21 @@ $user_id = $_SESSION['user_id'];
 $head_department = $_SESSION['department'];
 
 // Query to fetch reservations of the student rep of same department
-$dept_reservation_sql = "SELECT * FROM reservations WHERE user_department = ? ORDER BY created_at DESC";
+$dept_reservation_sql = "
+SELECT 
+    r.*, 
+    d.dept_name 
+FROM 
+    reservations r 
+JOIN 
+    users u ON r.user_id = u.id 
+JOIN 
+    dept_tbl d ON u.department_id = d.dept_id 
+WHERE 
+    d.dept_id = ? 
+ORDER BY 
+    r.created_at DESC";
+
 $stmt = $conn->prepare($dept_reservation_sql);
 $stmt->bind_param("s", $head_department);
 $stmt->execute();
@@ -151,6 +165,28 @@ $dept_reservation_result = $stmt->get_result();
         #custom-dialog, #reservationsModal, #reservationModal {
             z-index: 10000; /* Ensures the logout modal appears on top of everything */
         }
+                .fc-toolbar-title {
+            font-size:large !important; /* Adjust this size as needed */
+            font-weight: normal; /* Optional: adjust font weight */
+        }
+
+        /* Make navigation buttons smaller */
+        .fc-prev-button,
+        .fc-next-button,
+        .fc-today-button,
+        .fc-dayGridMonth-button,
+        .fc-timeGridWeek-button,
+        .fc-timeGridDay-button {
+            font-size: 12px !important; /* Adjust font size */
+            padding: 5px 8px !important; /* Adjust padding for size */
+        }
+
+        /* Optional: Adjust the overall toolbar padding */
+        .fc-toolbar {
+            padding: 5px !important; /* Adjust padding if needed */
+            margin-bottom: 1px !important;
+        }
+
     </style>
 </head>
 <body>
@@ -186,7 +222,7 @@ $dept_reservation_result = $stmt->get_result();
                     <div class="h-1/2 p-2">
                         <!--Widgets-->
                         <div class="grid grid-cols-1 m-2 gap-4">
-                            <a href="reservations-deptHead.php" class="block">
+                            <a href="reservations-deptHead" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-calendar-check fa-2x w-1/4 text-green-600"></i>
                                     <div class="w-3/4">
@@ -214,7 +250,7 @@ $dept_reservation_result = $stmt->get_result();
                                 </div>
                             </a>
 
-                            <a href="reservations-deptHead.php" class="block">
+                            <a href="reservations-deptHead" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-calendar-alt fa-2x text-blue-600 w-1/4"></i>
                                     <div class="w-3/4">
@@ -239,7 +275,7 @@ $dept_reservation_result = $stmt->get_result();
                                 </div>
                             </a>
 
-                            <a href="reservations-deptHead.php" class="block">
+                            <a href="reservations-deptHead" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-calendar-times fa-2x w-1/4 text-red-600"></i>
                                     <div class="w-3/4">

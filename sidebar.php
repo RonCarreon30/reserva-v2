@@ -13,19 +13,19 @@
             ?>
             <!-- Registrar Sidebar Links -->
             <div class="flex flex-col items-center mt-3 border-t border-gray-700">
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-reg.php" title="Dashboard">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-reg" title="Dashboard">
                     <i class="fa-solid fa-home"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="accManagement.php" title="Account Management">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="accManagement" title="Account Management">
                     <i class="fa-solid fa-user"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dataSetup.php" title="Data Setup">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dataSetup" title="Data Setup">
                     <i class="fa-solid fa-database"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="loads-deptHead.php" title="Room Loading">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="loads" title="Room Loading">
                     <i class="fa-solid fa-table"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="roomManagement.php" title="Room Management">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="roomManagement" title="Room Management">
                     <i class="fa-solid fa-door-open"></i>
                 </a>
 
@@ -37,22 +37,25 @@
             ?>
             <!-- Admin Sidebar Links -->
             <div class="flex flex-col items-center mt-3 border-t border-gray-700">
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-admin.php" title="Dashboard">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-admin" title="Dashboard">
                     <i class="fa-solid fa-home"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="accManagement.php" title="Account Management">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="accManagement" title="Account Management">
                     <i class="fa-solid fa-user"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dataSetup.php" title="Data Setup">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dataSetup" title="Data Setup">
                     <i class="fa-solid fa-school"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityReservations.php" title="Facility Reservations">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="loads" title="Room Loading">
+                    <i class="fa-solid fa-table"></i>
+                </a>                
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityReservations" title="Facility Reservations">
                     <i class="fa-solid fa-calendar"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityManagement.php" title="Facility Management">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityManagement" title="Facility Management">
                     <i class="fa-solid fa-building"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="roomManagement.php" title="Room Management">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="roomManagement" title="Room Management">
                     <i class="fa-solid fa-door-open"></i>
                 </a>
             </div>
@@ -63,13 +66,13 @@
             ?>
             <!-- Facility Head Sidebar Links -->
             <div class="flex flex-col items-center mt-3 border-t border-gray-700">
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-gso.php" title="Dashboard">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-gso" title="Dashboard">
                     <i class="fa-solid fa-home"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityManagement.php" title="Facility Management">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityManagement" title="Facility Management">
                     <i class="fa-solid fa-building"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityReservations.php" title="Facility Reservations">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityReservations" title="Facility Reservations">
                     <i class="fa-solid fa-calendar"></i>
                 </a>
             </div>
@@ -80,13 +83,13 @@
             ?>
             <!-- Dept. Head Sidebar Links -->
             <div class="flex flex-col items-center mt-3 border-t border-gray-700">
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-deptHead.php" title="Dashboard">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-deptHead" title="Dashboard">
                     <i class="fa-solid fa-home"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="loads-deptHead.php" title="Room Loading">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="loads" title="Room Loading">
                     <i class="fa-solid fa-table"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="reservations-deptHead.php" title="Facility Reservations">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="reservations-deptHead" title="Facility Reservations">
                     <i class="fa-solid fa-calendar"></i>
                 </a>
             </div>
@@ -97,13 +100,13 @@
             ?>
             <!-- Student Rep Sidebar Links -->
             <div class="flex flex-col items-center mt-3 border-t border-gray-700">
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-student.php" title="Home">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dashboard-student" title="Home">
                     <i class="fa-solid fa-home"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="reservations-student.php" title="Reservations">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="reservations-student" title="Reservations">
                     <i class="fa-solid fa-calendar"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityReservation.php" title="Facility Reservation">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="facilityReservation" title="Facility Reservation">
                     <i class="fa-solid fa-building"></i>
                 </a>
             </div>
@@ -124,7 +127,7 @@
     }
     ?>
     <div class="flex flex-col items-center mt-2 border-t border-gray-700">
-        <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="settings_page.php" title="Account Settings">
+        <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="settings_page" title="Account Settings">
             <i class="fa-solid fa-gear"></i>
         </a>
     </div>

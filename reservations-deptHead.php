@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-    header("Location: index.html");
+        header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if ($_SESSION['role'] !== 'Dept. Head') {
     // Redirect to a page indicating unauthorized access
-    header("Location: index.html");
+        header("Location: unauthorized");
     exit();
 }
 
@@ -22,10 +22,6 @@ require_once 'database/config.php';
 // Fetch the user ID from the session data
 $user_id = $_SESSION['user_id'];
 
-// Fetch the user data from the database
-$user_query = "SELECT * FROM users WHERE id = '$user_id'";
-$user_result = $conn->query($user_query);
-$user_data = $user_result->fetch_assoc();
 
 // Fetch user's department from the session
 $head_department = $_SESSION['department'];
@@ -34,16 +30,19 @@ $head_department = $_SESSION['department'];
 $all_reservations_sql = "
     SELECT 
         r.*, 
+        d.dept_name, 
         f.facility_name, 
         f.building 
     FROM 
         reservations r 
     JOIN 
-        facilities f 
-    ON 
-        r.facility_id = f.id
+        users u ON r.user_id = u.id 
+    JOIN 
+        dept_tbl d ON u.department_id = d.dept_id 
+    JOIN 
+        facilities f ON r.facility_id = f.facility_id 
     WHERE 
-        r.user_department = ?
+        d.dept_name = ?
     ORDER BY 
         r.created_at DESC";
 $stmt = $conn->prepare($all_reservations_sql);
@@ -72,7 +71,7 @@ $all_reservations_result = $stmt->get_result();
 
             facilityRows.forEach(row => {
                 const facilityName = row.cells[1].textContent.toLowerCase(); // Facility name in the first column
-                const reservationStatus = row.cells[5].textContent.toLowerCase(); // Reservation status in the fifth column
+                const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status in the fifth column
                 
                 // Determine if the row should be shown based on search and status filters
                 const matchesSearch = facilityName.includes(searchQuery);
@@ -134,7 +133,7 @@ $all_reservations_result = $stmt->get_result();
         <div class="flex flex-col flex-1">
             <header class="bg-white shadow-lg">
                 <div class="flex items-center justify-between px-6 py-3 border-b">
-                    <h2 class="text-lg font-semibold">Events/Reserved Dates</h2>
+                    <h2 class="text-lg font-semibold">Department Reservations</h2>
                     <!-- Add any header content here -->
                 </div>
             </header>
@@ -148,7 +147,7 @@ $all_reservations_result = $stmt->get_result();
             <main class="flex-1 p-4 overflow-y-auto">
                 <div class="flex items-center space-x-4 mb-4">
                     <div id="facility-reservation" title="Facility Reservation">
-                        <button id="add-facility-btn" onclick="window.location.href='facilityReservation.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
+                        <button id="add-facility-btn" onclick="window.location.href='facilityReservation'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
                             <i class="fa-solid fa-circle-plus"></i>
                         </button>
                     </div>
@@ -187,12 +186,9 @@ $all_reservations_result = $stmt->get_result();
                                 </span>
                             </th>
                             <th class="py-3 px-4">
-                                <span class="flex items-center">Start Time</span>
+                                <span class="flex items-center">Time</span>
                             </th>
-                            <th class="py-3 px-4">
-                                <span class="flex items-center">End Time</span>
-                            </th>
-                            <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(5)">
+                            <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(4)">
                                 <span class="flex items-center">Status
                                     <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
@@ -216,6 +212,14 @@ $all_reservations_result = $stmt->get_result();
                                 $reservationId = $row["id"];
                                 $reservationStatus = $row["reservation_status"];
                                 $reservationDate = $row["reservation_date"];
+
+                                // Convert start and end times to 12-hour format with AM/PM
+                                $startTime = new DateTime($row["start_time"]);
+                                $formattedStartTime = $startTime->format('g:i A');
+
+                                $endTime = new DateTime($row["end_time"]);
+                                $formattedEndTime = $endTime->format('g:i A');
+
                                 $isEditable = ($reservationDate >= $today) || ($reservationStatus === 'In Review' || $reservationStatus === 'Declined');
                                 
                                 $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
@@ -223,9 +227,8 @@ $all_reservations_result = $stmt->get_result();
                                 echo '<td class="py-2 px-4">' . htmlspecialchars($row["building"]) . '</td>'; // Display the building
                                 echo '<td class="py-2 px-4">' . htmlspecialchars($row["facility_name"]) . '</td>'; // Display the facility name
                                 echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
-                                echo '<td class="py-2 px-4">' . htmlspecialchars($row["start_time"]) . '</td>';
-                                echo '<td class="py-2 px-4">' . htmlspecialchars($row["end_time"]) . '</td>';
-                                echo '<td class="py-2 px-4 font-semibold">' . htmlspecialchars($row["reservation_status"]) . '</td>';
+                                echo '<td class="py-2 px-4">' . htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime) . '</td>';
+                                echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_status"]) . '</td>';
                                 echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';
                                     if ($isEditable) {
                                         echo '<td class="py-2 px-4">';
@@ -298,7 +301,7 @@ $all_reservations_result = $stmt->get_result();
                         <span id="rejectionReason" class="ml-1 text-red-600"></span>
                     </label>
                 </div>
-
+                <input type="hidden" id="facilityId" />
 
                 <div class="flex mb-4 gap-2">
                     <div class="w-1/2">
@@ -390,7 +393,7 @@ $all_reservations_result = $stmt->get_result();
         <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
             <p id="errorMessageContent" class="text-lg text-red-700 font-semibold mb-4"></p>
             <div class="flex justify-center mt-5">
-                <button onclick="hideErrorMessage()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">OK</button>
+                <button onclick="location.reload()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">OK</button>
             </div>
         </div>
     </div>
@@ -425,6 +428,8 @@ $all_reservations_result = $stmt->get_result();
                         document.getElementById('facultyInCharge').value = data.facultyInCharge;
                         document.getElementById('purpose').value = data.purpose;
                         document.getElementById('additionalInfo').value = data.additional_info;
+                         // Add facilityId to a hidden input field or another appropriate way to capture it
+                        document.getElementById('facilityId').value = data.facility_id;
 
                         if (data.reservation_status === 'Declined') {
                             document.getElementById('rejectionReasonContainer').style.display = 'block';
@@ -454,9 +459,11 @@ $all_reservations_result = $stmt->get_result();
             const rejectionReason = document.getElementById('rejectionReason').textContent;
 
             const updatedReservationStatus = 'In Review';
+            const facilityId = document.getElementById('facilityId').value; // Get facilityId from the hidden input            
 
             const updatedReservation = {
                 reservationId: currentReservationId,
+                facilityId: facilityId,
                 facilityName: facilityName,
                 reservationDate: reservationDate,
                 startTime: startTime,
@@ -489,7 +496,7 @@ $all_reservations_result = $stmt->get_result();
             })
             .catch(error => {
                 console.error('Error:', error);
-                showErrorMessage('An error occurred while saving the reservation.');
+                showErrorMessage('Error updating reservation: ' + data.message);
             });
         }
 

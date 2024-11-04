@@ -4,8 +4,6 @@ accManagement
 -Send credentials to newly added user
 
 facilityReservations
--confirmation in modal
--edit
 -Export (All)Reservations(table)
 
 reservations-student

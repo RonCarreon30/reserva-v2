@@ -5,7 +5,7 @@ function showUserForm() {
 function SubmitForm() {
   // Refresh page
   document.getElementById("addUserForm").classList.add("hidden");
-  window.location.href = "accManagement.html";
+  window.location.href = "accManagement";
 }
 
 function closeForm() {

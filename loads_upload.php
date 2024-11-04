@@ -5,14 +5,14 @@
     // Check if the user is logged in
     if (!isset($_SESSION['user_id'])) {
         // Redirect to the login page
-        header("Location: index.html");
+        header("Location: unauthorized");
         exit();
     }
 
     // Check if the user has the required role
     if (!in_array($_SESSION['role'], ['Dept. Head', 'Admin',  'Registrar'])) {
         // Redirect to a page indicating unauthorized access
-        header("Location: index.html");
+        header("Location: unauthorized");
         exit();
     }
 
@@ -52,58 +52,41 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@^2.2.15/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
     <script>
-                document.addEventListener('DOMContentLoaded', function() {
-            // Automatically filter reservations on page load
-            filterSchedules();
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    // Automatically filter schedules on page load
+    filterSchedules();
+});
 
-        function filterSchedules() {
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-            const facilityRows = document.querySelectorAll('#eventsTable tbody tr');
-            let hasVisibleRows = false; // Flag to check if any rows are visible
+function filterSchedules() {
+    const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+    const facilityRows = document.querySelectorAll('#schedules-body tr');
+    let hasVisibleRows = false;
 
-            facilityRows.forEach(row => {
-                const facilityName = row.cells[0].textContent.toLowerCase(); // Facility name in the first column
-                const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status in the fifth column
-                
-                // Determine if the row should be shown based on search and status filters
-                const matchesSearch = facilityName.includes(searchQuery);
-                let matchesStatus = false;
+    facilityRows.forEach(row => {
+        const facilityName = row.cells[0].textContent.toLowerCase();
+        const reservationStatus = row.cells[6].textContent.toLowerCase(); // Adjusted for Status column
 
-                // Default status filter behavior
-                if (statusFilter === 'all') {
-                    matchesStatus = true; // Show all
-                } else if (statusFilter === 'in review') {
-                    matchesStatus = reservationStatus === 'in review';
-                } else if (statusFilter === 'approved') {
-                    matchesStatus = reservationStatus === 'approved';                    
-                } else if (statusFilter === 'declined') {
-                    matchesStatus = reservationStatus === 'declined';                    
-                } else if (statusFilter === 'expired') {
-                    matchesStatus = reservationStatus === 'expired'; // Show only expired
-                } else {
-                    // Default to showing 'In Review' and 'Reserved' statuses
-                    matchesStatus = (reservationStatus === 'in review' || reservationStatus === 'approved');
-                }
+        const matchesSearch = facilityName.includes(searchQuery);
+        const matchesStatus = statusFilter === 'all' || reservationStatus === statusFilter;
 
-                // Show or hide the row based on matches
-                if (matchesSearch && matchesStatus) {
-                    row.classList.remove('hidden'); // Show row
-                    hasVisibleRows = true; // At least one row is visible
-                } else {
-                    row.classList.add('hidden'); // Hide row
-                }
-            });
-
-            // Show or hide the "no results found" message based on visibility of rows
-            const noResultsMessage = document.getElementById('noResultsMessage');
-            if (!hasVisibleRows) {
-                noResultsMessage.classList.remove('hidden'); // Show the message
-            } else {
-                noResultsMessage.classList.add('hidden'); // Hide the message
-            }
+        if (matchesSearch && matchesStatus) {
+            row.classList.remove('hidden');
+            hasVisibleRows = true;
+        } else {
+            row.classList.add('hidden');
         }
+    });
+
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    if (!hasVisibleRows) {
+        noResultsMessage.classList.remove('hidden');
+    } else {
+        noResultsMessage.classList.add('hidden');
+    }
+}
+
+
 
         function sortTable(columnIndex) {
             const table = document.getElementById('eventsTable');
@@ -140,33 +123,37 @@
                 </div>
             </header>
             <main class="flex-1 p-4 overflow-y-auto">
-                <div class="flex items-center space-x-4 justify-between">
-                    <div class="space-x-4">
-                        <button onclick="window.location.href='loads-deptHead.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out" title="View Room Loads">
+                <div class="flex items-center justify-between">
+                    <div class="flex gap-2">
+                        <button onclick="window.location.href='loads.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out" title="View Room Loads">
                             <i class="fa-solid fa-calendar-check"></i>
                         </button>
+                        <div class="h-10 border-2 border-gray-400"></div>
+                        <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                            <option value="all">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="assigned">Assigned</option>
+                            <option value="conflicted">Conflicted</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                        <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterSchedules()">
+                    </div>
+
+                    <div class="flex gap-2">
                         <button class="px-4 py-2 bg-plv-blue text-white rounded-lg hover:bg-plv-highlight transition duration-150 ease-in-out" onclick="showUploadModal()">
                             <i class="fa-solid fa-file-upload"></i> Upload Schedule
                         </button>
+
+                        <div class="h-10 border-2 border-gray-400"></div>
+                        
+                        <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 ease-in-out" onclick="window.location.href='handlers/download_template.php'">
+                            <i class="fa-solid fa-file-download"></i> Download Template
+                        </button>
                     </div>
-                    <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-150 ease-in-out" onclick="window.location.href='handlers/download_template.php'">
-                        <i class="fa-solid fa-file-download"></i> Download Template
-                    </button>
+
                 </div>
                 <!-- Table for Schedules -->
                 <div class="mt-6">
-                    <h3 class="text-lg font-semibold mb-2">Uploaded Schedules</h3>
-                        <div class="flex items-center space-x-4 mb-2">
-                        <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterReservations()">
-                            <option value="" disabled selected>Select Status</option> <!-- Placeholder option -->
-                            <option value="all">All</option>
-                            <option value="in review">In Review</option>
-                            <option value="approved">Approved</option>
-                            <option value="declined">Declined</option>
-                            <option value="expired">Expired</option>
-                        </select>
-                        <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterReservations()">
-                    </div>
                     <div id="schedulesList" class="overflow-x-auto max-h-[calc(100vh-200px)] bg-white rounded-md shadow-md border border-gray-200">
                         <table id="schedules-table" class="min-w-full divide-y divide-gray-200">
                             <thead>
@@ -220,13 +207,25 @@
                                                 $isEditable = (strtolower($schedStatus) === 'pending' || strtolower($schedStatus) === 'conflicted');
                                                 $isAssigned = (strtolower($schedStatus) === 'assigned');
 
-                                                echo '<tr>';
+                                                date_default_timezone_set('Asia/Manila'); // Set to your local timezone
+                                                    // Check if the schedule is newly added (within the last 30 seconds)
+                                                $isNewSchedule = (strtotime($row['created_at']) >= strtotime('-30 seconds'));
+
+
+                                                // Apply a different class if it's a new schedule
+                                                $rowClass = $isNewSchedule ? 'bg-blue-100' : '';
+
+                                                // Convert start_time and end_time to 12-hour format with AM/PM
+                                                $startTime12hr = date("h:i A", strtotime($row['start_time']));
+                                                $endTime12hr = date("h:i A", strtotime($row['end_time']));
+
+                                                echo "<tr class='$rowClass'>"; // Add the highlight class to the row
                                                 echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['subject_code']) . '</td>';
                                                 echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['section']) . '</td>';
                                                 echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['instructor']) . '</td>';
-                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['start_time']) . ' - ' . htmlspecialchars($row['end_time']) . '</td>';
+                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($startTime12hr) . ' - ' . htmlspecialchars($endTime12hr) . '</td>'; // Updated time format
                                                 echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['days']) . '</td>';
-                                                
+
                                                 if ($isAssigned) {
                                                     echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['building_name']) . ' - ' . htmlspecialchars($row['room_name']) .'</td>';
                                                     echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-green-500">' . htmlspecialchars($row['sched_status']) . '</td>';
@@ -245,6 +244,8 @@
                                                 }
                                                 echo '</tr>';
                                             }
+
+
                                         } else {
                                             echo '<tr><td colspan="8" class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">No schedules found.</td></tr>';
                                         }
@@ -261,8 +262,13 @@
             </main>
         </div>
     </div>
+    <!-- Toast Notification -->
+<div id="toast" class="fixed bottom-5 right-5 z-50 flex items-center p-4 max-w-xs text-white rounded-lg shadow-lg opacity-0 transform translate-y-4 transition-all duration-300">
+    <span id="toast-message"></span>
+</div>
+
     <!-- Modal Structure -->
-    <div id="message-modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+    <div id="message-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-lg shadow-lg p-5">
             <h2 id="modal-title" class="text-lg font-semibold mb-4">Message</h2>
             <p id="modal-message" class="text-gray-700"></p>
@@ -348,7 +354,7 @@
                 </div>
 
                 <div class="flex justify-end space-x-4">
-                    <button id="close-modal" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Close</button>
+                    <button id="close-parsed-modal" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Close</button>
                     <button id="save-schedule" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Save Schedule</button>
                 </div>
             </div>
@@ -441,7 +447,7 @@
             });
         }
 
-        document.getElementById('close-modal').addEventListener('click', function() {
+        document.getElementById('close-parsed-modal').addEventListener('click', function() {
             document.getElementById('parsed-sched-modal').classList.add('hidden');
         });
 
@@ -467,145 +473,129 @@
                 url: 'handlers/save_schedules.php',
                 data: { schedules: JSON.stringify(schedules), aySemester, departmentId },
                 success: function(response) {
-                    const parsedResponse = JSON.parse(response);
-                    
-                    // Set modal title based on response success
-                    document.getElementById('modal-title').innerText = parsedResponse.success ? 'Success' : 'Error';
-                    
-                    if (parsedResponse.success) {
-                        // Function to convert time from 24-hour format to 12-hour format with AM/PM
-                        function convertTo12HourFormat(time24) {
-                            const [hours, minutes] = time24.split(':');
-                            const period = hours >= 12 ? 'PM' : 'AM';
-                            const adjustedHours = hours % 12 || 12; // Convert to 12-hour format
-                            return `${adjustedHours}:${minutes} ${period}`;
-                        }
-                        // Show saved schedules
-                        if (parsedResponse.savedSchedules.length > 0) {
-                            document.getElementById('modal-message').innerText = 
-                                parsedResponse.message + '\nSaved Schedules:\n' + 
-                                parsedResponse.savedSchedules.map(schedule => {
-                                    const startTime12 = convertTo12HourFormat(schedule.startTime);
-                                    const endTime12 = convertTo12HourFormat(schedule.endTime);
-                                    return `${schedule.subjectCode} (${schedule.day}): ${startTime12} - ${endTime12}`;
-                                }).join('\n');
-                        } else {
-                            document.getElementById('modal-message').innerText = parsedResponse.message; // No new schedules saved
-                        }
+                    console.log("Raw response from save_schedules.php:", response);
+                    document.getElementById('parsed-sched-modal').classList.add('hidden');
 
-                        // Show duplicates if any
-                        if (parsedResponse.duplicates.length > 0) {
-                            document.getElementById('modal-message').innerText += 
-                                '\n\nSome schedules were not saved due to duplicates:\n' + 
-                                parsedResponse.duplicates.map(schedule => {
-                                    const startTime12 = convertTo12HourFormat(schedule.startTime);
-                                    const endTime12 = convertTo12HourFormat(schedule.endTime);
-                                    return `${schedule.subjectCode} (${schedule.day}): ${startTime12} - ${endTime12}`;
-                                }).join('\n');
+                    if (typeof response === "string") {
+                        const parsedResponse = JSON.parse(response);
+                        document.getElementById('modal-title').innerText = parsedResponse.success ? 'Success' : 'Error';
+                        document.getElementById('modal-message').innerText = parsedResponse.message;
+                        document.getElementById('message-modal').classList.remove('hidden');
+
+                        if (parsedResponse.success) {
+                            // Display saved schedules
+                            if (parsedResponse.savedSchedules.length > 0) {
+                                let savedMessage = "Saved Schedules:\n" + parsedResponse.savedSchedules.map(schedule => {
+                                    return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section})`;
+                                }).join("\n");
+                                showToast(savedMessage, "bg-green-500");
+                            }
+
+                            // Display duplicate schedules if any
+                            if (parsedResponse.duplicates.length > 0) {
+                                let duplicateMessage = "Duplicate Schedules:\n" + parsedResponse.duplicates.map(schedule => {
+                                    return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section})`;
+                                }).join("\n");
+                                showToast(duplicateMessage, "bg-yellow-500");
+                            }
+
+                            // Proceed with room assignment
+                            showToast("Assigning rooms, please wait...", "bg-blue-500");
+                            $.ajax({
+                                type: 'POST',
+                                url: 'handlers/fcfs_assignment.php',
+                                data: { userId: parsedResponse.userId },
+                                success: function(assignmentResponse) {
+                                    console.log("Raw response from fcfs_assignment.php:", assignmentResponse);
+                                    const assignmentData = typeof assignmentResponse === "string" ? JSON.parse(assignmentResponse) : assignmentResponse;
+
+                                    if (assignmentData.success) {
+                                        showToast("Room assignment successful!", "bg-green-500");
+                                        setTimeout(function() {
+                                            location.reload();
+                                        }, 3000);
+                                    } else {
+                                        showToast("Room assignment failed: " + assignmentData.message, "bg-red-500");
+                                    }
+                                },
+                                error: function() {
+                                    showToast("Error during room assignment.", "bg-red-500");
+                                    document.getElementById('modal-message').innerText = "Room assignment process failed.";
+                                }
+                            });
+                        } else {
+                            if (parsedResponse.duplicates.length > 0) {
+                                let duplicateMessage = "Duplicates detected:\n" + parsedResponse.duplicates.map(schedule => {
+                                    return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section})`;
+                                }).join("\n");
+                                showToast(duplicateMessage, "bg-yellow-500");
+                            }
                         }
                     } else {
-                        document.getElementById('modal-message').innerText = parsedResponse.message; // Handle errors
+                        console.error("Unexpected response format:", response);
+                        showToast("Unexpected response format. Please try again.", "bg-red-500");
                     }
-
-                    // Show the modal
-                    document.getElementById('message-modal').classList.remove('hidden');
-                    
-                    document.getElementById('parsed-sched-modal').classList.add('hidden');
                 },
                 error: function(xhr, status, error) {
-                    document.getElementById('modal-title').innerText = 'Error';
-                    document.getElementById('modal-message').innerText = 'An error occurred while saving the schedules. Please try again.';
-                    document.getElementById('message-modal').classList.remove('hidden');
+                    console.error("Error saving schedules:", error);
+                    document.getElementById('modal-message').innerText = "An error occurred while saving schedules. Please try again.";
+                    showToast("An error occurred while saving schedules.", "bg-red-500");
                 }
             });
-
         });
+
 
         // Close modal event
         document.getElementById('close-modal').addEventListener('click', function() {
             document.getElementById('message-modal').classList.add('hidden');
         });
 
+        function showToast(message, status) {
+            let toast = document.getElementById("toast");
+            let messageSpan = document.getElementById("toast-message");
 
+            // Clear existing background color classes
+            toast.classList.remove("bg-green-500", "bg-red-500", "bg-blue-500");
 
-        /*function loadPendingSchedules() {
-            // Logic to fetch and display pending schedules (if needed)
-        }*/
-
-        function showToast(message, bgColor) {
-        let toast = document.getElementById("toast");
-        let messageSpan = document.getElementById("toast-message");
-
-        // Ensure the toast starts hidden
-        toast.classList.add("opacity-0", "translate-y-4");
-        toast.classList.remove("opacity-100", "translate-y-0");
-
-        // Clear existing background color classes
-        toast.classList.remove("bg-green-500", "bg-red-500", "bg-blue-500");
-
-        // Set the new background color class
-        toast.classList.add(bgColor);
-
-        // Determine the icon based on bgColor
-        let icon;
-        if (bgColor === "bg-green-500") {
-            icon = "fas fa-check-circle"; // Success icon
-        } else if (bgColor === "bg-red-500") {
-            icon = "fas fa-exclamation-circle"; // Error icon
-        } else if (bgColor === "bg-blue-500") {
-            icon = "fas fa-spinner fa-spin"; // Loading icon
-        } else {
-            icon = "fas fa-info-circle"; // Default info icon
-        }
-
-        // Set the toast message with the appropriate icon
-        messageSpan.innerHTML = `<i class="${icon}"></i> ${message}`;
-
-        // Show the toast
-        toast.classList.remove("opacity-0", "translate-y-4");
-        toast.classList.add("opacity-100", "translate-y-0");
-
-        // Hide the toast after 3 seconds (or keep it for loading until manually closed)
-        if (bgColor !== "bg-blue-500") {
-            // Only auto-hide if not a loading message
-            setTimeout(() => {
-            toast.classList.remove("opacity-100", "translate-y-0");
-            toast.classList.add("opacity-0", "translate-y-4");
-            }, 5000);
-        }
-        }
-    
-        //For displaying Scheds on table
-        /*$(document).ready(function() {
-            // Fetch pending schedules
-            fetchPendingSchedules();
-
-            function fetchPendingSchedules() {
-                $.ajax({
-                    url: 'handlers/fetch_pending_schedules.php',
-                    method: 'GET',
-                    dataType: 'json',
-                    success: function(data) {
-                        const $tbody = $('#schedules-body');
-                        $tbody.empty(); // Clear existing rows
-                        data.forEach(schedule => {
-                            const row = `<tr>
-                                <td class="px-6 py-4 whitespace-nowrap">${schedule.subject_code}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${schedule.section}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${schedule.instructor}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${schedule.time}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${schedule.days}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">${schedule.schedule_status}</td>
-                            </tr>`;
-                            $tbody.append(row);
-                        });
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error fetching schedules:', error);
-                    }
-                });
+            // Determine the background color and icon based on status
+            let bgColor, icon;
+            switch (status) {
+                case "success":
+                    bgColor = "bg-green-500";
+                    icon = "fas fa-check-circle"; // Success icon
+                    break;
+                case "error":
+                    bgColor = "bg-red-500";
+                    icon = "fas fa-exclamation-circle"; // Error icon
+                    break;
+                case "loading":
+                    bgColor = "bg-blue-500";
+                    icon = "fas fa-spinner fa-spin"; // Loading spinner icon
+                    break;
+                default:
+                    bgColor = "bg-gray-500";
+                    icon = "fas fa-info-circle"; // Default info icon
             }
-        });*/
+
+            // Set the new background color class
+            toast.classList.add(bgColor);
+
+            // Set the toast message with the appropriate icon
+            messageSpan.innerHTML = `<i class="${icon}"></i> ${message}`;
+
+            // Show the toast
+            toast.classList.remove("opacity-0", "translate-y-4");
+            toast.classList.add("opacity-100", "translate-y-0");
+
+            // Hide the toast automatically after 5 seconds if not in loading state
+            if (status !== "loading") {
+                setTimeout(() => {
+                    toast.classList.remove("opacity-100", "translate-y-0");
+                    toast.classList.add("opacity-0", "translate-y-4");
+                }, 5000);
+            }
+        }
+
     </script>
 </body>
 </html>

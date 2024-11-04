@@ -14,7 +14,7 @@ $query = "
     SELECT 
         schedules.*, 
         room_assignments_tbl.assignment_id, 
-        rooms_tbl.room_number, 
+        rooms_tbl.room_name, 
         rooms_tbl.room_type, 
         rooms_tbl.building_id, 
         buildings_tbl.building_name, 
@@ -101,7 +101,7 @@ while ($row = $result->fetch_assoc()) {
                     'section' => $row['section'],     // Course section
                     'instructor' => $row['instructor'], // Instructor name
                     'extendedProps' => [
-                        'room' => $row['room_number'],
+                        'room' => $row['room_name'],
                         'building' => $row['building_name']
                     ]
                 ];

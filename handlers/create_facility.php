@@ -14,19 +14,7 @@ $building = htmlspecialchars($_POST['building']);
 $fStatus = htmlspecialchars($_POST['status']);
 $descri = htmlspecialchars($_POST['descri']);
 
-// Connect to the database
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "reservadb";
-
-// Create connection
-$conn = new mysqli($servername, $username, $db_password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+include '../database/config.php';
 
 // Check if the room already exists in the database
 $checkStmt = $conn->prepare("SELECT COUNT(*) FROM facilities WHERE facility_name = ? AND building = ?");

@@ -5,14 +5,14 @@
     // Check if the user is logged in
     if (!isset($_SESSION['user_id'])) {
         // Redirect to the login page
-        header("Location: index.html");
+    header("Location: unauthorized");
         exit();
     }
 
     // Check if the user has the required role
     if ($_SESSION['role'] !== 'Student Rep') {
         // Redirect to a page indicating unauthorized access
-        header("Location: index.html");
+        header("Location: unauthorized");
         exit();
     }
 
@@ -131,6 +131,28 @@
         #custom-dialog {
             z-index: 10000; /* Ensures the logout modal appears on top of everything */
         }
+                .fc-toolbar-title {
+            font-size:large !important; /* Adjust this size as needed */
+            font-weight: normal; /* Optional: adjust font weight */
+        }
+
+        /* Make navigation buttons smaller */
+        .fc-prev-button,
+        .fc-next-button,
+        .fc-today-button,
+        .fc-dayGridMonth-button,
+        .fc-timeGridWeek-button,
+        .fc-timeGridDay-button {
+            font-size: 12px !important; /* Adjust font size */
+            padding: 5px 8px !important; /* Adjust padding for size */
+        }
+
+        /* Optional: Adjust the overall toolbar padding */
+        .fc-toolbar {
+            padding: 5px !important; /* Adjust padding if needed */
+            margin-bottom: 1px !important;
+        }
+
     </style>
 </head>
 <body>
@@ -169,7 +191,7 @@
                     <div class="h-1/2 p-2">
                         <!--Widgets-->
                         <div class="grid grid-cols-1 m-2 gap-4">
-                            <a href="reservations-student.php" class="block">
+                            <a href="reservations-student" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-calendar-check fa-2x w-1/4 text-green-600"></i>
                                     <div class="w-3/4">
@@ -197,7 +219,7 @@
                                 </div>
                             </a>
 
-                            <a href="reservations-student.php" class="block">
+                            <a href="reservations-student" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-calendar-alt fa-2x text-blue-600 w-1/4"></i>
                                     <div class="w-3/4">
@@ -222,7 +244,7 @@
                                 </div>
                             </a>
 
-                            <a href="reservations-student.php" class="block">
+                            <a href="reservations-student" class="block">
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-calendar-times fa-2x w-1/4 text-red-600"></i>
                                     <div class="w-3/4">

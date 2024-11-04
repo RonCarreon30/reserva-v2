@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-    header("Location: index.html");
+    header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if ($_SESSION['role'] !== 'Facility Head' && $_SESSION['role'] !== 'Admin') {
     // Redirect to a page indicating unauthorized access
-    header("Location: index.html");
+    header("Location: unauthorized");
     exit();
 }
 
@@ -31,21 +31,84 @@ if ($conn->connect_error) {
 $user_id = $_SESSION['user_id'];
 
 // Fetch reservations with status "Pending" for the Pending List
-$review_reservation_sql = "SELECT * FROM reservations WHERE reservation_status = 'In Review' ORDER BY created_at DESC";
+$review_reservation_sql = "SELECT 
+    r.*,         -- Select all columns from the reservations table
+    u.first_name,
+    u.last_name,  -- Example of a column from the users table
+    u.email,     -- Example of another column from the users table
+    f.facility_name, -- Example of a column from the facilities table
+    f.building,
+    f.descri    -- Example of another column from the facilities table
+FROM 
+    reservations r
+JOIN 
+    users u ON r.user_id = u.id
+JOIN 
+    facilities f ON r.facility_id = f.facility_id
+WHERE 
+    r.reservation_status = 'In Review'
+ORDER BY 
+    r.created_at DESC;
+";
 $review_reservation_result = $conn->query($review_reservation_sql);
 
-// Fetch all reservations
-$all_reservations_sql = "SELECT * FROM reservations ORDER BY start_date, start_time";
+$all_reservations_sql = "SELECT 
+    r.*,
+    u.first_name,
+    u.last_name,  -- Example of a column from the users table
+    f.building,
+    f.facility_name
+FROM
+    reservations r
+JOIN 
+    users u ON r.user_id = u.id
+JOIN
+    facilities f ON r.facility_id = f.facility_id
+ORDER BY 
+    CASE WHEN r.reservation_status = 'In Review' THEN 0 ELSE 1 END,
+    r.created_at DESC";
 $all_reservations_result = $conn->query($all_reservations_sql);
+/* Check if there are results
+if ($all_reservations_result && $all_reservations_result->num_rows > 0) {
+    // Start the output (you could also build an HTML table)
+    echo "<table border='1'>
+            <tr>
+                <th>Reservation ID</th>
+                <th>User First Name</th>
+                <th>User Last Name</th>
+                <th>Building</th>
+                <th>Facility Name</th>
+                <th>Reservation Status</th>
+                <th>Created At</th>
+            </tr>";
+
+    // Loop through the results
+    while ($row = $all_reservations_result->fetch_assoc()) {
+        echo "<tr>
+                <td>{$row['id']}</td>
+                <td>{$row['first_name']}</td>
+                <td>{$row['last_name']}</td>
+                <td>{$row['building']}</td>
+                <td>{$row['facility_name']}</td>
+                <td>{$row['reservation_status']}</td>
+                <td>{$row['created_at']}</td>
+              </tr>";
+    }
+
+    echo "</table>";
+} else {
+    echo "No reservations found.";
+}*/
+
 
 // Fetch reservations and encode them for FullCalendar
 $reservations = [];
 if ($all_reservations_result->num_rows > 0) {
     while ($row = $all_reservations_result->fetch_assoc()) {
         $reservations[] = [
-            'title' => $row['facility_name'],
-            'start' => $row['start_date'] . 'T' . $row['start_time'],
-            'end' => $row['end_date'] . 'T' . $row['end_time'],
+            'title' => $row['purpose'].' @'.$row['facility_name'],
+            'start' => $row['reservation_date'] . 'T' . $row['start_time'],
+            'end' => $row['reservation_date'] . 'T' . $row['end_time'],
         ];
     }
 }
@@ -73,7 +136,7 @@ if ($all_reservations_result->num_rows > 0) {
 
         facilityRows.forEach(row => {
             const facilityName = row.cells[0].textContent.toLowerCase(); // Facility name in the first column
-            const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status in the fifth column
+            const reservationStatus = row.cells[6].textContent.toLowerCase(); // Reservation status in the fifth column
             
             // Determine if the row should be shown based on search and status filters
             const matchesSearch = facilityName.includes(searchQuery);
@@ -113,25 +176,34 @@ if ($all_reservations_result->num_rows > 0) {
         }
     }
 
-        function sortTable(columnIndex) {
-            const table = document.getElementById('eventsTable');
-            const rows = Array.from(table.querySelectorAll('tbody tr'));
-            const isAscending = table.dataset.sortOrder === 'asc';
+function sortTable(columnIndex) {
+    const table = document.getElementById('eventsTable');
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const columnHeader = table.querySelector(`th:nth-child(${columnIndex + 1})`);
+    const isAscending = columnHeader.dataset.sortOrder === 'asc';
 
-            rows.sort((rowA, rowB) => {
-                const cellA = rowA.children[columnIndex].textContent.trim();
-                const cellB = rowB.children[columnIndex].textContent.trim();
+    // Check if the column contains dates (for the Reservation Date column)
+    const isDateColumn = columnIndex === 3;
 
-                if (isAscending) {
-                    return cellA.localeCompare(cellB);
-                } else {
-                    return cellB.localeCompare(cellA);
-                }
-            });
+    rows.sort((rowA, rowB) => {
+        let cellA = rowA.children[columnIndex].textContent.trim();
+        let cellB = rowB.children[columnIndex].textContent.trim();
 
-            table.querySelector('tbody').append(...rows);
-            table.dataset.sortOrder = isAscending ? 'desc' : 'asc';
+        // Parse dates if it’s a date column
+        if (isDateColumn) {
+            cellA = new Date(cellA);
+            cellB = new Date(cellB);
+            return isAscending ? cellA - cellB : cellB - cellA;
+        } else {
+            return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
         }
+    });
+
+    // Append sorted rows and update the sort order for the next click
+    table.querySelector('tbody').append(...rows);
+    columnHeader.dataset.sortOrder = isAscending ? 'desc' : 'asc';
+}
+
         </script>
 </head>
 <body>
@@ -149,10 +221,10 @@ if ($all_reservations_result->num_rows > 0) {
             </header>
             <!-- Main content area -->
             <main class="flex flex-1 p-4 overflow-y-auto">
-                <div class="w-3/4 pr-2">
+                <div class="w-full">
                     <div class="flex items-center space-x-4 mb-2">
                         <div id="facility-reservation" title="Facility Reservation">
-                            <button id="add-schedule-button" onclick="window.location.href='facilityReservation.php'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
+                            <button id="add-schedule-button" onclick="window.location.href='facilityReservation'" class="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
                                 <i class="fa-solid fa-circle-plus"></i>
                             </button>
                         </div>
@@ -171,13 +243,22 @@ if ($all_reservations_result->num_rows > 0) {
                             <thead>
                                 <tr class="bg-gray-200 border-b">
                                     <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
-                                        <span class="flex items-center">Facility Name
+                                        <span class="flex items-center">Facility
                                             <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                             </svg>
                                         </span>
                                     </th>
-                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
+                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100">
+                                        <span class="flex items-center">Purpose</span>
+                                    </th>
+                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100">
+                                        <span class="flex items-center">Faculty In Charge</span>
+                                    </th>       
+                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100">
+                                        <span class="flex items-center">Reserved By</span>
+                                    </th>                                
+                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(4)">
                                         <span class="flex items-center">Reservation Date
                                             <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
@@ -185,20 +266,14 @@ if ($all_reservations_result->num_rows > 0) {
                                         </span>
                                     </th>
                                     <th class="py-3 px-4">
-                                        <span class="flex items-center">Start Time</span>
+                                        <span class="flex items-center">Time</span>
                                     </th>
-                                    <th class="py-3 px-4">
-                                        <span class="flex items-center">End Time</span>
-                                    </th>
-                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(4)">
+                                    <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(6)">
                                         <span class="flex items-center">Status
                                             <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                             </svg>
                                         </span>
-                                    </th>
-                                    <th class="py-3 px-4">
-                                        <span class="flex items-center">Purpose</span>
                                     </th>
                                     <th class="py-3 px-4">
                                         <span class="flex items-center">Actions</span>
@@ -207,78 +282,85 @@ if ($all_reservations_result->num_rows > 0) {
                             </thead>
                             <tbody class="divide-y divide-gray-200" id="reservationTableBody">
                                 <?php
-                                    // Output reservations for the events list table
                                     $all_reservations_result->data_seek(0); // Reset result pointer
                                     $today = date('Y-m-d');
+                                    $hasInReview = false;
+                                    $hasOtherReservations = false;
+
+                                    // Preliminary check for "In Review" reservations
+                                    while ($row = $all_reservations_result->fetch_assoc()) {
+                                        if ($row["reservation_status"] === 'In Review') {
+                                            $hasInReview = true;
+                                        } else {
+                                            $hasOtherReservations = true;
+                                        }
+                                    }
+
+                                    // Reset pointer for actual display loop
+                                    $all_reservations_result->data_seek(0);
+                                    $inReviewShown = false; // Flag to check if "In Review" header has been shown
+                                    $otherShown = false;    // Flag to check if "Other Reservations" header has been shown
+
                                     while ($row = $all_reservations_result->fetch_assoc()) {
                                         $reservationId = $row["id"];
                                         $reservationStatus = $row["reservation_status"];
-                                        $reservationDate = $row["reservation_date"];
-                                        $isEditable = ($reservationDate >= $today) || ($reservationStatus === 'In Review' || $reservationStatus === 'Declined');
-                                        
+                                        $isPending = ($reservationStatus === 'In Review');
+
+                                        // Convert start and end times to 12-hour format with AM/PM
+                                        $startTime = new DateTime($row["start_time"]);
+                                        $formattedStartTime = $startTime->format('g:i A');
+
+                                        $endTime = new DateTime($row["end_time"]);
+                                        $formattedEndTime = $endTime->format('g:i A');
+
                                         $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
-                                        echo '<tr class="' . $statusClass . '">';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["facility_name"]) . '</td>';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["start_time"]) . '</td>';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["end_time"]) . '</td>';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_status"]) . '</td>';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';
-                                        echo '<td class="py-2 px-4">';
-                                        
-                                        if ($isEditable) {
-                                            echo '<button onclick="editReservation(' . $reservationId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
+
+                                        // Show "In Review" header only if there are "In Review" reservations
+                                        if ($isPending && $hasInReview && !$inReviewShown) {
+                                            echo '<tr><td colspan="7" class="bg-yellow-200 text-yellow-800 font-bold py-2 px-4">Pending Reservations</td></tr>';
+                                            $inReviewShown = true;
                                         }
-                                        
-                                        echo '<button onclick="deleteReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
+
+                                        // Show "Other Reservations" header only if there are other reservations and at least one "In Review" reservation
+                                        if (!$isPending && $hasInReview && $hasOtherReservations && !$otherShown) {
+                                            echo '<tr><td colspan="7" class="bg-green-100 text-gray-800 font-bold py-2 px-4 mt-4">Other Reservations</td></tr>';
+                                            $otherShown = true;
+                                        }
+
+                                        echo '<tr class="' . $statusClass . '">';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["building"]) . ' ' . htmlspecialchars($row["facility_name"]) . '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["facultyInCharge"]) . '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["first_name"]) . ' ' . htmlspecialchars($row["last_name"]) .  '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
+
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime) . '</td>';
+                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_status"]) . '</td>';
+                                        echo '<td class="py-2 px-4 space-x-2">';
+
+                                        // Show buttons based on status
+                                        if ($isPending) {
+                                            echo '<button onclick="acceptReservation(' . $reservationId . ')" class="bg-blue-500 text-white rounded-md px-2 py-2 hover:bg-blue-600">Approve</button>';
+                                            echo '<button onclick="declineReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-2 py-2 hover:bg-red-600">Decline</button>';
+                                        } elseif ($reservationStatus === 'Expired') {
+                                             echo '<button class="bg-gray-300 text-white rounded-md px-4 py-2 hover:bg-gray-200 hover: cursor-not-allowed" disabled>Edit</button>';
+                                            echo '<button onclick="deleteReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
+                                        } else {
+                                            echo '<button onclick="editReservation(' . $reservationId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
+                                            echo '<button onclick="deleteReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
+                                        }
+
                                         echo '</td>';
                                         echo '</tr>';
                                     }
-
                                 ?>
-
                             </tbody>
+
                         </table>
                         <div id="noResultsMessage" class="text-center py-4 hidden">
                             <img src="img/undraw_not_found_re_bh2e.svg" alt="No Reservations Found" class="mx-auto mb-2 opacity-40" style="max-width: 250px;">
                             <p class="text-gray-500">No results found for the selected filters.</p>
                         </div>
-                    </div>
-                </div>
-
-                <div class="h-full border-l border-gray-300"></div>
-
-                <div class="flex flex-col h-full w-1/3 space-y-4 p-2">
-                    <div>
-                        <h2 class="font-bold text-lg">Pendings</h2>
-                    </div>
-                    <div id="PendingList" class="bg-white shadow overflow-y-auto sm:rounded-lg flex-1">
-                        <ul id="PendingListUl" class="divide-y divide-gray-200 flex flex-col p-2">
-                            <?php
-                            if ($review_reservation_result->num_rows > 0) {
-                                while ($row = $review_reservation_result->fetch_assoc()) {
-                                    $reservationId = $row["id"];
-                                    echo '<li class="p-4 border-gray-200 border-b reservation-item" data-reservation-id="' . $reservationId . '">';
-                                    echo '<h3 class="text-lg font-bold mb-2">' . htmlspecialchars($row["facility_name"]) . '</h3>';
-                                    echo '<h3 class="text-gray-600 mb-2">' . htmlspecialchars($row["user_department"]) . '</h3>';
-                                    echo '<p class="text-gray-600 mb-2">Reservation Date: ' . htmlspecialchars($row["reservation_date"]) . '</p>';
-                                    echo '<p class="text-gray-600 mb-2">Start Time: ' . htmlspecialchars($row["start_time"]) . ' - End Time: ' . htmlspecialchars($row["end_time"]) . '</p>';
-                                    echo '<p class="italic">' . htmlspecialchars($row["reservation_status"]) . '</p>';
-                                    echo '<div class="flex justify-between mt-2">';
-                                    echo '<button onclick="declineReservation(' . $reservationId . ')" class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600">Decline</button>';
-                                    echo '<button onclick="acceptReservation(' . $reservationId . ')" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600">Approve</button>';
-                                    echo '</div>';
-                                    echo '</li>';
-                                }
-                            } else {
-                                echo '<li class="flex flex-col items-center justify-center text-center space-y-4 py-8">
-                                        <img class="w-1/2 h-1/2 opacity-60" src="img/undraw_winners_re_wr1l.svg" alt="No Reservations">
-                                        <p class="text-gray-600 font-semibold text-lg">No pendings!</p>
-                                    </li>
-                                    ';
-                            }
-                            ?>
-                        </ul>
                     </div>
                 </div>
             </main>
@@ -335,7 +417,7 @@ if ($all_reservations_result->num_rows > 0) {
                         <span id="rejectionReason" class="ml-1 text-red-600"></span>
                     </label>
                 </div>
-
+                <input type="hidden" id="facilityId" />
 
                 <div class="flex mb-4 gap-2">
                     <div class="w-1/2">
@@ -426,7 +508,7 @@ if ($all_reservations_result->num_rows > 0) {
             <div>
                 <form id="reservationForm" class="space-y-4">
                     <div class="flex flex-col space-y-2">
-                        <textarea id="rejectionReason" name="rejectionReason" rows="3" class="border border-gray-300 rounded-md p-2" required></textarea>
+                        <textarea id="rejectionReasonText" name="rejectionReasonText" rows="3" class="border border-gray-300 rounded-md p-2" required></textarea>
                     </div>
                 </form>
                 <button onclick="hideSuccessModal()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Cancel</button>
@@ -469,295 +551,336 @@ if ($all_reservations_result->num_rows > 0) {
 
     <script src="scripts/logout.js"></script>
     <script src="scripts/functions.js"></script>
-<script>
-    let currentReservationId;  // Declare a variable to store the current reservation ID
+    <script>
+        let currentReservationId;  // Declare a variable to store the current reservation ID
 
-// Edit Reservation
-function editReservation(id) {
-    // Store the reservation ID for future use when saving changes
-    currentReservationId = id;
+        // Edit Reservation
+        function editReservation(id) {
+            // Store the reservation ID for future use when saving changes
+            currentReservationId = id;
 
-    // Make an AJAX request to fetch the reservation details from the server using the reservation ID
-    fetch(`handlers/fetch_reservation.php?id=${id}`)
-        .then(response => response.json())
-        .then(data => {
-            console.log(data);  // Log the retrieved data to the console for debugging
+            // Make an AJAX request to fetch the reservation details from the server using the reservation ID
+            fetch(`handlers/fetch_reservation.php?id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);  // Log the retrieved data to the console for debugging
 
-            // Populate the form fields with the fetched data
-            document.getElementById('facilityName').value = data.facility_name;
-            document.getElementById('reservationDate').value = data.reservation_date;
-            document.getElementById('startTime').value = data.start_time;
-            document.getElementById('endTime').value = data.end_time;
-            document.getElementById('facultyInCharge').value = data.facultyInCharge;
-            document.getElementById('purpose').value = data.purpose;
-            document.getElementById('additionalInfo').value = data.additional_info;
+                    // Populate the form fields with the fetched data
+                    document.getElementById('facilityName').value = data.facility_name;
+                    document.getElementById('reservationDate').value = data.reservation_date;
+                    document.getElementById('startTime').value = data.start_time;
+                    document.getElementById('endTime').value = data.end_time;
+                    document.getElementById('facultyInCharge').value = data.facultyInCharge;
+                    document.getElementById('purpose').value = data.purpose;
+                    document.getElementById('additionalInfo').value = data.additional_info;
+                        document.getElementById('facilityId').value = data.facility_id;
+                    // If the status is 'Rejected', show the rejection reason
+                    if (data.reservation_status === 'Declined') {
+                        document.getElementById('rejectionReasonContainer').style.display = 'block';
+                        document.getElementById('rejectionReason').textContent = data.rejection_reason;
+                    } else {
+                        // Hide the rejection reason if it's not rejected
+                        document.getElementById('rejectionReasonContainer').style.display = 'none';
+                    }
 
-            // If the status is 'Rejected', show the rejection reason
-            if (data.reservation_status === 'Declined') {
-                document.getElementById('rejectionReasonContainer').style.display = 'block';
-                document.getElementById('rejectionReason').textContent = data.rejection_reason;
-            } else {
-                // Hide the rejection reason if it's not rejected
-                document.getElementById('rejectionReasonContainer').style.display = 'none';
-            }
+                    // Show the modal
+                    document.getElementById('EditReservationModal').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showErrorMessage('An error occurred while fetching reservation details.');
+                });
+        }
 
-            // Show the modal
-            document.getElementById('EditReservationModal').classList.remove('hidden');
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showErrorMessage('An error occurred while fetching reservation details.');
-        });
-}
+        // Save changes to reservation
+        function saveChanges() {
+            // Gather the updated form values
+            const facilityName = document.getElementById('facilityName').value;
+            const reservationDate = document.getElementById('reservationDate').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const facultyInCharge = document.getElementById('facultyInCharge').value;
+            const purpose = document.getElementById('purpose').value;
+            const additionalInfo = document.getElementById('additionalInfo').value;
+            const rejectionReason = document.getElementById('rejectionReason').textContent;
 
-    // Save changes to reservation
-    function saveChanges() {
-        // Gather the updated form values
-        const facilityName = document.getElementById('facilityName').value;
-        const reservationDate = document.getElementById('reservationDate').value;
-        const startTime = document.getElementById('startTime').value;
-        const endTime = document.getElementById('endTime').value;
-        const facultyInCharge = document.getElementById('facultyInCharge').value;
-        const purpose = document.getElementById('purpose').value;
-        const additionalInfo = document.getElementById('additionalInfo').value;
-        const rejectionReason = document.getElementById('rejectionReason').textContent;
+            // Update reservation status to 'In Review'
+            const updatedReservationStatus = 'Approved';
+            const facilityId = document.getElementById('facilityId').value; // Get facilityId from the hidden input
 
-        // Update reservation status to 'In Review'
-        const updatedReservationStatus = 'Approved';
+            // Construct the reservation data object, including the reservation ID
+            const updatedReservation = {
+                reservationId: currentReservationId,  // Include the ID of the reservation
+                facilityId: facilityId,     
+                facilityName: facilityName,
+                reservationDate: reservationDate,
+                startTime: startTime,
+                endTime: endTime,
+                facultyInCharge: facultyInCharge,
+                purpose: purpose,
+                additionalInfo: additionalInfo,
+                rejectionReason: rejectionReason,
+                reservationStatus: updatedReservationStatus // Set reservation status to 'In Review'
+            };
 
-        // Construct the reservation data object, including the reservation ID
-        const updatedReservation = {
-            reservationId: currentReservationId,  // Include the ID of the reservation
-            facilityName: facilityName,
-            reservationDate: reservationDate,
-            startTime: startTime,
-            endTime: endTime,
-            facultyInCharge: facultyInCharge,
-            purpose: purpose,
-            additionalInfo: additionalInfo,
-            rejectionReason: rejectionReason,
-            reservationStatus: updatedReservationStatus // Set reservation status to 'In Review'
-        };
-
-        // Make an AJAX request to update the reservation on the server
-        fetch('handlers/update_reservation.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedReservation),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSuccessModal('Reservation updated successfully!');
-                // Hide the modal and refresh the reservation list or calendar
-                closeModal();
-                setTimeout(() => {
-                    location.reload(); // Reload the current page after success
-                }, 3000); // 3000 milliseconds = 3 seconds
-            } else {
-                showErrorMessage('Error updating reservation: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showErrorMessage('An error occurred while saving the reservation.');
-        });
-    }
-
-    // Delete reservation
-    function deleteReservation(reservationId) {
-        // Show confirmation dialog
-        showConfirmation("Are you sure you want to delete this reservation?", function() {
-            // Make an AJAX request to delete the reservation
-            fetch('handlers/delete_reservation.php', {
+            // Make an AJAX request to update the reservation on the server
+            fetch('handlers/update_reservation.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ id: reservationId })
+                body: JSON.stringify(updatedReservation),
             })
-            .then(response => {
-                if (response.ok) {
-                    showSuccessModal('Reservation deleted successfully!');
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessModal('Reservation updated successfully!');
+                    // Hide the modal and refresh the reservation list or calendar
+                    closeModal();
                     setTimeout(() => {
                         location.reload(); // Reload the current page after success
                     }, 3000); // 3000 milliseconds = 3 seconds
                 } else {
-                    showErrorMessage('Failed to delete the reservation. Please try again.');
+                    showErrorMessage('Error updating reservation: ' + data.message);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showErrorMessage('An error occurred while deleting the reservation.');
+                showErrorMessage('An error occurred while saving the reservation.');
             });
-        });
-    }
-
-    // Close modal
-    function closeModal() {
-        document.getElementById('EditReservationModal').classList.add('hidden');
-    }
-
-    // Function to show modal with reservation details
-    function showModal(event) {
-        console.log('Showing modal for event:', event);
-        const modal = document.getElementById('reservationsModal');
-        const modalContent = modal.querySelector('#modalContent');
-
-        // Convert start and end dates to local time
-        const startDate = new Date(event.start);
-        const endDate = new Date(event.end);
-
-        // Format options for date and time
-        const dateOptions = {
-            weekday: 'short', 
-            year: 'numeric', 
-            month: 'numeric', 
-            day: 'numeric',
-        };
-
-        const timeOptions = {
-            hour: 'numeric',
-            minute: 'numeric',
-            hour12: true
-        };
-
-        modalContent.innerHTML = `
-            <p><strong>Facility Name:</strong> ${event.title}</p>
-            <p><strong>Reservation Date:</strong> ${startDate.toLocaleDateString(undefined, dateOptions)}</p>
-            <p><strong>Start Time:</strong> ${startDate.toLocaleTimeString(undefined, timeOptions)}</p>
-            <p><strong>End Time:</strong> ${endDate.toLocaleTimeString(undefined, timeOptions)}</p>
-            <!-- Add more details as needed -->
-        `;
-
-        modal.classList.remove('hidden');
-    }
-
-    // Function to show success modal
-    function showSuccessModal(message) {
-        const successModal = document.getElementById('successModal');
-        const successMessage = document.getElementById('successMessage');
-        successMessage.innerText = message;
-        successModal.classList.remove('hidden');
-    }
-
-    // Function to hide success modal
-    function hideSuccessModal() {
-        const successModal = document.getElementById('successModal');
-        successModal.classList.add('hidden');
-        setTimeout(() => {
-            location.reload(); // Reload the current page after success
-        }, 3000); // 3000 milliseconds = 3 seconds
-    }
-
-    // Function to show confirmation modal
-    function showConfirmation(message, callback) {
-        const confirmationModal = document.getElementById('confirmationModal');
-        const confirmationMessage = document.getElementById('confirmationMessage');
-        confirmationMessage.innerText = message;
-        confirmationModal.classList.remove('hidden');
-        confirmActionCallback = callback;
-    }
-
-    // Function to hide confirmation modal
-    function hideConfirmation() {
-        const confirmationModal = document.getElementById('confirmationModal');
-        confirmationModal.classList.add('hidden');
-    }
-
-    // Function to handle confirmation action
-    function confirmAction() {
-        hideConfirmation();
-        if (confirmActionCallback) {
-            confirmActionCallback();
         }
-    }
 
-    // Function to handle cancellation of action
-    function cancelAction() {
-        hideConfirmation();
-    }
+        // Delete reservation
+        function deleteReservation(reservationId) {
+            // Show confirmation dialog
+            showConfirmation("Are you sure you want to delete this reservation?", function() {
+                // Make an AJAX request to delete the reservation
+                fetch('handlers/delete_reservation.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: reservationId })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        showSuccessModal('Reservation deleted successfully!');
+                        setTimeout(() => {
+                            location.reload(); // Reload the current page after success
+                        }, 3000); // 3000 milliseconds = 3 seconds
+                    } else {
+                        showErrorMessage('Failed to delete the reservation. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showErrorMessage('An error occurred while deleting the reservation.');
+                });
+            });
+        }
 
-    let confirmActionCallback;
+        // Close modal
+        function closeModal() {
+            document.getElementById('EditReservationModal').classList.add('hidden');
+        }
 
-    // Function to show error message in a modal
-    function showErrorMessage(message) {
-        const errorMessageModal = document.getElementById('errorMessageModal');
-        const errorMessageContent = document.getElementById('errorMessageContent');
-        
-        // Set the error message content
-        errorMessageContent.innerText = message;
-        
-        // Show the error message modal
-        errorMessageModal.classList.remove('hidden');
-    }
+        // Function to show modal with reservation details
+        function showModal(event) {
+            console.log('Showing modal for event:', event);
+            const modal = document.getElementById('reservationsModal');
+            const modalContent = modal.querySelector('#modalContent');
 
-    // Function to hide the error message modal
-    function hideErrorMessage() {
-        const errorMessageModal = document.getElementById('errorMessageModal');
-        errorMessageModal.classList.add('hidden');
-    }
+            // Convert start and end dates to local time
+            const startDate = new Date(event.start);
+            const endDate = new Date(event.end);
 
-    // Function to handle accepting reservation
-    function acceptReservation(reservationId) {
-        console.log('Accept reservation:', reservationId);
-        fetch('handlers/check_reservation_overlap.php?id=' + reservationId, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
+            // Format options for date and time
+            const dateOptions = {
+                weekday: 'short', 
+                year: 'numeric', 
+                month: 'numeric', 
+                day: 'numeric',
+            };
+
+            const timeOptions = {
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
+            };
+
+            modalContent.innerHTML = `
+                <p><strong>Facility Name:</strong> ${event.title}</p>
+                <p><strong>Reservation Date:</strong> ${startDate.toLocaleDateString(undefined, dateOptions)}</p>
+                <p><strong>Start Time:</strong> ${startDate.toLocaleTimeString(undefined, timeOptions)}</p>
+                <p><strong>End Time:</strong> ${endDate.toLocaleTimeString(undefined, timeOptions)}</p>
+                <!-- Add more details as needed -->
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        // Function to show success modal
+        function showSuccessModal(message) {
+            const successModal = document.getElementById('successModal');
+            const successMessage = document.getElementById('successMessage');
+            successMessage.innerText = message;
+            successModal.classList.remove('hidden');
+        }
+
+        // Function to hide success modal
+        function hideSuccessModal() {
+            const successModal = document.getElementById('successModal');
+            successModal.classList.add('hidden');
+            setTimeout(() => {
+                location.reload(); // Reload the current page after success
+            }, 3000); // 3000 milliseconds = 3 seconds
+        }
+
+        // Function to show confirmation modal
+        function showConfirmation(message, callback) {
+            const confirmationModal = document.getElementById('confirmationModal');
+            const confirmationMessage = document.getElementById('confirmationMessage');
+            confirmationMessage.innerText = message;
+            confirmationModal.classList.remove('hidden');
+            confirmActionCallback = callback;
+        }
+
+        // Function to hide confirmation modal
+        function hideConfirmation() {
+            const confirmationModal = document.getElementById('confirmationModal');
+            confirmationModal.classList.add('hidden');
+        }
+
+        // Function to handle confirmation action
+        function confirmAction() {
+            hideConfirmation();
+            if (confirmActionCallback) {
+                confirmActionCallback();
             }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                console.error('Error checking reservation overlap:', data.error);
-                showErrorMessage('Error checking reservation overlap. Please try again.');
-            } else if (data.overlap) {
-                showErrorMessage('There is a reservation conflict. Please select another time slot.');
-            } else {
-                showConfirmation('Are you sure you want to accept this reservation?', function() {
-                    // Send AJAX request to accept reservation
+        }
+
+        // Function to handle cancellation of action
+        function cancelAction() {
+            hideConfirmation();
+        }
+
+        let confirmActionCallback;
+
+        // Function to show error message in a modal
+        function showErrorMessage(message) {
+            const errorMessageModal = document.getElementById('errorMessageModal');
+            const errorMessageContent = document.getElementById('errorMessageContent');
+            
+            // Set the error message content
+            errorMessageContent.innerText = message;
+            
+            // Show the error message modal
+            errorMessageModal.classList.remove('hidden');
+        }
+
+        // Function to hide the error message modal
+        function hideErrorMessage() {
+            const errorMessageModal = document.getElementById('errorMessageModal');
+            errorMessageModal.classList.add('hidden');
+        }
+
+        // Function to handle accepting reservation
+        function acceptReservation(reservationId) {
+            console.log('Accept reservation:', reservationId);
+            fetch('handlers/check_reservation_overlap.php?id=' + reservationId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    console.error('Error checking reservation overlap:', data.error);
+                    showErrorMessage('Error checking reservation overlap. Please try again.');
+                } else if (data.overlap) {
+                    showErrorMessage('There is a reservation conflict. Please select another time slot.');
+                } else {
+                    showConfirmation('Are you sure you want to accept this reservation?', function() {
+                        // Send AJAX request to accept reservation
+                        fetch('handlers/update_reservation_status.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                id: reservationId, // Include reservation ID
+                                status: 'Approved' // Set the desired status here
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showSuccessModal('Reservation Approved!');
+                                setTimeout(() => {
+                                    location.reload(); // Reload the current page after success
+                                }, 3000); // 3000 milliseconds = 3 seconds
+                            } else {
+                                showErrorMessage('Failed to  reservation. Please try again.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showErrorMessage('An error occurred while accepting the reservation.');
+                        });
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showErrorMessage('An error occurred while checking the reservation.');
+            });
+        }
+
+        function declineReservation(reservationId) {
+            console.log("Decline button clicked", reservationId);
+            const rejectionReasonForm = document.getElementById('rejectionReasonForm');
+            rejectionReasonForm.classList.remove('hidden');
+
+            const confirmButton = document.getElementById('confirmRejectionButton');
+            confirmButton.onclick = function() {
+                const rejectionReason = document.getElementById('rejectionReasonText').value;
+console.log('Sending rejection reason:', rejectionReason);
+
+                showConfirmation('Are you sure you want to decline this reservation?', function() {
+                    // Send reservation ID, status, and rejection reason in the request body
                     fetch('handlers/update_reservation_status.php', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            id: reservationId, // Include reservation ID
-                            status: 'Approved' // Set the desired status here
+                            id: reservationId,           // Include reservation ID
+                            status: 'Declined',          // Include status as Declined
+                            reason: rejectionReason       // Include rejection reason
                         })
+                        
+                        
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showSuccessModal('Reservation Approved!');
-                            setTimeout(() => {
-                                location.reload(); // Reload the current page after success
-                            }, 3000); // 3000 milliseconds = 3 seconds
+                    
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload(); // Reload on success
                         } else {
-                            showErrorMessage('Failed to  reservation. Please try again.');
+                            showModal({ title: 'Error declining reservation' });
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showErrorMessage('An error occurred while accepting the reservation.');
                     });
                 });
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showErrorMessage('An error occurred while checking the reservation.');
-        });
-    }
-</script>
+            };
+        }
+
+
+    </script>
 
 </body>
 </html>

@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-    header("Location: index.html");
+    header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if ($_SESSION['role'] !== 'Registrar') {
     // Redirect to a page indicating unauthorized access
-    header("Location: index.html");
+    header("Location: unauthorized");
     exit();
 }
 
@@ -139,6 +139,28 @@ $user_data = $user_result->fetch_assoc();
         #confirmation-modal {
             z-index: 10000; /* Ensures the logout modal appears on top of everything */
         }
+                .fc-toolbar-title {
+            font-size:large !important; /* Adjust this size as needed */
+            font-weight: normal; /* Optional: adjust font weight */
+        }
+
+        /* Make navigation buttons smaller */
+        .fc-prev-button,
+        .fc-next-button,
+        .fc-today-button,
+        .fc-dayGridMonth-button,
+        .fc-timeGridWeek-button,
+        .fc-timeGridDay-button {
+            font-size: 12px !important; /* Adjust font size */
+            padding: 5px 8px !important; /* Adjust padding for size */
+        }
+
+        /* Optional: Adjust the overall toolbar padding */
+        .fc-toolbar {
+            padding: 5px !important; /* Adjust padding if needed */
+            margin-bottom: 1px !important;
+        }
+
     </style>
 </head>
 <body>
@@ -169,7 +191,7 @@ $user_data = $user_result->fetch_assoc();
                     <div class="h-1/2 p-2">
                         <div class="grid grid-cols-1 m-2 gap-4">
                         <!-- Widgets -->
-                            <a href="accManagement.php" class="block">
+                            <a href="accManagement" class="block">
                                 <!-- Total Users -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-users fa-2x w-1/4 text-blue-600"></i>
@@ -192,7 +214,7 @@ $user_data = $user_result->fetch_assoc();
                                 </div>
                             </a>
 
-                            <a href="roomManagement.php" class="block">
+                            <a href="roomManagement" class="block">
                                 <!-- Total Rooms -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-door-closed fa-2x w-1/4 text-blue-600"></i>
@@ -215,7 +237,7 @@ $user_data = $user_result->fetch_assoc();
                                 </div>
                             </a>
 
-                            <a href="loads-deptHead.php" class="block">
+                            <a href="loads" class="block">
                                 <!-- Total Facilities -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-building fa-2x w-1/4 text-blue-600"></i>

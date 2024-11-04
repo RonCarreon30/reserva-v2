@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-    header("Location: index.html");
+    header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if ($_SESSION['role'] !== 'Admin') {
     // Redirect to a page indicating unauthorized access
-    header("Location: index.html");
+    header("Location: unauthorized");
     exit();
 }
 
@@ -127,6 +127,28 @@ $user_data = $user_result->fetch_assoc();
         #custom-dialog {
             z-index: 10000; /* Ensures the logout modal appears on top of everything */
         }
+                .fc-toolbar-title {
+            font-size:large !important; /* Adjust this size as needed */
+            font-weight: normal; /* Optional: adjust font weight */
+        }
+
+        /* Make navigation buttons smaller */
+        .fc-prev-button,
+        .fc-next-button,
+        .fc-today-button,
+        .fc-dayGridMonth-button,
+        .fc-timeGridWeek-button,
+        .fc-timeGridDay-button {
+            font-size: 12px !important; /* Adjust font size */
+            padding: 5px 8px !important; /* Adjust padding for size */
+        }
+
+        /* Optional: Adjust the overall toolbar padding */
+        .fc-toolbar {
+            padding: 5px !important; /* Adjust padding if needed */
+            margin-bottom: 1px !important;
+        }
+
     </style>
 </head>
 <body>
@@ -156,7 +178,7 @@ $user_data = $user_result->fetch_assoc();
                     <div class="h-1/2 p-2">
                         <div class="grid grid-cols-1 m-2 gap-4">
                         <!-- Widgets -->
-                            <a href="accManagement.php" class="block">
+                            <a href="accManagement" class="block">
                                 <!-- Total Users -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-users fa-2x w-1/4 text-blue-600"></i>
@@ -179,7 +201,7 @@ $user_data = $user_result->fetch_assoc();
                                 </div>
                             </a>
 
-                            <a href="roomManagement.php" class="block">
+                            <a href="roomManagement" class="block">
                                 <!-- Total Rooms -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-door-closed fa-2x w-1/4 text-blue-600"></i>
@@ -202,7 +224,7 @@ $user_data = $user_result->fetch_assoc();
                                 </div>
                             </a>
 
-                            <a href="facilityManagement.php" class="block">
+                            <a href="facilityManagement" class="block">
                                 <!-- Total Facilities -->
                                 <div class="flex items-center rounded bg-white p-6 shadow-md h-30 cursor-pointer hover:bg-gray-200">
                                     <i class="fas fa-building fa-2x w-1/4 text-blue-600"></i>
@@ -234,7 +256,7 @@ $user_data = $user_result->fetch_assoc();
     <div id="eventDetailsModal" class="hidden fixed z-10 inset-0 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center">
         <div class="bg-white rounded-lg shadow-lg p-6">
             <div class="flex justify-between items-center border-b pb-2">
-            <h2 id="eventTitle" class="text-2xl font-semibold text-gray-800"></h2>
+            <h2 id="eventTitle" class="text-2xl font-semibold text-gray-800">Reservation/Event Details</h2>
             <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 focus:outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -242,26 +264,30 @@ $user_data = $user_result->fetch_assoc();
             </button>
             </div>
             <div class="mt-4">
-            <div class="mb-4">
-                <h3 class="text-lg font-medium text-gray-700">Time:</h3>
-                <p id="eventTime" class="text-gray-600"></p>
-            </div>
-            <div class="mb-4">
-                <h3 class="text-lg font-medium text-gray-700">Facility Name:</h3>
-                <p id="eventFacility" class="text-gray-600"></p>
-            </div>
-            <div class="mb-4">
-                <h3 class="text-lg font-medium text-gray-700">Faculty In Charge:</h3>
-                <p id="eventFacultyInCharge" class="text-gray-600"></p>
-            </div>
-            <div class="mb-4">
-                <h3 class="text-lg font-medium text-gray-700">Additional Info:</h3>
-                <p id="eventAdditionalInfo" class="text-gray-600"></p>
-            </div>
-            <div>
-                <h3 class="text-lg font-medium text-gray-700">Description:</h3>
-                <p id="eventDescription" class="text-gray-600"></p>
-            </div>
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-700">Purpose</h3>
+                    <p id="eventPurpose" class="text-gray-600"></p>
+                </div>
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-700">Facility Name:</h3>
+                    <p id="eventFacility" class="text-gray-600"></p>
+                </div>              
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-700">Start:</h3>
+                    <p id="eventStart" class="text-gray-600"></p>
+                </div>
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-700">End:</h3>
+                    <p id="eventEnd" class="text-gray-600"></p>
+                </div>            
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-700">Faculty In Charge:</h3>
+                    <p id="eventFacultyInCharge" class="text-gray-600"></p>
+                </div>
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-700">Additional Info:</h3>
+                    <p id="eventAdditionalInfo" class="text-gray-600"></p>
+                </div>
             </div>
             <div class="mt-6 flex justify-end">
             <button onclick="closeModal()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none">Close</button>
@@ -284,24 +310,21 @@ $user_data = $user_result->fetch_assoc();
     <script>
         function showEventDetails(event) {
             // Populate the modal with event details
-            document.getElementById('eventTitle').innerText = event.title;
-            
-            // Format the start and end time, show both if available
-            var eventTime = event.start.toLocaleString() + 
-                            (event.end ? ' - ' + event.end.toLocaleString() : '');
-            document.getElementById('eventTime').innerText = eventTime;
+
+            document.getElementById('eventPurpose').innerText = event.extendedProps.purpose;
+            document.getElementById('eventStart').innerText = event.extendedProps.sTime;
+            document.getElementById('eventEnd').innerText = event.extendedProps.eTime;
             
             // Show facility_name, FacultyInCharge, and additional_info (use event's extendedProps)
             document.getElementById('eventFacility').innerText = event.extendedProps.facility_name || 'Not specified';
             document.getElementById('eventFacultyInCharge').innerText = event.extendedProps.FacultyInCharge || 'Not specified';
             document.getElementById('eventAdditionalInfo').innerText = event.extendedProps.additional_info || 'No additional information';
 
-            // Show event description if available
-            document.getElementById('eventDescription').innerText = event.extendedProps.description || 'No description provided';
-
             // Show the modal
+                    console.log(event);
             document.getElementById('eventDetailsModal').classList.remove('hidden');
         }
+
 
         function closeModal() {
             // Hide the modal

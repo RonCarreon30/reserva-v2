@@ -5,14 +5,14 @@ session_start();
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to the login page
-    header("Location: index.html");
+    header("Location: unauthorized");
     exit();
 }
 
 // Check if the user has the required role
 if (!in_array($_SESSION['role'], ['Facility Head', 'Admin'])) {
     // Redirect to a page indicating unauthorized access
-    header("Location: index.html");
+    header("Location: unauthorized");
     exit();
 }
 // Fetch reservations from the database for the current user
@@ -26,7 +26,7 @@ $buildings_sql = "SELECT DISTINCT building FROM facilities";
 $buildings_result = $conn->query($buildings_sql);
 
 //Query to fetch facility data from the database
-$sql = "SELECT * FROM facilities ORDER BY id DESC";
+$sql = "SELECT * FROM facilities ORDER BY facility_id DESC";
 $result = $conn->query($sql);
 ?>
 <!DOCTYPE html>
@@ -179,8 +179,8 @@ $result = $conn->query($sql);
                                         <td class="py-3 px-4"><?php echo $row['status']; ?></td>
                                         <td class="py-3 px-4"><?php echo $row['descri']; ?></td>
                                         <td class="py-3 px-4">
-                                            <button onclick="editFacility(<?php echo $row['id']; ?>)" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>
-                                            <button onclick="deleteFacility(<?php echo $row['id']; ?>)" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>
+                                            <button onclick="editFacility(<?php echo $row['facility_id']; ?>)" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>
+                                            <button onclick="deleteFacility(<?php echo $row['facility_id']; ?>)" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
@@ -214,11 +214,8 @@ $result = $conn->query($sql);
                         </div>
                         <form method="POST" action="handlers/create_facility.php" >
                             <div class="mb-4">
-                                <div class="">
-                                    <label for="facilityName" class="block text-gray-700 font-semibold mb-2">Facility Name:</label>
-                                    <input type="text" id="facilityName" name="facilityName" required
-                                        class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
-                                </div>
+                                <label for="facilityName" class="block text-gray-700 font-semibold mb-2">Facility Name:</label>
+                                <input type="text" id="facilityName" name="facilityName" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
                             </div>
                             <div class="flex mb-4 gap-2">
                                 <div class="w-1/2">
@@ -354,7 +351,7 @@ $result = $conn->query($sql);
             currentFacilityId = id;
 
             // Make an AJAX request to fetch the user details from the server using the user ID
-            fetch(`handlers/fetch_facility.php?id=${id}`)
+            fetch(`handlers/fetch_facility.php?facility_id=${id}`)
                 .then(response => response.json())
                 .then(data => {
                     // Populate the form fields with the fetched data

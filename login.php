@@ -29,22 +29,22 @@
             // Debugging: Output department information            
             switch ($user['userRole']) {
                 case 'Admin':
-                    $redirect = 'dashboard-admin.php';
+                    $redirect = 'dashboard-admin';
                     break;
                 case 'Registrar':
-                    $redirect = 'dashboard-reg.php';
+                    $redirect = 'dashboard-reg';
                     break;
                 case 'Facility Head':
-                    $redirect = 'dashboard-gso.php';
+                    $redirect = 'dashboard-gso';
                     break;
                 case 'Dept. Head':
-                    $redirect = 'dashboard-deptHead.php';
+                    $redirect = 'dashboard-deptHead';
                     break;
                 case 'Student Rep':
-                    $redirect = 'dashboard-student.php';
+                    $redirect = 'dashboard-student';
                     break;
                 default:
-                    $redirect = 'login.php'; // Redirect to login page if role not found
+                    $redirect = 'index'; // Redirect to login page if role not found
                     break;
             }
             
