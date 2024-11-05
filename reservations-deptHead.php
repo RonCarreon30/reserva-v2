@@ -266,11 +266,11 @@ $all_reservations_result = $stmt->get_result();
 
 
     <!-- Edit Reservation Modal -->
-    <div id="EditReservationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div id="EditReservationModal" class=" fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-md shadow-md">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-semibold">Edit Reservation</h2>
-                <button id="closeModal" class="text-gray-600 hover:text-gray-800 focus:outline-none" onclick="closeModal()">
+                <button id="closeModal" class="text-gray-600 hover:text-gray-800 focus:outline-none" onclick="closeModal('EditReservationModal')">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
