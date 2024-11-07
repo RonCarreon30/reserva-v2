@@ -216,7 +216,7 @@ function sortTable(columnIndex) {
             <!-- Header -->
             <header class="bg-white shadow-lg">
                 <div class="flex items-center justify-between px-6 py-3 border-b">
-                    <h2 class="text-lg font-semibold">Facility Reservations</h2>
+                    <h2 class="text-lg font-semibold">Reservations Management</h2>
                 </div>
             </header>
             <!-- Main content area -->

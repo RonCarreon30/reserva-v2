@@ -58,6 +58,11 @@ $all_reservations_result = $stmt->get_result();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PLV: RESERVA</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Automatically filter reservations on page load
@@ -121,7 +126,107 @@ $all_reservations_result = $stmt->get_result();
             table.querySelector('tbody').append(...rows);
             table.dataset.sortOrder = isAscending ? 'desc' : 'asc';
         }
+
+                document.addEventListener("DOMContentLoaded", function() {
+            const holidayAPIUrl = "https://www.googleapis.com/calendar/v3/calendars/en.philippines%23holiday%40group.v.calendar.google.com/events?key=AIzaSyCB7rRha3zbgSYH1aD5SECsRvQ3usacZHU"; // Your API endpoint
+
+            fetch(holidayAPIUrl)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    // Extract holiday dates from the API response
+                    const holidayDates = data.items.map(holiday => holiday.start.date);
+
+                    // Initialize Flatpickr with disabled holiday dates
+                    flatpickr("#reservationDate", {
+                        dateFormat: "Y-m-d",
+                        enableTime: false,
+
+                        onDayCreate: function(dObj, dStr, fp, dayElem) {
+                            const date = dayElem.dateObj; // Get the date of the current day element
+                            const dateString = dayElem.dateObj.toISOString().split('T')[0]; // Get date in YYYY-MM-DD format
+
+                            // Add custom class for holidays
+                            if (holidayDates.includes(dateString)) {
+                                dayElem.classList.add("holiday"); // Add class for holidays
+                            }
+
+                            // Add custom class for Sundays
+                            if (date.getDay() === 0) {
+                                dayElem.classList.add("sunday"); // Add class for Sundays
+                            }
+                        },
+                        onChange: function(selectedDates, dateStr, instance) {
+                            const selectedDate = new Date(dateStr); // Convert selected date string to Date object
+                            const today = new Date(); // Get today's date
+                            today.setHours(0, 0, 0, 0); // Reset hours, minutes, seconds for comparison
+
+                            // Create a new Date object for the selected date without time components
+                            const selectedDateNoTime = new Date(selectedDate);
+                            selectedDateNoTime.setHours(0, 0, 0, 0); // Reset hours, minutes, seconds for comparison
+
+                            console.log("Today: ", today);
+                            console.log("Selected date (no time): ", selectedDateNoTime);
+
+                            // Check if selected date is a holiday
+                            if (holidayDates.includes(dateStr)) {
+                                showToast(`${dateStr} is a holiday and cannot be selected.`); // Show toast for holiday
+                                instance.clear(); // Optionally clear the selection
+                            } 
+                            // Check if the selected date is today
+                            else if (selectedDateNoTime.getTime() === today.getTime()) {
+                                showToast("Same day reservations are not allowed."); // Show toast for same day reservation
+                                instance.clear(); // Optionally clear the selection
+                            } 
+                            // Check if the selected date is in the past
+                            else if (selectedDateNoTime < today) {
+                                showToast(`${dateStr} is a past date and cannot be selected.`); // Show toast for past dates
+                                instance.clear(); // Optionally clear the selection
+                            }     // Check if the selected date is a Sunday
+                            else if (selectedDate.getDay() === 0) { // Sunday is represented by 0
+                                showToast(`${dateStr} falls on a Sunday and cannot be selected.`); // Show toast for Sunday
+                                instance.clear(); // Optionally clear the selection
+                            } else {
+                                console.log("Selected date: ", dateStr); // Handle the selected date
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching holiday data:", error);
+                });
+
+            function showToast(message) {
+                const toast = document.getElementById("toast");
+                const toastMessage = document.getElementById("toastMessage");
+
+                toastMessage.textContent = message; // Set the toast message
+                toast.classList.remove("hidden"); // Show the toast
+
+                // Hide the toast after 3 seconds
+                setTimeout(() => {
+                    toast.classList.add("hidden");
+                }, 3000);
+            }
+        });
     </script>
+        <style>
+        /* Custom styles for holidays */
+        .flatpickr-day.holiday {
+            background-color: #ffcccc; /* Light red background */
+            color: #d9534f; /* Dark red text */
+        }
+
+        /* Custom styles for Sundays */
+        .flatpickr-day.sunday {
+            background-color: #ccf2ff; /* Light blue background */
+            color: #007bff; /* Blue text */
+        }
+        #custom-dialog, #toast {
+            z-index: 10000; /* Ensures the logout modal appears on top of everything */
+        }
+
+    </style>
 </head>
 <body>
     <div class="flex h-screen bg-gray-100">
@@ -161,7 +266,7 @@ $all_reservations_result = $stmt->get_result();
                     </select>
                     <input type="text" id="searchInput" placeholder="Search..." class="border rounded-md py-2 px-4" onkeyup="filterReservations()">
                 </div>
-                <table id="eventsTable" class="min-w-full bg-white rounded-md shadow-md border border-gray-200">
+                <table id="eventsTable" class="min-w-full overflow-y-auto max-h-[calc(100vh-200px)] bg-white rounded-md shadow-md border border-gray-200">
                     <thead>
                         <tr class="bg-gray-200 border-b">
                             <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
@@ -251,6 +356,9 @@ $all_reservations_result = $stmt->get_result();
             </div>
         </div>
     </div>
+    <div id="toast" class="fixed top-4 right-4 bg-red-400 text-white text-sm p-3 rounded-lg hidden">
+        <span id="toastMessage"></span>
+    </div>    
 
     <!-- HTML for custom confirmation dialog -->
     <div id="custom-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -266,7 +374,7 @@ $all_reservations_result = $stmt->get_result();
 
 
     <!-- Edit Reservation Modal -->
-    <div id="EditReservationModal" class=" fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div id="EditReservationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-md shadow-md">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-semibold">Edit Reservation</h2>
@@ -306,25 +414,25 @@ $all_reservations_result = $stmt->get_result();
                 <div class="flex mb-4 gap-2">
                     <div class="w-1/2">
                         <div class="flex flex-col space-y-2">
-                            <label for="facilityName" class="text-gray-700">Facility Name:</label>
+                            <label for="facilityName" class="block text-gray-700 text-xs">Facility Name:</label>
                             <input type="text" id="facilityName" name="facilityName" class="border border-gray-300 bg-gray-300 rounded-md p-2" readonly required>
                         </div>
                     </div>
                     <div class="w-1/2">
                         <div class="flex flex-col space-y-2">
-                            <label for="reservationDate" class="text-gray-700">Reservation Date:</label>
-                            <input type="date" id="reservationDate" name="reservationDate" class="border border-gray-300 rounded-md p-2" required>
+                        <label for="reservationDate" class="block text-gray-700 text-xs">Reservation Date:<span class="text-red-500">*</span></label>
+                        <input type="text" id="reservationDate" name="reservationDate" class="w-full px-3 py-2 rounded-md border border-gray-300" required onchange="validateDate()">
                         </div>
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2 hidden">
-                    <label for="department" class="text-gray-700">Department:</label>
+                    <label for="department" class="block text-gray-700 text-xs">Department:<span class="text-red-500">*</span></label>
                     <input type="text" id="department" name="department" class="border border-gray-300 rounded-md p-2" readonly>
                 </div>
                 <div class="flex mb-4 gap-2">
                     <div class="w-1/2">
                         <div class="flex flex-col space-y-2">
-                            <label for="startTime" class="text-gray-700">Starting Time:</label>
+                            <label for="startTime" class="block text-gray-700 text-xs">Starting Time:<span class="text-red-500">*</span></label>
                             <select id="startTime" name="startTime" class="border border-gray-300 rounded-md p-2" required>
                                 <?php foreach ($timeOptions as $time): ?>
                                     <option value="<?php echo $time; ?>" <?php echo (isset($row['start_time']) && $time == $row['start_time']) ? 'selected' : ''; ?>>
@@ -336,7 +444,7 @@ $all_reservations_result = $stmt->get_result();
                     </div>
                     <div class="w-1/2">
                         <div class="flex flex-col space-y-2">
-                            <label for="endTime" class="text-gray-700">End Time:</label>
+                            <label for="endTime" class="block text-gray-700 text-xs">End Time:<span class="text-red-500">*</span></label>
                             <select id="endTime" name="endTime" class="border border-gray-300 rounded-md p-2" required>
                                 <?php foreach ($timeOptions as $time): ?>
                                     <option value="<?php echo $time; ?>" <?php echo (isset($row['end_time']) && $time == $row['end_time']) ? 'selected' : ''; ?>>
@@ -348,15 +456,15 @@ $all_reservations_result = $stmt->get_result();
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <label for="facultyInCharge" class="text-gray-700">Faculty in Charge:</label>
+                    <label for="facultyInCharge" class="block text-gray-700 text-xs">Faculty in Charge:<span class="text-red-500">*</span></label>
                     <input type="text" id="facultyInCharge" name="facultyInCharge" class="border border-gray-300 rounded-md p-2" required>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <label for="purpose" class="text-gray-700">Purpose:</label>
+                    <label for="purpose" class="block text-gray-700 text-xs">Purpose:<span class="text-red-500">*</span></label>
                     <input type="text" id="purpose" name="purpose" class="border border-gray-300 rounded-md p-2">
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <label for="additionalInfo" class="text-gray-700">Additional Information:</label>
+                    <label for="additionalInfo" class="block text-gray-700 text-xs">Additional Information:<span class="text-red-500">*</span></label>
                     <textarea id="additionalInfo" name="additionalInfo" class="border border-gray-300 rounded-md p-2"></textarea>
                 </div>
                 <div class="flex justify-between">
