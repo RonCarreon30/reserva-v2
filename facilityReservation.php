@@ -212,7 +212,7 @@
                 </div>
             </header>
         <!-- Main Section -->
-        <main class="flex-1 p-4 overflow-y-auto">
+        <main class="flex-1 p-4 h-screen">
             <div class="flex items-center space-x-4 mb-4">
                 <div id="facility-reservations" title="Reservations">
                     <button id="view-reservations-btn" onclick="window.history.back()" class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out">
@@ -229,60 +229,90 @@
                 </select>
                 <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search facilities..." onkeyup="filterFacilities()">
             </div>
+            <div class="overflow-y-auto max-h-[calc(100vh-200px)]">
+                <table id="facilityTable" class="min-w-full bg-white rounded-md shadow-md border border-gray-200" data-sort-order="asc">
+                    <thead>
+                        <tr class="bg-gray-200 border-b">
+                            <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
+                                <span class="flex items-center">Building
+                                    <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                    </svg>
+                                </span>
+                            </th>                                
+                            <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
+                                <span class="flex items-center">Facility Name
+                                    <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                    </svg>
+                                </span>
+                            </th>
+                            <th class="py-3 px-4 text-left">
+                                <span class="flex items-center">Status</span>
+                            </th>
+                            <th class="py-3 px-4 text-left">
+                                <span class="flex items-center">Description</span>
+                            </th>
+                            <th class="py-3 px-4 text-left">Action</th>
+                        </tr>
+                    </thead>
 
-<table id="facilityTable" class="min-w-full bg-white rounded-md shadow-md border border-gray-200" data-sort-order="asc">
-    <thead>
-        <tr class="bg-gray-200 border-b">
-            <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
-                <span class="flex items-center">Building
-                    <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
-                    </svg>
-                </span>
-            </th>                                
-            <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
-                <span class="flex items-center">Facility Name
-                    <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
-                    </svg>
-                </span>
-            </th>
-            <th class="py-3 px-4 text-left">
-                <span class="flex items-center">Status</span>
-            </th>
-            <th class="py-3 px-4 text-left">
-                <span class="flex items-center">Description</span>
-            </th>
-            <th class="py-3 px-4 text-left">Action</th>
+<tbody class="divide-y divide-gray-200">
+    <?php
+    $availableRows = [];
+    $unavailableRows = [];
+
+    // Separate available and unavailable facilities
+    if ($facility_result->num_rows > 0) {
+        while ($row = $facility_result->fetch_assoc()) {
+            if ($row['status'] === 'Unavailable') {
+                $unavailableRows[] = $row;
+            } else {
+                $availableRows[] = $row;
+            }
+        }
+    }
+
+    // Display available facilities first
+    foreach ($availableRows as $row): ?>
+        <tr>
+            <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>
+            <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>
+            <td class="py-2 px-4"><?php echo htmlspecialchars($row['status']); ?></td>
+            <td class="py-2 px-4"><?php echo htmlspecialchars($row['descri']); ?></td>
+            <td class="py-2 px-4">
+                <button onclick="showReservationForm('<?php echo htmlspecialchars($row['facility_name']); ?>', '<?php echo htmlspecialchars($row['facility_id']); ?>')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Reserve</button>
+            </td>
         </tr>
-    </thead>
+    <?php endforeach; ?>
 
-    <tbody class="divide-y divide-gray-200">
-        <?php if ($facility_result->num_rows > 0): ?>
-            <?php while ($row = $facility_result->fetch_assoc()): ?>
-                <tr class="<?php echo $row['status'] === 'Unavailable' ? 'bg-red-100 text-red-600' : ''; ?>">
-                    <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>                                    
-                    <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>                                    
-                    <td class="py-2 px-4"><?php echo htmlspecialchars($row['status']); ?></td>
-                    <td class="py-2 px-4"><?php echo htmlspecialchars($row['descri']); ?></td>
-                    <td class="py-2 px-4">
-                        <?php if ($row['status'] !== 'Unavailable'): ?>
-                            <button onclick="showReservationForm('<?php echo htmlspecialchars($row['facility_name']); ?>', '<?php echo htmlspecialchars($row['facility_id']); ?>')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Reserve</button>
-                        <?php else: ?>
-                            <button disabled class="bg-gray-400 text-white rounded-md px-4 py-2 cursor-not-allowed">Unavailable</button>
-                        <?php endif; ?>
-                    </td>
-                </tr>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <tr>
-                <td colspan="5" class="text-center py-4">No facilities found</td>
-            </tr>
-        <?php endif; ?>
-    </tbody>
-</table>
+    <!-- Display unavailable facilities next -->
+    <?php foreach ($unavailableRows as $row): ?>
+        <tr class="bg-red-100 text-red-600">
+            <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>
+            <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>
+            <td class="py-2 px-4"><?php echo htmlspecialchars($row['status']); ?></td>
+            <td class="py-2 px-4"><?php echo htmlspecialchars($row['descri']); ?></td>
+            <td class="py-2 px-4">
+                <button disabled class="bg-gray-400 text-white rounded-md px-4 py-2 cursor-not-allowed">Unavailable</button>
+            </td>
+        </tr>
+    <?php endforeach; ?>
 
+    <!-- If no facilities found -->
+    <?php if ($facility_result->num_rows === 0): ?>
+        <tr>
+            <td colspan="5" class="text-center py-4">No facilities found</td>
+        </tr>
+    <?php endif; ?>
+</tbody>
+
+                </table>
+            </div>            
         </main>
+        <div id="footer-container">
+            <?php include 'footer.php' ?>
+        </div>
     </div>
 
     <div id="toast" class="fixed top-4 right-4 bg-red-400 text-white text-sm p-3 rounded-lg shadow-lg z-50">

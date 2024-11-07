@@ -191,7 +191,7 @@ $role_result = $conn->query($role_sql);
                                         <td class="py-3 px-4"><?php echo $row['dept_name']; ?></td>
                                         <td class="py-3 px-4"><?php echo $row['userRole']; ?></td>
                                         <td class="py-3 px-4">
-                                            <button onclick="editUser(<?php echo $row['id']; ?>)" class="bg-plv-blue text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>
+                                            <button onclick="editUser(<?php echo $row['id']; ?>)" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>
                                             <button onclick="deleteUser(<?php echo $row['id']; ?>)" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>
                                         </td>
                                     </tr>

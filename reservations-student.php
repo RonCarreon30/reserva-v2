@@ -259,7 +259,7 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                         </select>
                         <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterReservations()">
                     </div>
-                    <table id="eventsTable" class="min-w-full bg-white rounded-md shadow-md border border-gray-200">
+                    <table id="eventsTable" class="min-w-full overflow-y-auto max-h-[calc(100vh-200px)] bg-white rounded-md shadow-md border border-gray-200">
                         <thead>
                             <tr class="bg-gray-200 border-b">
                                 <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
