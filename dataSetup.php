@@ -112,7 +112,7 @@
                         </button>
                         <!-- Academic Year & Semester Form -->
                         <form id="academicYearForm" class="bg-gray-200 hidden p-2">
-                            <h3 class="text-md font-semibold mb-2">Add Academic Year & Sem.</h3>
+                            <h3 id="AyTitle" class="text-md font-semibold mb-2">Add Academic Year & Sem.</h3>
                             <div class="mb-2">
                                 <label for="academicYear" class="block text-xs font-medium text-gray-700 ml-1">Academic Year</label>
                                 <input type="text" id="academicYear" class=" p-1 border border-gray-300 rounded-md w-full" placeholder="2023-2024">
@@ -129,6 +129,7 @@
                                 </select>
                             </div>
                             <button type="button" id="saveAcademicYearBtn" class="px-2 py-1 bg-blue-500 text-white rounded-md">Save</button>
+                            <button type="button" id="cancelAcademicYearBtn" class="px-2 py-1 bg-gray-500 text-white rounded-md ml-2 hidden">Cancel</button>
                         </form>
 
                         <button id="buildingBtn" class="text-blue-500 hover:text-blue-700 font-semibold text-left p-2">
@@ -146,6 +147,7 @@
                                 <input type="text" id="building_desc" class="p-1 border border-gray-300 rounded-md w-full" placeholder="Civil Engineer and Information Technology Building">
                             </div>
                             <button type="button" id="saveBuildingBtn" class="px-2 py-1 bg-blue-500 text-white rounded-md">Save</button>
+                            <button type="button" id="cancelBuildingBtn" class="px-2 py-1 bg-gray-500 text-white rounded-md ml-2 hidden">Cancel</button>
                         </form>
 
                         <button id="departmentBtn" class="text-blue-500 hover:text-blue-700 font-semibold text-left p-2">
@@ -178,6 +180,7 @@
                                 </select>
                             </div>
                             <button type="button" id="saveDepartmentBtn" class="px-2 py-1 bg-blue-500 text-white rounded-md">Save</button>
+                            <button type="button" id="cancelDepartmentBtn" class="px-2 py-1 bg-gray-500 text-white rounded-md ml-2 hidden">Cancel</button>                            
                         </form>
                      </div>
                     <!-- Image at the bottom part -->
@@ -291,7 +294,14 @@
 
                     </div>
                 </div>
+                <!-- Include the FAQs section here -->
+                <div class="">
+                    <?php include 'faqBtn.php'; ?>
+                </div>
             </main>
+            <div id="footer-container">
+                <?php include 'footer.php' ?>
+            </div> 
         </div>
     </div>
     <!-- Logout Modal -->
@@ -391,66 +401,6 @@
             }, 3000);
         }
 
-        /*/ Save Building
-        document.getElementById('saveBuildingBtn').addEventListener('click', async function () {
-            const building_name = document.getElementById('building_name').value; // Corrected variable name
-            const building_desc = document.getElementById('building_desc').value; // Corrected variable name
-
-            const formData = new FormData();
-            formData.append('building_name', building_name); // Use the correct variable
-            formData.append('building_desc', building_desc); // Use the correct variable
-
-            try {
-                const response = await fetch('handlers/save_building.php', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (result.status === 'success') { // Corrected property check
-                    showToast('Building saved successfully!', 'success');
-                    setTimeout(() => {
-                        location.reload(); // Reload the page after 3 seconds
-                    }, 2000); // 3000 milliseconds = 3 seconds
-                } else {
-                    showToast('Failed to save Building!', 'error');
-                }
-            } catch (error) {
-                showToast('Error occurred while saving data!', 'error');
-            }
-        });
-
-        // Save Department
-        document.getElementById('saveDepartmentBtn').addEventListener('click', async function () {
-            const departmentName = document.getElementById('departmentName').value;
-            const building = document.getElementById('building').value;
-
-            const formData = new FormData();
-            formData.append('departmentName', departmentName);
-            formData.append('building', building);
-
-            try {
-                const response = await fetch('handlers/save_department.php', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    showToast('Department saved successfully!', 'success');
-                    setTimeout(() => {
-                        location.reload(); // Reload the page after 3 seconds
-                    }, 3000);
-                } else {
-                    showToast('Failed to save Department!', 'error');
-                }
-            } catch (error) {
-                showToast('Error occurred while saving data!', 'error');
-            }
-        });*/
-
     </script>
 
     <!--edit and delete AY-->
@@ -458,7 +408,6 @@
         // Get references to buttons and the form
         const saveAcademicYearBtn = document.getElementById('saveAcademicYearBtn');
 
-        // Function to handle editing
         document.querySelectorAll('.edit-btn').forEach(button => {
             button.addEventListener('click', function () {
                 const row = button.closest('tr');
@@ -473,10 +422,12 @@
                         document.getElementById('semester').value = data.semester;
                         document.getElementById('ayStatus').value = data.term_status;
 
-                        // Show the form and change the button label to "Update"
+                        // Show the form, set the button label to "Update", and show "Cancel" button
                         document.getElementById('academicYearForm').classList.remove('hidden');
                         document.getElementById('AYTableContainer').classList.remove('hidden');
                         saveAcademicYearBtn.textContent = 'Update';
+                        document.getElementById('cancelAcademicYearBtn').classList.remove('hidden');
+                        document.getElementById('AyTitle').textContent = 'Edit Academic Year & Semester';
 
                         // Store the row ID for later updates
                         document.getElementById('academicYearForm').setAttribute('data-edit-id', rowId);
@@ -485,11 +436,10 @@
                         console.error('Error fetching academic year data:', error);
                     });
             });
-
         });
 
-        // Function to handle saving or updating
-        saveAcademicYearBtn.addEventListener('click', async function () {
+        // Save/Update button functionality
+        saveAcademicYearBtn.addEventListener('click', function () {
             const form = document.getElementById('academicYearForm');
             const editId = form.getAttribute('data-edit-id');
 
@@ -508,40 +458,66 @@
                 fetch('handlers/update_ay.php', {
                     method: 'POST',
                     body: formData
-                }).then(response => response.json()).then(data => {
-                    if (data.status === 'success') { // Change this line to check for 'status'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
                         showToast(data.message, 'success'); // Use the message from the response
-                        updateVisibility(); // Update visibility after a few seconds
+                        updateVisibility();
                         setTimeout(() => {
-                            location.reload(); // Reload the page after 3 seconds
+                            location.reload();
                         }, 3000);
                     } else {
                         showToast(data.message, 'error');
                     }
+                })
+                .catch(error => {
+                    showToast('Error occurred', 'error'); // Handle any fetch error
                 });
             } else {
-                try {
-                    const response = await fetch('handlers/save_academic_year.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    const result = await response.json();
-
-                    if (result.status === 'success') {
-                        showToast('Academic Year & Semester saved successfully!', 'success');
-                        updateVisibility(); // Update visibility after a few seconds
+                fetch('handlers/save_academic_year.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        updateVisibility();
                         setTimeout(() => {
-                            location.reload(); // Reload the page after 3 seconds
+                            location.reload();
                         }, 3000);
                     } else {
-                        showToast('Failed to save Academic Year & Semester!', 'error');
+                        showToast(data.message, 'error');
                     }
-                } catch (error) {
-                    showToast('Error occurred while saving data!', 'error');
-                }
+                })
+                .catch(error => {
+                    showToast('Error occurred', 'error');
+                });
             }
+
+            // Hide the cancel button and reset the form after saving
+            document.getElementById('cancelAcademicYearBtn').classList.add('hidden');
+            document.getElementById('formTitle').textContent = 'Add Academic Year & Semester';
+            form.removeAttribute('data-edit-id');
+            saveAcademicYearBtn.textContent = 'Save';
         });
+
+        // Cancel button functionality
+        document.getElementById('cancelAcademicYearBtn').addEventListener('click', function () {
+            // Reset the form fields
+            document.getElementById('academicYear').value = '';
+            document.getElementById('semester').value = '';
+            document.getElementById('ayStatus').value = 'Current';
+            form.removeAttribute('data-edit-id');
+
+            // Hide the form, reset button text, and hide the Cancel button
+            document.getElementById('AyTitle').textContent = 'Add Academic Year & Semester';
+            document.getElementById('cancelAcademicYearBtn').classList.add('hidden');
+            document.getElementById('academicYearForm').removeAttribute('data-edit-id');
+            saveAcademicYearBtn.textContent = 'Save';
+        });
+
 
         // Function to handle deletion
         document.querySelectorAll('.delete-btn').forEach(button => {
@@ -571,173 +547,204 @@
 
     </script>
     <script>
-        // Function to handle editing building
-document.querySelectorAll('.edit-building-btn').forEach(button => {
-    button.addEventListener('click', function () {
-        const row = button.closest('tr');
-        const rowId = row.getAttribute('data-id');
+        // Edit button functionality for buildings
+        document.querySelectorAll('.edit-building-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const row = button.closest('tr');
+                const rowId = row.getAttribute('data-id');
 
-        fetch(`handlers/fetch_building.php?id=${rowId}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('building_name').value = data.building_name;
-                document.getElementById('building_desc').value = data.building_desc;
-                document.getElementById('buildingForm').classList.remove('hidden');
-                saveBuildingBtn.textContent = 'Update';
-                document.getElementById('buildingForm').setAttribute('data-edit-id', rowId);
-            })
-            .catch(error => console.error('Error fetching building data:', error));
-    });
-});
-
-// Function to handle saving or updating building
-saveBuildingBtn.addEventListener('click', async function () {
-    const form = document.getElementById('buildingForm');
-    const editId = form.getAttribute('data-edit-id');
-
-    const buildingName = document.getElementById('building_name').value;
-    const buildingDesc = document.getElementById('building_desc').value;
-
-    const formData = new FormData();
-    formData.append('building_name', buildingName);
-    formData.append('building_desc', buildingDesc);
-
-    if (editId) {
-        formData.append('id', editId);
-        fetch('handlers/update_building.php', {
-            method: 'POST',
-            body: formData
-        }).then(response => response.json()).then(data => {
-            if (data.status === 'success') {
-                showToast(data.message, 'success');
-                setTimeout(() => location.reload(), 3000);
-            } else {
-                showToast(data.message, 'error');
-            }
-        });
-    } else {
-        try {
-            const response = await fetch('handler/save_building.php', {
-                method: 'POST',
-                body: formData
+                fetch(`handlers/fetch_building.php?id=${rowId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('building_name').value = data.building_name;
+                        document.getElementById('building_desc').value = data.building_desc;
+                        document.getElementById('buildingForm').classList.remove('hidden');
+                        saveBuildingBtn.textContent = 'Update';
+                        document.getElementById('cancelBuildingBtn').classList.remove('hidden');
+                        document.getElementById('buildingForm').setAttribute('data-edit-id', rowId);
+                    })
+                    .catch(error => console.error('Error fetching building data:', error));
             });
-            const result = await response.json();
-            if (result.status === 'success') {
-                showToast('Building saved successfully!', 'success');
-                setTimeout(() => location.reload(), 3000);
-            } else {
-                showToast('Failed to save building!', 'error');
-            }
-        } catch (error) {
-            showToast('Error occurred while saving building data!', 'error');
-        }
-    }
-});
+        });
 
-// Function to handle deleting building
-document.querySelectorAll('.delete-building-btn').forEach(button => {
-    button.addEventListener('click', function () {
-        const rowId = button.getAttribute('data-id');
-        if (confirm("Are you sure you want to delete this building?")) {
-            fetch('handlers/delete_building.php', {
-                method: 'POST',
-                body: JSON.stringify({ id: rowId }),
-                headers: { 'Content-Type': 'application/json' }
-            }).then(response => response.json()).then(data => {
-                if (data.status === 'success') {
-                    showToast(data.message, 'success');
-                    setTimeout(() => location.reload(), 3000);
-                } else {
-                    showToast(data.message, 'error');
+        // Save/Update button functionality for buildings
+        saveBuildingBtn.addEventListener('click', async function () {
+            const form = document.getElementById('buildingForm');
+            const editId = form.getAttribute('data-edit-id');
+
+            const buildingName = document.getElementById('building_name').value;
+            const buildingDesc = document.getElementById('building_desc').value;
+
+            const formData = new FormData();
+            formData.append('building_name', buildingName);
+            formData.append('building_desc', buildingDesc);
+
+            if (editId) {
+                formData.append('id', editId);
+                fetch('handlers/update_building.php', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json()).then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        setTimeout(() => location.reload(), 3000);
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                });
+            } else {
+                try {
+                    const response = await fetch('handlers/save_building.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        showToast('Building saved successfully!', 'success');
+                        setTimeout(() => location.reload(), 3000);
+                    } else {
+                        showToast('Failed to save building!', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error occurred while saving building data!', 'error');
+                }
+            }
+
+            // Reset form and button text
+            document.getElementById('cancelBuildingBtn').classList.add('hidden');
+            form.removeAttribute('data-edit-id');
+            saveBuildingBtn.textContent = 'Save';
+        });
+
+        // Cancel button functionality for buildings
+        document.getElementById('cancelBuildingBtn').addEventListener('click', function () {
+            document.getElementById('building_name').value = '';
+            document.getElementById('building_desc').value = '';
+            document.getElementById('cancelBuildingBtn').classList.add('hidden');
+            saveBuildingBtn.textContent = 'Save';
+            form.removeAttribute('data-edit-id');
+        });
+
+        // Function to handle deleting building
+        document.querySelectorAll('.delete-building-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const rowId = button.getAttribute('data-id');
+                if (confirm("Are you sure you want to delete this building?")) {
+                    fetch('handlers/delete_building.php', {
+                        method: 'POST',
+                        body: JSON.stringify({ id: rowId }),
+                        headers: { 'Content-Type': 'application/json' }
+                    }).then(response => response.json()).then(data => {
+                        if (data.status === 'success') {
+                            showToast(data.message, 'success');
+                            setTimeout(() => location.reload(), 3000);
+                        } else {
+                            showToast(data.message, 'error');
+                        }
+                    });
                 }
             });
-        }
-    });
-});
-
-// Function to handle editing department
-document.querySelectorAll('.edit-department-btn').forEach(button => {
-    button.addEventListener('click', function () {
-        const row = button.closest('tr');
-        const rowId = row.getAttribute('data-id');
-
-        fetch(`handlers/fetch_department.php?id=${rowId}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('departmentName').value = data.dept_name;
-                document.getElementById('building').value = data.building_id; // Assuming this is a dropdown
-                document.getElementById('departmentForm').classList.remove('hidden');
-                saveDepartmentBtn.textContent = 'Update';
-                document.getElementById('departmentForm').setAttribute('data-edit-id', rowId);
-            })
-            .catch(error => console.error('Error fetching department data:', error));
-    });
-});
-
-// Function to handle saving or updating department
-saveDepartmentBtn.addEventListener('click', async function () {
-    const form = document.getElementById('departmentForm');
-    const editId = form.getAttribute('data-edit-id');
-
-    const departmentName = document.getElementById('departmentName').value;
-    const buildingId = document.getElementById('building').value;
-
-    const formData = new FormData();
-    formData.append('departmentName', departmentName);
-    formData.append('buildingId', buildingId);
-
-    if (editId) {
-        formData.append('id', editId);
-        fetch('handlers/update_department.php', {
-            method: 'POST',
-            body: formData
-        }).then(response => response.json()).then(data => {
-            if (data.status === 'success') {
-                showToast(data.message, 'success');
-                setTimeout(() => location.reload(), 3000);
-            } else {
-                showToast(data.message, 'error');
-            }
         });
-    } else {
-        try {
-            const response = await fetch('handlers/save_department.php', {
-                method: 'POST',
-                body: formData
-            });
-            const result = await response.json();
-            if (result.status === 'success') {
-                showToast('Department saved successfully!', 'success');
-                setTimeout(() => location.reload(), 3000);
-            } else {
-                showToast('Failed to save department!', 'error');
-            }
-        } catch (error) {
-            showToast('Error occurred while saving department data!', 'error');
-        }
-    }
-});
 
-// Function to handle deleting department
-document.querySelectorAll('.delete-department-btn').forEach(button => {
-    button.addEventListener('click', function () {
-        const rowId = button.getAttribute('data-id');
-        if (confirm("Are you sure you want to delete this department?")) {
-            fetch('handlers/delete_department.php', {
-                method: 'POST',
-                body: JSON.stringify({ id: rowId }),
-                headers: { 'Content-Type': 'application/json' }
-            }).then(response => response.json()).then(data => {
-                if (data.status === 'success') {
-                    showToast(data.message, 'success');
-                    setTimeout(() => location.reload(), 3000);
-                } else {
-                    showToast(data.message, 'error');
+        // Edit button functionality for departments
+        document.querySelectorAll('.edit-department-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const row = button.closest('tr');
+                const rowId = row.getAttribute('data-id');
+
+                fetch(`handlers/fetch_department.php?id=${rowId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('departmentName').value = data.dept_name;
+                        document.getElementById('building').value = data.building_id; 
+                        document.getElementById('departmentForm').classList.remove('hidden');
+                        saveDepartmentBtn.textContent = 'Update';
+                        document.getElementById('cancelDepartmentBtn').classList.remove('hidden');
+                        document.getElementById('departmentForm').setAttribute('data-edit-id', rowId);
+                    })
+                    .catch(error => console.error('Error fetching department data:', error));
+            });
+        });
+
+        // Save/Update button functionality for departments
+        saveDepartmentBtn.addEventListener('click', async function () {
+            const form = document.getElementById('departmentForm');
+            const editId = form.getAttribute('data-edit-id');
+
+            const departmentName = document.getElementById('departmentName').value;
+            const buildingId = document.getElementById('building').value;
+
+            const formData = new FormData();
+            formData.append('departmentName', departmentName);
+            formData.append('buildingId', buildingId);
+
+            if (editId) {
+                formData.append('id', editId);
+                fetch('handlers/update_department.php', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json()).then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        setTimeout(() => location.reload(), 3000);
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                });
+            } else {
+                try {
+                    const response = await fetch('handlers/save_department.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        showToast('Department saved successfully!', 'success');
+                        setTimeout(() => location.reload(), 3000);
+                    } else {
+                        showToast('Failed to save department!', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error occurred while saving department data!', 'error');
+                }
+            }
+
+            // Reset form and button text
+            document.getElementById('cancelDepartmentBtn').classList.add('hidden');
+            form.removeAttribute('data-edit-id');
+            saveDepartmentBtn.textContent = 'Save';
+        });
+
+        // Cancel button functionality for departments
+        document.getElementById('cancelDepartmentBtn').addEventListener('click', function () {
+            document.getElementById('departmentName').value = '';
+            document.getElementById('building').value = '';
+            document.getElementById('cancelDepartmentBtn').classList.add('hidden');
+            saveDepartmentBtn.textContent = 'Save';
+            form.removeAttribute('data-edit-id');
+        });
+
+
+        // Function to handle deleting department
+        document.querySelectorAll('.delete-department-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const rowId = button.getAttribute('data-id');
+                if (confirm("Are you sure you want to delete this department?")) {
+                    fetch('handlers/delete_department.php', {
+                        method: 'POST',
+                        body: JSON.stringify({ id: rowId }),
+                        headers: { 'Content-Type': 'application/json' }
+                    }).then(response => response.json()).then(data => {
+                        if (data.status === 'success') {
+                            showToast(data.message, 'success');
+                            setTimeout(() => location.reload(), 3000);
+                        } else {
+                            showToast(data.message, 'error');
+                        }
+                    });
                 }
             });
-        }
-    });
-});
+        });
 
     </script>
 </body>

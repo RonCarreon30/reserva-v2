@@ -1,79 +1,105 @@
 <?php
-include '../database/config.php'; // Database connection
+// Include your database connection
+require '../database/config.php';
 
-// Get the raw POST data
-$data = file_get_contents("php://input");
-$decodedData = json_decode($data, true); // Decode the JSON data
+header('Content-Type: application/json');
 
-// Retrieve user data from the decoded array
-$user_id = $decodedData['id'] ?? null; // Use null coalescing to avoid undefined index errors
-$firstName = $decodedData['first_name'] ?? null;
-$lastName = $decodedData['last_name'] ?? null;
-$email = $decodedData['email'] ?? null;
-$idNumber = $decodedData['idNumber'] ?? null;
-$department_id = $decodedData['department'] ?? null;
-$role = $decodedData['role'] ?? null;
-$password = $decodedData['password'] ?? null;
+// Initialize response
+$response = [
+    'status' => 'error',
+    'message' => ''
+];
 
-// Start a transaction to ensure data integrity
-$conn->begin_transaction();
+// Get the raw POST data from the form submission
+$first_name = isset($_POST['firstName']) ? trim($_POST['firstName']) : '';
+$last_name = isset($_POST['lastName']) ? trim($_POST['lastName']) : '';
+$email = isset($_POST['email']) ? trim($_POST['email']) : '';
+$id_number = isset($_POST['IdNumber']) ? trim($_POST['IdNumber']) : '';
+$department = isset($_POST['department']) ? intval($_POST['department']) : 0;
+$role = isset($_POST['role']) ? trim($_POST['role']) : '';
+$password = isset($_POST['password']) ? trim($_POST['password']) : '';
+$confirm_password = isset($_POST['confirmPassword']) ? trim($_POST['confirmPassword']) : '';
+$user_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
 
-try {
-    $changesMade = false; // Flag to check if any changes were made
+// Include the POST data in the response for debugging
+$response['post_data'] = [
+    'first_name' => $first_name,
+    'last_name' => $last_name,
+    'email' => $email,
+    'id_number' => $id_number,
+    'department' => $department,
+    'role' => $role,
+    'password' => $password,
+    'confirm_password' => $confirm_password,
+    'user_id' => $user_id
+];
 
-    // If a new password is provided, hash it and update it
-    if (!empty($password)) {
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-        // Update the user password in the database
-        $query = "UPDATE users SET userPassword = ? WHERE id = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("si", $hashedPassword, $user_id);
-        $stmt->execute();
-
-        // Check for errors
-        if ($stmt->affected_rows > 0) {
-            $changesMade = true; // Mark that changes were made
-        }
-    }
-
-    // Update the other user fields only if they are provided
-    if (!empty($firstName) || !empty($lastName) || !empty($email) || !empty($idNumber) || !empty($department_id) || !empty($role)) {
-        $query = "UPDATE users SET 
-                    first_name = IFNULL(NULLIF(?, ''), first_name), 
-                    last_name = IFNULL(NULLIF(?, ''), last_name), 
-                    email = IFNULL(NULLIF(?, ''), email), 
-                    id_number = IFNULL(NULLIF(?, ''), id_number), 
-                    department_id = IFNULL(NULLIF(?, ''), department_id), 
-                    userRole = IFNULL(NULLIF(?, ''), userRole) 
-                  WHERE id = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("ssssssi", $firstName, $lastName, $email, $idNumber, $department_id, $role, $user_id);
-        $stmt->execute();
-
-        // Check for errors
-        if ($stmt->affected_rows > 0) {
-            $changesMade = true; // Mark that changes were made
-        }
-    }
-
-    // Commit or rollback based on changes made
-    if ($changesMade) {
-        $conn->commit();
-        echo json_encode(['success' => 'User updated successfully']);
-    } else {
-        throw new Exception('No changes made to user information.');
-    }
-} catch (Exception $e) {
-    // Rollback the transaction on error
-    $conn->rollback();
-    echo json_encode(['error' => $e->getMessage()]);
-} finally {
-    // Close the statement if it was created
-    if (isset($stmt)) {
-        $stmt->close();
-    }
-    // Close the database connection if necessary
-    $conn->close();
+// Check if any required fields are empty
+if (empty($first_name) || empty($last_name) || empty($email) || empty($id_number) || empty($department) || empty($role)) {
+    $response['message'] = 'All fields are required.';
+    echo json_encode($response);
+    exit;
 }
+
+// Duplicate check: Check if the email or ID number already exists (excluding the current user)
+$dup_check_stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE (email = ? OR id_number = ?) AND id != ?");
+$dup_check_stmt->bind_param("ssi", $email, $id_number, $user_id);
+$dup_check_stmt->execute();
+$dup_check_stmt->bind_result($count);
+$dup_check_stmt->fetch();
+$dup_check_stmt->close();
+
+if ($count > 0) {
+    // Duplicate found
+    $response['message'] = 'Email or ID Number already exists. Please use a different one.';
+    echo json_encode($response);
+    exit;
+}
+
+// Check if password is provided and match
+if (!empty($password)) {
+    if ($password !== $confirm_password) {
+        $response['message'] = 'Passwords do not match. Please try again.';
+        echo json_encode($response);
+        exit;
+    }
+
+    // Hash the password
+    $password = password_hash($password, PASSWORD_BCRYPT);
+    $update_password_query = "userPassword = ?";
+} else {
+    // If no password is provided, skip password update
+    $update_password_query = "";
+}
+
+// Prepare the SQL query to update the user
+$sql = "UPDATE users 
+        SET first_name = ?, last_name = ?, email = ?, id_number = ?, department_id = ?, userRole = ?" . 
+        ($update_password_query ? ", " . $update_password_query : "") . " 
+        WHERE id = ?";
+
+// Prepare statement
+$stmt = $conn->prepare($sql);
+
+// Bind parameters
+if (!empty($password)) {
+    $stmt->bind_param('ssssissi', $first_name, $last_name, $email, $id_number, $department, $role, $password, $user_id);
+} else {
+    $stmt->bind_param('ssssisi', $first_name, $last_name, $email, $id_number, $department, $role, $user_id);
+}
+
+// Execute the query and prepare a response based on success or failure
+if ($stmt->execute()) {
+    $response['status'] = 'success';
+    $response['message'] = 'User updated successfully.';
+} else {
+    $response['message'] = 'Failed to update user: ' . $stmt->error;
+}
+
+// Close the statement and connection
+$stmt->close();
+$conn->close();
+
+// Send JSON response
+echo json_encode($response);
 ?>

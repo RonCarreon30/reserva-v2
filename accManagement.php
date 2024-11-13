@@ -135,6 +135,7 @@ $role_result = $conn->query($role_sql);
             
                 <!-- User List -->
                 <div class=" overflow-y-auto max-h-[calc(100vh-200px)]">
+                    <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-2"></div>
                     <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
                         <strong class="font-bold">Error!</strong>
                         <span class="block sm:inline">Something went wrong.</span>
@@ -365,7 +366,7 @@ $role_result = $conn->query($role_sql);
                 </div>
                 <div class="grid grid-cols-2 mt-2 gap-4">
                     <button type="button" onclick="closeModal()" class="col-span-1 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Cancel</button>
-                    <button type="button" onclick="saveUserChanges()" class="col-span-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600" >Update Account</button>
+                    <button type="submit" class="col-span-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600" >Update Account</button>
                 </div>
             </form>
         </div>
@@ -424,10 +425,45 @@ $role_result = $conn->query($role_sql);
     <script>
         let currentUserId;  // Declare a variable to store the current user ID
 
+        // Prevent form redirection on submit
+        document.getElementById("createUserForm").addEventListener("submit", function (event) {
+            event.preventDefault(); // Prevent the default form submission (page reload/redirect)
+
+            // Extract form data
+            const formData = new FormData(this);
+
+            // Use fetch API to send form data asynchronously
+            fetch("handlers/create_user.php", {
+            method: "POST",
+            body: formData,
+            })
+            .then((response) => response.json()) // Assuming response is JSON
+            .then((data) => {
+                if (data.status === 'success') {
+                // Show success message in modal
+                showToast(data);
+                setTimeout(() => {
+                    location.reload(); // Reloads the current page
+                }, 3000);
+                closeModal();
+                
+                } else {
+                // Show error message
+                showToast(data);
+                }
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                // Show generic error message in modal
+                showToast("There was an error processing the form.", false); // Passing `false` for error
+            });
+        });
+
         // Edit User
         function editUser(id) {
             // Store the user ID for future use when saving changes
             currentUserId = id;
+            console.log("Current User ID set to:", currentUserId); 
 
             // Make an AJAX request to fetch the user details from the server using the user ID
             fetch(`handlers/fetch_user.php?id=${id}`)
@@ -454,58 +490,63 @@ $role_result = $conn->query($role_sql);
         }
 
         // Save Changes to the User Account
-        function saveUserChanges() {
+        document.getElementById('editUserForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission behavior
+
             // Get the values from the password and confirm password fields
             const password = document.getElementById('editPassword').value;
             const confirmPassword = document.getElementById('editConfirmPassword').value;
 
             // Check if the password and confirm password match
             if (password !== confirmPassword) {
-                alert("Passwords do not match. Please try again."); // Show an error message
+                alert("Passwords do not match. Please try again.");
                 return; // Exit the function if they don't match
             }
 
-            // Get the updated data from the form fields
-            const updatedUserData = {
-                id: currentUserId, // Make sure currentUserId is defined
-                first_name: document.getElementById('editFirstName').value,
-                last_name: document.getElementById('editLastName').value,
-                email: document.getElementById('editEmail').value,
-                idNumber: document.getElementById('editIdNumber').value,
-                department: document.getElementById('editDepartment').value,
-                role: document.getElementById('editRole').value,
-                password: document.getElementById('editPassword').value // Include password if needed
-            };
+            // Create a FormData object to capture the form data
+            const formData = new FormData(event.target); // Automatically capture form data
 
-            // Make an AJAX request to save the updated user data to the server
+            // If the password is provided, append it to the FormData
+            if (password) {
+                formData.append('password', password);
+            }
+
+            // Append the current user ID to the form data (if needed)
+            console.log('Appending User ID:', currentUserId);
+            formData.append('id', currentUserId);
+
+
+            // Log FormData to the console for debugging
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value); // Logs each key-value pair in the form data
+            }
+
+            // Use Fetch API to submit the form data to the server
             fetch('handlers/update_user.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updatedUserData),
+                body: formData // Send the FormData object
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Show success modal or message
-                        showSuccessModal('User updated successfully!');
-                        setTimeout(() => {
-                            closeSuccessModal();
-                            location.reload(); // Reloads the current page
-                        }, 3000); // 3000 milliseconds = 3 seconds
-                // Reload the user list or update the table row
-                        closeModal();
-                    } else {
-                        // Show error message
-                        showError(data.error || 'Failed to update user.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error updating user:', error);
-                    showError('Error updating user.');
-                });
-        }
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Show success modal or message
+                    showToast(data); // Display success message
+                    closeModal(); // Close the modal
+                    setTimeout(() => {
+                        location.reload(); // Reload the current page
+                    }, 3000); // Wait 3 seconds before reloading
+                } else {
+                    // Show error message
+                    showToast(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating user:', error);
+                showToast('Error updating user.');
+            });
+        });
+
+
  
         function deleteUser(userId) {
             userIdToDelete = userId; // Store the user ID
@@ -516,36 +557,32 @@ $role_result = $conn->query($role_sql);
         // Delete User Account
         function confirmDelete() {
             // Make an AJAX request to delete the user from the server
-            fetch(`handlers/delete_user.php?id=${userIdToDelete}`, {
-                method: 'DELETE',
+            fetch(`handlers/delete_user.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: userIdToDelete })
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    // Show success message
-                    showSuccessModal('User deleted successfully!');
+                closeDeleteModal(); // Close the modal after the response
+
+                if (data.status === 'success') {
+                    showToast(data);
                     setTimeout(() => {
-                        closeSuccessModal();
                         location.reload(); // Reloads the current page
-                    }, 3000); // 3000 milliseconds = 3 seconds
+                    }, 3000); // 3 seconds
                 } else {
-                    // Show error message
-                    showError(data.message);
+                    showToast(data);
                 }
             })
             .catch(error => {
+                closeDeleteModal(); // Ensure the modal is closed
                 console.error('Error deleting user:', error);
-                showError('Error deleting user.');
+                showToast('Error deleting the user.');
             });
-
-            // Close the confirmation modal after confirming
-            closeDeleteModal();
         }
-
-        function closeDeleteModal() {
-            document.getElementById('confirmDeleteModal').classList.add('hidden');
-}
-
 
         // Close modal
         function closeModal() {
@@ -553,39 +590,35 @@ $role_result = $conn->query($role_sql);
             document.getElementById("createUserForm").reset();
         }
 
-        function showSuccessModal(message, isSuccess = true) {
-            const successMessageElement = document.getElementById('successMessage');
-            successMessageElement.textContent = message; // Set the dynamic success or error message
-
-            const successModal = document.getElementById('successModal');
-            
-            if (isSuccess) {
-                // Apply success styling
-                successModal.classList.remove('bg-red-500'); // Remove error styling if present
-                successModal.classList.add('bg-white'); // Success styling
-            } else {
-                // Apply error styling
-                successModal.classList.remove('bg-white'); // Remove success styling
-                successModal.classList.add('bg-red-500'); // Error styling
-            }
-
-            successModal.classList.remove('hidden'); // Show the modal
-
-            // Auto-close modal after 3 seconds for success, or let users manually close it for errors
-            if (isSuccess) {
-                setTimeout(() => {
-                    closeSuccessModal();
-                    location.reload(); // Reload the current page after success
-                }, 3000); // 3000 milliseconds = 3 seconds
-            }
+        function closeDeleteModal() {
+            document.getElementById('confirmDeleteModal').classList.add('hidden');
         }
 
-        function closeSuccessModal() {
-            var successModal = document.getElementById('successModal');
-            // Hide modal
-            successModal.classList.add('hidden');
-            document.getElementById("createUserForm").reset();
-            location.reload(); // Reload the current page after success
+                // Function to show toast notifications
+        function showToast(data) {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            // Dynamically set Tailwind CSS classes
+            toast.className = `p-4 rounded-md shadow-md mb-2 transition-opacity duration-300 ease-in-out fixed bottom-5 right-5 z-50 ${
+                data.status === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+
+            toast.textContent = data.message;
+
+            // Create close button
+            const closeButton = document.createElement('button');
+            closeButton.innerHTML = '&times;';
+            closeButton.className = 'ml-4 text-lg font-semibold';
+            closeButton.onclick = () => toast.remove(); // Remove toast on close button click
+
+            toast.appendChild(closeButton);
+            toastContainer.appendChild(toast);
+
+            // Automatically remove the toast after 5 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 5000); // Change this value for longer display time
         }
     </script>
 </body>

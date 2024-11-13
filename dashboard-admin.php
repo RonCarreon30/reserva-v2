@@ -116,7 +116,13 @@ $user_data = $user_result->fetch_assoc();
                             failureCallback(error); // Handle any error in the process
                         });
                 },
-
+                datesSet: function(info) {
+                    // Modify the calendar title by adding 'Reservations' to the month
+                    const calendarTitle = document.querySelector('.fc-toolbar-title');
+                    if (calendarTitle) {
+                        calendarTitle.textContent = info.view.title + ' | Events & Reservations';
+                    }
+                }
 
             });
 
@@ -168,6 +174,7 @@ $user_data = $user_result->fetch_assoc();
 
             <!-- Main content area -->
             <main class="flex flex-1 p-4 h-screen overflow-y-auto">
+
                 <div class="w-3/4 pr-4">
                     <div id='calendar' class="h-full p-1 text-xs bg-white border border-gray-200 rounded-lg shadow-lg"></div>
                 </div>
@@ -250,6 +257,9 @@ $user_data = $user_result->fetch_assoc();
                     </div>
                 </div>
             </main>
+            <div id="footer-container">
+                <?php include 'footer.php' ?>
+            </div> 
         </div>
     </div>
         <!-- Modal Container -->

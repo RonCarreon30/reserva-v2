@@ -19,13 +19,6 @@ if ($_SESSION['role'] !== 'Facility Head' && $_SESSION['role'] !== 'Admin') {
 // database config
 include_once 'database/config.php';
 
-// Create connection
-$conn = new mysqli($servername, $username, $db_password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
 
 // Fetch the user ID from the session data
 $user_id = $_SESSION['user_id'];
