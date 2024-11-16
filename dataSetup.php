@@ -137,7 +137,7 @@
                         </button>
                         <!-- Building Form -->
                         <form id="buildingForm" class="bg-gray-200 hidden p-2">
-                            <h3 class="text-md font-semibold mb-2">Add Building</h3>
+                            <h3 id="buildingFormTitle" class="text-md font-semibold mb-2">Add Building</h3>
                             <div class="mb-2">
                                 <label class="block text-xs font-medium text-gray-700 ml-1">Building Name</label>
                                 <input type="text" id="building_name" class="p-1 border border-gray-300 rounded-md w-full" placeholder="CEIT">
@@ -155,7 +155,7 @@
                         </button>
                         <!-- Department Form -->
                         <form id="departmentForm" class="bg-gray-200 hidden p-2">
-                            <h3 class="text-md font-semibold mb-2">Add Department</h3>
+                            <h3 id="deptFormTitle" class="text-md font-semibold mb-2">Add Department</h3>
                             <div class="mb-2">
                                 <label class="block text-xs font-medium text-gray-700 ml-1">Department Name:</label>
                                 <input type="text" id="departmentName" class="p-1 border border-gray-300 rounded-md w-full" placeholder="Information Technology">
@@ -294,14 +294,11 @@
 
                     </div>
                 </div>
-                <!-- Include the FAQs section here -->
+                                <!-- Include the FAQs section here -->
                 <div class="">
                     <?php include 'faqBtn.php'; ?>
                 </div>
             </main>
-            <div id="footer-container">
-                <?php include 'footer.php' ?>
-            </div> 
         </div>
     </div>
     <!-- Logout Modal -->
@@ -424,7 +421,6 @@
 
                         // Show the form, set the button label to "Update", and show "Cancel" button
                         document.getElementById('academicYearForm').classList.remove('hidden');
-                        document.getElementById('AYTableContainer').classList.remove('hidden');
                         saveAcademicYearBtn.textContent = 'Update';
                         document.getElementById('cancelAcademicYearBtn').classList.remove('hidden');
                         document.getElementById('AyTitle').textContent = 'Edit Academic Year & Semester';
@@ -495,12 +491,6 @@
                     showToast('Error occurred', 'error');
                 });
             }
-
-            // Hide the cancel button and reset the form after saving
-            document.getElementById('cancelAcademicYearBtn').classList.add('hidden');
-            document.getElementById('formTitle').textContent = 'Add Academic Year & Semester';
-            form.removeAttribute('data-edit-id');
-            saveAcademicYearBtn.textContent = 'Save';
         });
 
         // Cancel button functionality
@@ -509,13 +499,14 @@
             document.getElementById('academicYear').value = '';
             document.getElementById('semester').value = '';
             document.getElementById('ayStatus').value = 'Current';
-            form.removeAttribute('data-edit-id');
 
-            // Hide the form, reset button text, and hide the Cancel button
             document.getElementById('AyTitle').textContent = 'Add Academic Year & Semester';
             document.getElementById('cancelAcademicYearBtn').classList.add('hidden');
             document.getElementById('academicYearForm').removeAttribute('data-edit-id');
             saveAcademicYearBtn.textContent = 'Save';
+            document.getElementById('academicYearForm').removeAttribute('data-edit-id');
+
+
         });
 
 
@@ -558,9 +549,12 @@
                     .then(data => {
                         document.getElementById('building_name').value = data.building_name;
                         document.getElementById('building_desc').value = data.building_desc;
+
                         document.getElementById('buildingForm').classList.remove('hidden');
                         saveBuildingBtn.textContent = 'Update';
                         document.getElementById('cancelBuildingBtn').classList.remove('hidden');
+                        document.getElementById('buildingFormTitle').textContent = 'Edit Department';                                                
+
                         document.getElementById('buildingForm').setAttribute('data-edit-id', rowId);
                     })
                     .catch(error => console.error('Error fetching building data:', error));
@@ -584,45 +578,53 @@
                 fetch('handlers/update_building.php', {
                     method: 'POST',
                     body: formData
-                }).then(response => response.json()).then(data => {
+                })
+                .then(response => response.json())
+                .then(data => {
                     if (data.status === 'success') {
                         showToast(data.message, 'success');
-                        setTimeout(() => location.reload(), 3000);
+                        updateVisibility();
+                        setTimeout(() => {
+                            location.reload();
+                        }, 3000);
                     } else {
                         showToast(data.message, 'error');
                     }
                 });
             } else {
-                try {
-                    const response = await fetch('handlers/save_building.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const result = await response.json();
-                    if (result.status === 'success') {
-                        showToast('Building saved successfully!', 'success');
-                        setTimeout(() => location.reload(), 3000);
+                fetch('handlers/save_building.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        updateVisibility();
+                        setTimeout(() => {
+                            location.reload();
+                        }, 3000);
                     } else {
-                        showToast('Failed to save building!', 'error');
+                        showToast(data.message, 'error');
                     }
-                } catch (error) {
-                    showToast('Error occurred while saving building data!', 'error');
-                }
+                })
+                .catch(error => {
+                    showToast('Error occurred', 'error');
+                });
             }
-
-            // Reset form and button text
-            document.getElementById('cancelBuildingBtn').classList.add('hidden');
-            form.removeAttribute('data-edit-id');
-            saveBuildingBtn.textContent = 'Save';
         });
 
         // Cancel button functionality for buildings
         document.getElementById('cancelBuildingBtn').addEventListener('click', function () {
             document.getElementById('building_name').value = '';
             document.getElementById('building_desc').value = '';
+
+            document.getElementById('buildingFormTitle').textContent = 'Add Department';
             document.getElementById('cancelBuildingBtn').classList.add('hidden');
             saveBuildingBtn.textContent = 'Save';
-            form.removeAttribute('data-edit-id');
+
+            // Remove the data-edit-id attribute
+            document.getElementById('buildingForm').removeAttribute('data-edit-id');
         });
 
         // Function to handle deleting building
@@ -657,9 +659,12 @@
                     .then(data => {
                         document.getElementById('departmentName').value = data.dept_name;
                         document.getElementById('building').value = data.building_id; 
+
                         document.getElementById('departmentForm').classList.remove('hidden');
                         saveDepartmentBtn.textContent = 'Update';
                         document.getElementById('cancelDepartmentBtn').classList.remove('hidden');
+                        document.getElementById('deptFormTitle').textContent = 'Edit Department';                        
+                        
                         document.getElementById('departmentForm').setAttribute('data-edit-id', rowId);
                     })
                     .catch(error => console.error('Error fetching department data:', error));
@@ -683,45 +688,52 @@
                 fetch('handlers/update_department.php', {
                     method: 'POST',
                     body: formData
-                }).then(response => response.json()).then(data => {
+                })
+                .then(response => response.json())
+                .then(data => {
                     if (data.status === 'success') {
                         showToast(data.message, 'success');
-                        setTimeout(() => location.reload(), 3000);
+                        updateVisibility();
+                        setTimeout(() => {
+                            location.reload();
+                        }, 3000);
                     } else {
                         showToast(data.message, 'error');
                     }
                 });
             } else {
-                try {
-                    const response = await fetch('handlers/save_department.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const result = await response.json();
-                    if (result.status === 'success') {
-                        showToast('Department saved successfully!', 'success');
-                        setTimeout(() => location.reload(), 3000);
+                fetch('handlers/save_department.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        updateVisibility();
+                        setTimeout(() => {
+                            location.reload();
+                        }, 3000);
                     } else {
-                        showToast('Failed to save department!', 'error');
+                        showToast(data.message, 'error');
                     }
-                } catch (error) {
-                    showToast('Error occurred while saving department data!', 'error');
-                }
+                })
+                .catch(error => {
+                    showToast('Error occurred', 'error');
+                });
             }
-
-            // Reset form and button text
-            document.getElementById('cancelDepartmentBtn').classList.add('hidden');
-            form.removeAttribute('data-edit-id');
-            saveDepartmentBtn.textContent = 'Save';
         });
 
         // Cancel button functionality for departments
         document.getElementById('cancelDepartmentBtn').addEventListener('click', function () {
             document.getElementById('departmentName').value = '';
             document.getElementById('building').value = '';
+
+            document.getElementById('deptFormTitle').textContent = 'Add Department';
             document.getElementById('cancelDepartmentBtn').classList.add('hidden');
             saveDepartmentBtn.textContent = 'Save';
-            form.removeAttribute('data-edit-id');
+            // Remove the data-edit-id attribute
+            document.getElementById('departmentForm').removeAttribute('data-edit-id');
         });
 
 

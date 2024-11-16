@@ -105,8 +105,13 @@
             alt="Forgot Password"
             class="w-32 mb-4"
           />
-          <h2 class="text-xl font-bold text-gray-800 mb-4">Forgot Password</h2>
-          <p class="text-gray-600 mb-6">
+          <h2
+            id="header-container"
+            class="text-xl font-bold text-gray-800 mb-4"
+          >
+            Forgot Password
+          </h2>
+          <p id="response-container" class="text-gray-600 mb-6">
             Please enter the email associated with your account.
           </p>
           <form id="forgetPassForm" class="w-full">
@@ -151,6 +156,7 @@
     </div>
 
     <script>
+      // Handle the login form submission
       document
         .getElementById("loginForm")
         .addEventListener("submit", function (event) {
@@ -178,12 +184,81 @@
             });
         });
 
+      // Handle the forgot password form submission
+      // Handle the forgot password form submission
+      document
+        .getElementById("forgetPassForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const emailInput = document.getElementById("email");
+          const email = emailInput.value.trim();
+
+          if (!email) {
+            document.getElementById("response-container").textContent =
+              "Please enter a valid email address.";
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append("email", email); // Append the email to the FormData object
+
+          fetch("handlers/forgetPass.php", {
+            method: "POST",
+            body: formData, // Send the FormData as the body of the request
+          })
+            .then((response) => response.json()) // Parse the response as JSON
+            .then((data) => {
+              if (data.success) {
+                // Successful email sending
+                document.getElementById("header-container").textContent =
+                  "Password Reset Email Sent!";
+                document.getElementById("response-container").textContent =
+                  data.message; // Use the response message
+                document.getElementById("forgetPassImage").src =
+                  "img/success.svg";
+                document
+                  .getElementById("forgetPassForm")
+                  .classList.add("hidden");
+                document
+                  .getElementById("DoneButton")
+                  .classList.remove("hidden");
+              } else {
+                // Error response
+                document.getElementById("response-container").textContent =
+                  `${data.message}`; // Access the message field properly
+                // Apply Tailwind CSS for red text
+                document
+                  .getElementById("response-container")
+                  .classList.add("text-red-500", "font-semibold");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              document.getElementById("response-container").textContent =
+                "An error occurred. Please try again later.";
+            });
+        });
+
+      // Functions to show and hide the forgot password modal
       function showForgetPass() {
         document.getElementById("forgetPass").classList.remove("hidden");
       }
 
       function hideForgetPass() {
         document.getElementById("forgetPass").classList.add("hidden");
+        document.getElementById("email").value = "";
+      }
+
+      // Reset the form and UI state when the Done button is clicked
+      function doneForgetPass() {
+        hideForgetPass();
+        document.getElementById("forgetPassForm").classList.remove("hidden");
+        document.getElementById("DoneButton").classList.add("hidden");
+        document.getElementById("response-container").textContent =
+          "Please enter the email associated with your account.";
+        document.getElementById("forgetPassImage").src = "img/forgotPass.svg";
+        document.getElementById("email").value = ""; // Clear the email field
       }
     </script>
   </body>
