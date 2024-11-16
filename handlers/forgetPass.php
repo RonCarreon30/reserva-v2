@@ -63,8 +63,8 @@ if (!empty($email)) {
             $mail->isSMTP();
             $mail->Host = 'smtp.gmail.com'; // Use your SMTP server
             $mail->SMTPAuth = true;
-            $mail->Username = 'infinityfree.reserva@gmail.com'; // Your SMTP username (e.g., Gmail)
-            $mail->Password = 'bxzi apyp cvtn kkpj'; // Your SMTP password (use app-specific password for Gmail)
+            $mail->Username = 'secret'; // Your SMTP username (e.g., Gmail)
+            $mail->Password = '#pass here mga kuys'; // Your SMTP password (use app-specific password for Gmail)
             $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = 587;
 
