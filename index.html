@@ -111,9 +111,37 @@
           >
             Forgot Password
           </h2>
+          <div
+            id="loadingIndicator"
+            class="hidden flex items-center justify-center mt-4"
+          >
+            <svg
+              class="animate-spin h-5 w-5 text-blue-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8z"
+              ></path>
+            </svg>
+            <span class="ml-2 text-gray-700 font-semibold">Processing...</span>
+          </div>
+
           <p id="response-container" class="text-gray-600 mb-6">
             Please enter the email associated with your account.
           </p>
+
           <form id="forgetPassForm" class="w-full">
             <div class="mb-4">
               <label for="email" class="block text-gray-600 mb-2">Email:</label>
@@ -185,7 +213,6 @@
         });
 
       // Handle the forgot password form submission
-      // Handle the forgot password form submission
       document
         .getElementById("forgetPassForm")
         .addEventListener("submit", function (event) {
@@ -193,28 +220,36 @@
 
           const emailInput = document.getElementById("email");
           const email = emailInput.value.trim();
+          const loadingIndicator = document.getElementById("loadingIndicator");
+          const responseContainer =
+            document.getElementById("response-container");
 
           if (!email) {
-            document.getElementById("response-container").textContent =
+            responseContainer.textContent =
               "Please enter a valid email address.";
             return;
           }
 
           const formData = new FormData();
-          formData.append("email", email); // Append the email to the FormData object
+          formData.append("email", email);
+
+          // Show the loading spinner
+          loadingIndicator.classList.remove("hidden");
+          responseContainer.textContent = ""; // Clear any previous messages
 
           fetch("handlers/forgetPass.php", {
             method: "POST",
-            body: formData, // Send the FormData as the body of the request
+            body: formData,
           })
-            .then((response) => response.json()) // Parse the response as JSON
+            .then((response) => response.json())
             .then((data) => {
+              // Hide the loading spinner
+              loadingIndicator.classList.add("hidden");
+
               if (data.success) {
-                // Successful email sending
                 document.getElementById("header-container").textContent =
                   "Password Reset Email Sent!";
-                document.getElementById("response-container").textContent =
-                  data.message; // Use the response message
+                responseContainer.textContent = data.message;
                 document.getElementById("forgetPassImage").src =
                   "img/success.svg";
                 document
@@ -224,18 +259,18 @@
                   .getElementById("DoneButton")
                   .classList.remove("hidden");
               } else {
-                // Error response
-                document.getElementById("response-container").textContent =
-                  `${data.message}`; // Access the message field properly
-                // Apply Tailwind CSS for red text
-                document
-                  .getElementById("response-container")
-                  .classList.add("text-red-500", "font-semibold");
+                responseContainer.textContent = `${data.message}`;
+                responseContainer.classList.add(
+                  "text-red-500",
+                  "font-semibold"
+                );
               }
             })
             .catch((error) => {
               console.error("Error:", error);
-              document.getElementById("response-container").textContent =
+              // Hide the loading spinner
+              loadingIndicator.classList.add("hidden");
+              responseContainer.textContent =
                 "An error occurred. Please try again later.";
             });
         });

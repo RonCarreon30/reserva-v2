@@ -421,6 +421,25 @@ $role_result = $conn->query($role_sql);
     <script src="scripts/logout.js"></script>
     <script src="scripts/accMngmnt.js"></script>
     <script src="scripts/functions.js"></script>
+    <script>
+        document.getElementById("lastName").addEventListener("input", updatePassword);
+document.getElementById("idNumber").addEventListener("input", updatePassword);
+
+function updatePassword() {
+    const lastName = document.getElementById("lastName").value;
+    const idNumber = document.getElementById("idNumber").value;
+
+    if (lastName && idNumber) {
+        const generatedPassword = `${lastName}${idNumber}`;
+        document.getElementById("password").value = generatedPassword;
+        document.getElementById("confirmPassword").value = generatedPassword;
+    } else {
+        document.getElementById("password").value = "";
+        document.getElementById("confirmPassword").value = "";
+    }
+}
+
+    </script>
     <!-- JavaScript for edit and delete actions -->
     <script>
         let currentUserId;  // Declare a variable to store the current user ID

@@ -1,23 +1,39 @@
 <?php
 require 'database/config.php';
 
-// Check if token exists in URL
+$showSuccessMessage = false; // Flag for displaying success message
+
+function displayError($message) {
+    echo '
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Error</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 max-w-md w-full text-center">
+            <h2 class="text-2xl font-bold text-red-600 mb-4">Error</h2>
+            <p class="text-gray-700 mb-6">' . htmlspecialchars($message) . '</p>
+            <a href="../reserva-v2/index" class="text-blue-600 hover:underline">Back to Login</a>
+        </div>
+    </body>
+    </html>';
+    exit;
+}
+
 if (isset($_GET['token'])) {
     $token = $_GET['token'];
 
-    // Check if the token is valid and not expired
     $query = $conn->prepare("SELECT user_id, expires_at FROM password_resets WHERE token = ?");
     $query->bind_param("s", $token);
     $query->execute();
     $result = $query->get_result();
 
     if ($result->num_rows === 0) {
-        echo '<script>
-                window.onload = function() {
-                    openModal("error-modal", "Invalid or expired token.");
-                };
-              </script>';
-        die();
+        displayError('Invalid or expired token.');
     }
 
     $reset = $result->fetch_assoc();
@@ -25,71 +41,35 @@ if (isset($_GET['token'])) {
     $expires_at = $reset['expires_at'];
 
     if (strtotime($expires_at) < time()) {
-        echo '<script>
-                window.onload = function() {
-                    openModal("error-modal", "Token has expired.");
-                };
-              </script>';
-        die();
+        displayError('Token has expired.');
     }
 
-    // Handle form submission (reset password)
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = $_POST['password'];
         $confirm_password = $_POST['confirm_password'];
 
-        // Check if passwords match
         if ($password !== $confirm_password) {
-            echo '<script>
-                    window.onload = function() {
-                        openModal("error-modal", "Passwords do not match.");
-                    };
-                  </script>';
-            die();
+            displayError('Passwords do not match.');
         }
 
-        // Hash the new password
         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-
-        // Update the user's password in the database
         $update_query = $conn->prepare("UPDATE users SET userPassword = ? WHERE id = ?");
         $update_query->bind_param("si", $hashed_password, $user_id);
 
         if ($update_query->execute()) {
-            // Delete the reset token after successful reset
             $delete_token_query = $conn->prepare("DELETE FROM password_resets WHERE token = ?");
             $delete_token_query->bind_param("s", $token);
             $delete_token_query->execute();
 
-            // Redirect to the desired page after successful reset
-            echo '<script>
-                    window.onload = function() {
-                        openModal("success-modal", "Password successfully reset.");
-                        setTimeout(function() {
-                            window.location.href = "http://localhost/reserva-v2/index";
-                        }, 3000);
-                    };
-                  </script>';
-            exit;
+            $showSuccessMessage = true;
         } else {
-            echo '<script>
-                    window.onload = function() {
-                        openModal("error-modal", "Failed to reset password.");
-                    };
-                  </script>';
+            displayError('Failed to reset password.');
         }
     }
-
 } else {
-    echo '<script>
-            window.onload = function() {
-                openModal("error-modal", "No token provided.");
-            };
-          </script>';
-    die();
+    displayError('No token provided.');
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -99,10 +79,16 @@ if (isset($_GET['token'])) {
     <title>Reset Password</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
+<?php if ($showSuccessMessage): ?>
+    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 max-w-md w-full text-center mx-auto mt-12">
+        <h2 class="text-2xl font-bold text-green-600 mb-4">Success</h2>
+        <p class="text-gray-700 mb-6">Password successfully reset.</p>
+        <a href="../reserva-v2/" class="text-blue-600 hover:underline">Back to Login</a>
+    </div>
+<?php else: ?>
     <!-- Header -->
     <header class="bg-plv-blue text-white py-2 m">
         <a href="/index" class="m-16 hover:underline">Home</a>
@@ -146,46 +132,17 @@ if (isset($_GET['token'])) {
             <?php include 'faqBtn.php'; ?>
         </div>
     </main>
-
     <!-- Footer -->
     <div id="footer-container">
         <?php include 'footer.php'; ?>
     </div>
-
-    <!-- Success Modal -->
-<div id="success-modal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden">
-    <div class="bg-white p-6 rounded-lg w-1/3 text-center">
-        <h3 class="text-2xl font-semibold text-green-600" id="success-message"></h3>
-        <button onclick="closeModal('success-modal')" class="mt-4 bg-green-600 text-white px-4 py-2 rounded">Close</button>
-    </div>
-</div>
-
-<!-- Error Modal -->
-<div id="error-modal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden">
-    <div class="bg-white p-6 rounded-lg w-1/3 text-center">
-        <h3 class="text-2xl font-semibold text-red-600" id="error-message"></h3>
-        <button onclick="closeModal('error-modal')" class="mt-4 bg-red-600 text-white px-4 py-2 rounded">Close</button>
-    </div>
-</div>
+    <?php endif; ?>
 
 <script>
-    // Function to open the modal with the message
-    function openModal(modalId, message) {
-        const modal = document.getElementById(modalId);
-        const messageElement = document.getElementById(modalId === 'success-modal' ? 'success-message' : 'error-message');
-        messageElement.textContent = message;
-        modal.classList.remove('hidden');
-    }
-
-    // Function to close the modal
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.add('hidden');
-    }
-
     // Toggle password visibility
     const togglePassword = document.getElementById('toggle-password');
     const passwordField = document.getElementById('password');
+    
     togglePassword.addEventListener('click', function () {
         const type = passwordField.type === 'password' ? 'text' : 'password';
         passwordField.type = type;
@@ -195,6 +152,7 @@ if (isset($_GET['token'])) {
     // Toggle confirm password visibility
     const toggleConfirmPassword = document.getElementById('toggle-confirm-password');
     const confirmPasswordField = document.getElementById('confirm_password');
+    
     toggleConfirmPassword.addEventListener('click', function () {
         const type = confirmPasswordField.type === 'password' ? 'text' : 'password';
         confirmPasswordField.type = type;
@@ -202,44 +160,29 @@ if (isset($_GET['token'])) {
     });
 
     // Password validation regex
-    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_\-])[A-Za-z\d@$!%*?&_\-]{8,}$/;
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-console.log(passwordPattern.test('F@rt0123'));
-    // Handle form submission and show success/error modals
+    // Optional: Add client-side validation for confirming passwords
     const form = document.querySelector('form');
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', (e) => {
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirm_password').value;
 
         // Check if passwords match
         if (password !== confirmPassword) {
             e.preventDefault();
-            openModal('error-modal', 'Passwords do not match!');
+            alert('Passwords do not match!');
             return;
         }
 
-        // Check if the password meets the required strength
+        /*/ Check if the password meets the required strength
         if (!passwordPattern.test(password)) {
             e.preventDefault();
-            openModal('error-modal', 'Password must be at least 8 characters long, with at least one uppercase letter, one lowercase letter, one number, and one special character.');
+            alert('Password too short or lacks complexity!');
             return;
-        }
-
-        // If the form passes validation, send it to the server (example using fetch)
-        const response = await fetch('reset-password.php?token=' + encodeURIComponent("<?php echo htmlspecialchars($token); ?>"), {
-            method: 'POST',
-            body: new FormData(form)
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            openModal('success-modal', data.message);
-        } else {
-            openModal('error-modal', data.message);
-        }
+        }*/
     });
 </script>
-
 
 
 </body>

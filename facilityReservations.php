@@ -198,6 +198,23 @@ function sortTable(columnIndex) {
 }
 
         </script>
+        <style>
+            /* Simple spinning animation */
+.loader {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+        </style>
 </head>
 <body>
     <div class="flex h-screen bg-gray-100">
@@ -504,7 +521,7 @@ function sortTable(columnIndex) {
                         <textarea id="rejectionReasonText" name="rejectionReasonText" rows="3" class="border border-gray-300 rounded-md p-2" required></textarea>
                     </div>
                 </form>
-                <button onclick="hideSuccessModal()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Cancel</button>
+                <button onclick="location.reload();" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Cancel</button>
                 <button id="confirmRejectionButton" class="px-4 py-2 mt-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Okay</button>
             </div>
         </div>
@@ -540,6 +557,10 @@ function sortTable(columnIndex) {
             </div>
         </div>
     </div>
+    <div id="loadingIcon" class="hidden fixed inset-0 flex justify-center items-center bg-gray-800 bg-opacity-50">
+        <div class="loader"></div>
+    </div>
+
 
 
     <script src="scripts/logout.js"></script>
@@ -746,6 +767,8 @@ function sortTable(columnIndex) {
 
         // Function to handle confirmation action
         function confirmAction() {
+            const rejectionReasonForm = document.getElementById('rejectionReasonForm');
+            rejectionReasonForm.classList.add('hidden');
             hideConfirmation();
             if (confirmActionCallback) {
                 confirmActionCallback();
@@ -778,99 +801,121 @@ function sortTable(columnIndex) {
         }
 
         // Function to handle accepting reservation
-        function acceptReservation(reservationId) {
-            console.log('Accept reservation:', reservationId);
-            fetch('handlers/check_reservation_overlap.php?id=' + reservationId, {
+// Function to handle accepting reservation
+function acceptReservation(reservationId) {
+    console.log('Accept reservation:', reservationId);
+    fetch('handlers/check_reservation_overlap.php?id=' + reservationId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            console.error('Error checking reservation overlap:', data.error);
+            showErrorMessage('Error checking reservation overlap. Please try again.');
+        } else if (data.overlap) {
+            showErrorMessage('There is a reservation conflict. Please select another time slot.');
+        } else {
+            showConfirmation('Are you sure you want to accept this reservation?', function() {
+                // Send AJAX request to accept reservation
+                    // Show the loading icon
+                document.getElementById('loadingIcon').classList.remove('hidden');
+                fetch('handlers/update_reservation_status.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: reservationId, // Include reservation ID
+                        status: 'Approved' // Set the desired status here
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading icon after success or failure
+                    document.getElementById('loadingIcon').classList.add('hidden');
+                    
+                    if (data.success) {
+                        showSuccessModal('Reservation Approved!');
+                        setTimeout(() => {
+                            location.reload(); // Reload the current page after success
+                        }, 3000); // 3000 milliseconds = 3 seconds
+                    } else {
+                        showErrorMessage('Failed to approve reservation. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Hide loading icon on error
+                    document.getElementById('loadingIcon').classList.add('hidden');
+                    showErrorMessage('An error occurred while accepting the reservation.');
+                });
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Hide loading icon on error
+        document.getElementById('loadingIcon').classList.add('hidden');
+        showErrorMessage('An error occurred while checking the reservation.');
+    });
+}
+
+// Function to decline reservation
+function declineReservation(reservationId) {
+    console.log("Decline button clicked", reservationId);
+    const rejectionReasonForm = document.getElementById('rejectionReasonForm');
+    rejectionReasonForm.classList.remove('hidden');
+
+    const confirmButton = document.getElementById('confirmRejectionButton');
+    confirmButton.onclick = function() {
+        const rejectionReason = document.getElementById('rejectionReasonText').value;
+        console.log('Sending rejection reason:', rejectionReason);
+
+        showConfirmation('Are you sure you want to decline this reservation?', function() {
+            // Show the loading icon before sending the request
+            document.getElementById('loadingIcon').classList.remove('hidden');
+            
+            // Send reservation ID, status, and rejection reason in the request body
+            fetch('handlers/update_reservation_status.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                    id: reservationId,           // Include reservation ID
+                    status: 'Declined',          // Include status as Declined
+                    reason: rejectionReason       // Include rejection reason
+                })
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    console.error('Error checking reservation overlap:', data.error);
-                    showErrorMessage('Error checking reservation overlap. Please try again.');
-                } else if (data.overlap) {
-                    showErrorMessage('There is a reservation conflict. Please select another time slot.');
+                // Hide loading icon after success or failure
+                document.getElementById('loadingIcon').classList.add('hidden');
+                
+                if (data.success) {
+                        location.reload(); // Reload the current page after success
                 } else {
-                    showConfirmation('Are you sure you want to accept this reservation?', function() {
-                        // Send AJAX request to accept reservation
-                        fetch('handlers/update_reservation_status.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                id: reservationId, // Include reservation ID
-                                status: 'Approved' // Set the desired status here
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                showSuccessModal('Reservation Approved!');
-                                setTimeout(() => {
-                                    location.reload(); // Reload the current page after success
-                                }, 3000); // 3000 milliseconds = 3 seconds
-                            } else {
-                                showErrorMessage('Failed to  reservation. Please try again.');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            showErrorMessage('An error occurred while accepting the reservation.');
-                        });
-                    });
+                    showModal({ title: 'Error declining reservation' });
                 }
             })
             .catch(error => {
+                // Hide loading icon on error
+                document.getElementById('loadingIcon').classList.add('hidden');
                 console.error('Error:', error);
-                showErrorMessage('An error occurred while checking the reservation.');
+                showModal({ title: 'Error declining reservation' });
             });
-        }
+        });
+    };
+}
 
-        function declineReservation(reservationId) {
-            console.log("Decline button clicked", reservationId);
-            const rejectionReasonForm = document.getElementById('rejectionReasonForm');
-            rejectionReasonForm.classList.remove('hidden');
-
-            const confirmButton = document.getElementById('confirmRejectionButton');
-            confirmButton.onclick = function() {
-                const rejectionReason = document.getElementById('rejectionReasonText').value;
-console.log('Sending rejection reason:', rejectionReason);
-
-                showConfirmation('Are you sure you want to decline this reservation?', function() {
-                    // Send reservation ID, status, and rejection reason in the request body
-                    fetch('handlers/update_reservation_status.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            id: reservationId,           // Include reservation ID
-                            status: 'Declined',          // Include status as Declined
-                            reason: rejectionReason       // Include rejection reason
-                        })
-                        
-                        
-                    })
-                    
-                    .then(response => {
-                        if (response.ok) {
-                            location.reload(); // Reload on success
-                        } else {
-                            showModal({ title: 'Error declining reservation' });
-                        }
-                    });
-                });
-            };
-        }
 
 
     </script>
