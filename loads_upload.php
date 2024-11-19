@@ -21,24 +21,29 @@
 
     require 'database/config.php'; 
 
-    try {
-        // Connect to the database
-        $pdo = new PDO('mysql:host=localhost;dbname=reservadb', 'root', '');
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $sql = "
+        SELECT dept_id, dept_name 
+        FROM dept_tbl 
+        ORDER BY (dept_name = ?) DESC, dept_name ASC
+    ";
 
-        // Fetch all departments, sorting to place the user's department at the top
-        $sql = "
-            SELECT dept_id, dept_name 
-            FROM dept_tbl 
-            ORDER BY (dept_name = :user_department) DESC, dept_name ASC
-        ";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':user_department', $user_department, PDO::PARAM_STR);
-        $stmt->execute();
-        $departments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if ($stmt = $conn->prepare($sql)) {
+        // Bind the parameter
+        $stmt->bind_param('s', $user_department);
 
-    } catch (PDOException $e) {
-        echo "Error: " . $e->getMessage();
+        // Execute the statement
+        if ($stmt->execute()) {
+            // Fetch the results
+            $result = $stmt->get_result();
+            $departments = $result->fetch_all(MYSQLI_ASSOC);
+        } else {
+            echo "Error executing query: " . $stmt->error;
+        }
+
+        // Close the statement
+        $stmt->close();
+    } else {
+        echo "Error preparing statement: " . $conn->error;
     }
 ?>
 <!DOCTYPE html>

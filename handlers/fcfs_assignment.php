@@ -140,6 +140,14 @@ foreach ($pendingSchedules as $schedule) {
         ";
         $conn->query($sqlUpdateStatus);
     } else {
+        // Mark as conflicted if no room assigned
+        $sqlMarkConflicted = "
+            UPDATE schedules 
+            SET sched_status = 'conflicted' 
+            WHERE schedule_id = '$scheduleId';
+        ";
+        $conn->query($sqlMarkConflicted);
+
         $response['noRoomSchedules'][] = $scheduleId;
     }
 }

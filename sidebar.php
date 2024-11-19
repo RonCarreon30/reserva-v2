@@ -22,7 +22,7 @@
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="dataSetup" title="Data Setup">
                     <i class="fa-solid fa-database"></i>
                 </a>
-                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="loads" title="Room Loading">
+                <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="loads_management" title="Room Loads Management">
                     <i class="fa-solid fa-table"></i>
                 </a>
                 <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-persian-blue" href="roomManagement" title="Room Management">

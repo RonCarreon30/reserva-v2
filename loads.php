@@ -16,6 +16,12 @@
         exit();
     }
 
+    // Check user role from the session
+    $role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
+
+    // Determine the redirection URL based on the role
+    $redirectUrl = ($role === 'Registrar') ? 'loads_management.php' : 'loads_upload.php';
+    
     require_once 'database/config.php';
 
     function convertTo12HourFormat($time) {
@@ -195,7 +201,11 @@ function updateCalendar() {
                     <div class="w-3/4 rounded-lg flex flex-col">
                         <div class="flex justify-between">
                             <div class="mb-2 items-center">
-                                <button id="add-schedule-button" onclick="window.location.href='loads_upload'" class="px-3 py-2 mr-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out" title="Add Schedules">
+                                <!-- Button with dynamic redirection -->
+                                <button id="add-schedule-button" 
+                                        onclick="window.location.href='<?php echo $redirectUrl; ?>'" 
+                                        class="px-3 py-2 mr-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 ease-in-out" 
+                                        title="Add Schedules">
                                     <i class="fa-solid fa-circle-plus"></i>
                                 </button>
 
