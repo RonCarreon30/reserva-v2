@@ -76,7 +76,20 @@
                 table.querySelector('tbody').append(...rows);
                 table.dataset.sortOrder = isAscending ? 'desc' : 'asc';
             }
-
+            document.addEventListener('DOMContentLoaded', function() {
+                // Populate Academic Year dropdown
+                const academicYearSelect = document.getElementById('academicYear');
+                const currentYear = new Date().getFullYear();
+                
+                // Add 5 years starting from current year
+                for (let i = 0; i < 5; i++) {
+                    const year = currentYear + i;
+                    const option = document.createElement('option');
+                    option.value = `${year}-${year + 1}`;
+                    option.textContent = `${year}-${year + 1}`;
+                    academicYearSelect.appendChild(option);
+                }
+            });
 
         </script>
         <style>
@@ -111,15 +124,21 @@
                             Academic Year & Semester
                         </button>
                         <!-- Academic Year & Semester Form -->
-                        <form id="academicYearForm" class="bg-gray-200 hidden p-2">
+                        <form id="academicYearForm" class="bg-gray-200 hidden p-2 pb-4">
                             <h3 id="AyTitle" class="text-md font-semibold mb-2">Add Academic Year & Sem.</h3>
                             <div class="mb-2">
                                 <label for="academicYear" class="block text-xs font-medium text-gray-700 ml-1">Academic Year</label>
-                                <input type="text" id="academicYear" class=" p-1 border border-gray-300 rounded-md w-full" placeholder="2023-2024">
+                                <select id="academicYear" class="p-1 border border-gray-300 rounded-md w-full">
+                                    <!-- Will be populated dynamically via JavaScript -->
+                                </select>
                             </div>
                             <div class="mb-2">
                                 <label for="semester" class="block text-xs font-medium text-gray-700 ml-1">Semester</label>
-                                <input type="text" id="semester" class="p-1 border border-gray-300 rounded-md w-full" placeholder="1st Semester">
+                                <select id="semester" class="p-1 border border-gray-300 rounded-md w-full">
+                                    <option value="1st Semester">1st Semester</option>
+                                    <option value="2nd Semester">2nd Semester</option>
+                                    <option value="Summer">Summer</option>
+                                </select>
                             </div>
                             <div class="mb-2">
                                 <label for="ayStatus" class="block text-xs font-medium text-gray-700 ml-1">Status:</label>
@@ -131,12 +150,11 @@
                             <button type="button" id="saveAcademicYearBtn" class="px-2 py-1 bg-blue-500 text-white rounded-md">Save</button>
                             <button type="button" id="cancelAcademicYearBtn" class="px-2 py-1 bg-gray-500 text-white rounded-md ml-2 hidden">Cancel</button>
                         </form>
-
                         <button id="buildingBtn" class="text-blue-500 hover:text-blue-700 font-semibold text-left p-2">
                             Building
                         </button>
                         <!-- Building Form -->
-                        <form id="buildingForm" class="bg-gray-200 hidden p-2">
+                        <form id="buildingForm" class="bg-gray-200 hidden p-2  pb-4">
                             <h3 id="buildingFormTitle" class="text-md font-semibold mb-2">Add Building</h3>
                             <div class="mb-2">
                                 <label class="block text-xs font-medium text-gray-700 ml-1">Building Name</label>
@@ -154,7 +172,7 @@
                             Department
                         </button>
                         <!-- Department Form -->
-                        <form id="departmentForm" class="bg-gray-200 hidden p-2">
+                        <form id="departmentForm" class="bg-gray-200 hidden p-2 ">
                             <h3 id="deptFormTitle" class="text-md font-semibold mb-2">Add Department</h3>
                             <div class="mb-2">
                                 <label class="block text-xs font-medium text-gray-700 ml-1">Department Name:</label>

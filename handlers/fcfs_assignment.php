@@ -1,6 +1,5 @@
 <?php
 session_start();
-$user_id = $_SESSION['user_id'];
 include '../database/config.php';
 
 $response = [
@@ -10,119 +9,168 @@ $response = [
     'noRoomSchedules' => []
 ];
 
-// Step 1: Retrieve pending schedules and their department details
-$sqlPendingSchedules = "
-    SELECT s.*, d.building_id, d.dept_name
-    FROM schedules s
-    JOIN dept_tbl d ON s.department_id = d.dept_id
-    WHERE s.sched_status = 'pending' AND s.user_id = $user_id;
-";
-$resultPendingSchedules = $conn->query($sqlPendingSchedules);
+$scheduleIds = json_decode($_POST['scheduleIds'], true);
 
-if (!$resultPendingSchedules) {
+if (empty($scheduleIds)) {
     $response['success'] = false;
-    $response['message'][] = "Error fetching pending schedules: " . $conn->error;
+    $response['message'][] = "No schedules provided for assignment.";
     echo json_encode($response);
     exit;
 }
 
-$pendingSchedules = [];
-while ($row = $resultPendingSchedules->fetch_assoc()) {
-    $pendingSchedules[] = $row;
+// Fetch schedules based on the provided IDs
+$ids = implode(',', array_map('intval', $scheduleIds));
+$sqlFetchSchedules = "
+    SELECT s.*, d.building_id, d.dept_name
+    FROM schedules s
+    JOIN dept_tbl d ON s.department_id = d.dept_id
+    WHERE s.schedule_id IN ($ids)
+";
+
+$resultFetchSchedules = $conn->query($sqlFetchSchedules);
+
+if (!$resultFetchSchedules) {
+    $response['success'] = false;
+    $response['message'][] = "Error fetching schedules: " . $conn->error;
+    echo json_encode($response);
+    exit;
 }
 
-foreach ($pendingSchedules as $schedule) {
+$schedules = [];
+while ($row = $resultFetchSchedules->fetch_assoc()) {
+    $schedules[] = $row;
+}
+
+// Function to check for section schedule conflicts
+function checkSectionConflict($conn, $section, $days, $startTime, $endTime, $scheduleId) {
+    $sqlCheck = "
+        SELECT s.*
+        FROM schedules s
+        WHERE s.section = '$section'
+        AND s.schedule_id != '$scheduleId'
+        AND s.sched_status != 'cancelled'
+        AND s.days REGEXP '(" . implode("|", explode(',', $days)) . ")'
+        AND ('$startTime' < s.end_time AND '$endTime' > s.start_time)
+    ";
+    $result = $conn->query($sqlCheck);
+    return $result->num_rows > 0;
+}
+
+// Function to check for instructor schedule conflicts
+function checkInstructorConflict($conn, $instructor, $days, $startTime, $endTime, $scheduleId) {
+    $sqlCheck = "
+        SELECT s.*
+        FROM schedules s
+        WHERE s.instructor = '$instructor'
+        AND s.schedule_id != '$scheduleId'
+        AND s.sched_status != 'cancelled'
+        AND s.days REGEXP '(" . implode("|", explode(',', $days)) . ")'
+        AND ('$startTime' < s.end_time AND '$endTime' > s.start_time)
+    ";
+    $result = $conn->query($sqlCheck);
+    return $result->num_rows > 0;
+}
+
+// Function to find optimal room time slot
+function findOptimalTimeSlot($conn, $roomId, $startTime, $endTime, $days) {
+    // Get existing assignments for the room
+    $sqlExisting = "
+        SELECT s.start_time, s.end_time
+        FROM room_assignments_tbl ra
+        JOIN schedules s ON ra.schedule_id = s.schedule_id
+        WHERE ra.room_id = '$roomId'
+        AND s.days REGEXP '(" . implode("|", explode(',', $days)) . ")'
+        ORDER BY s.start_time
+    ";
+    
+    $result = $conn->query($sqlExisting);
+    $existingSlots = $result->fetch_all(MYSQLI_ASSOC);
+    
+    // Calculate gap between proposed time and existing slots
+    $minGap = 7200; // Minimum acceptable gap in seconds (2 hours)
+    $optimalGap = 0; // No gap is optimal
+    
+    foreach ($existingSlots as $slot) {
+        $slotStart = strtotime($slot['start_time']);
+        $slotEnd = strtotime($slot['end_time']);
+        $proposedStart = strtotime($startTime);
+        $proposedEnd = strtotime($endTime);
+        
+        $gap = $slotStart - $proposedEnd;
+        if ($gap > 0 && $gap < $minGap) {
+            return false; // Gap is too small
+        }
+    }
+    
+    return true;
+}
+
+foreach ($schedules as $schedule) {
     $scheduleId = $schedule['schedule_id'];
     $classType = $schedule['class_type'];
     $buildingId = $schedule['building_id'];
-    $days = explode(',', $schedule['days']);
+    $days = $schedule['days'];
     $startTime = $schedule['start_time'];
     $endTime = $schedule['end_time'];
+    $section = $schedule['section'];
+    $instructor = $schedule['instructor'];
     $roomAssigned = false;
 
-    // Step 2: Get rooms that match the schedule's class_type and building
+    // Check for section conflicts
+    if (checkSectionConflict($conn, $section, $days, $startTime, $endTime, $scheduleId)) {
+        $response['success'] = false;
+        $response['message'][] = "Section schedule conflict detected for schedule ID: $scheduleId";
+        continue;
+    }
+
+    // Check for instructor conflicts
+    if (checkInstructorConflict($conn, $instructor, $days, $startTime, $endTime, $scheduleId)) {
+        $response['success'] = false;
+        $response['message'][] = "Instructor schedule conflict detected for schedule ID: $scheduleId";
+        continue;
+    }
+
+    // Get matching rooms
     $sqlMatchingRooms = "
         SELECT r.*
         FROM rooms_tbl r
         WHERE r.room_type = '$classType'
         AND r.building_id = '$buildingId'
-        AND r.room_status = 'Available';
+        AND r.room_status = 'Available'
     ";
     $resultMatchingRooms = $conn->query($sqlMatchingRooms);
 
     if (!$resultMatchingRooms) {
         $response['success'] = false;
         $response['message'][] = "Error fetching matching rooms: " . $conn->error;
-        echo json_encode($response);
-        exit;
+        continue;
     }
 
     $rooms = $resultMatchingRooms->fetch_all(MYSQLI_ASSOC);
 
-    // Step 3: Check room assignments and assign if no conflicts
+    // Try to find optimal room assignment
     foreach ($rooms as $room) {
         $roomId = $room['room_id'];
-        $sqlCheckAssignment = "
+        
+        // Check if room is available at this time
+        $sqlCheckRoom = "
             SELECT ra.*
             FROM room_assignments_tbl ra
             JOIN schedules s ON ra.schedule_id = s.schedule_id
             WHERE ra.room_id = '$roomId'
-            AND s.days LIKE '%" . implode("%' OR s.days LIKE '%", $days) . "%'
-            AND ('$startTime' < s.end_time AND '$endTime' > s.start_time);
+            AND s.days REGEXP '(" . implode("|", explode(',', $days)) . ")'
+            AND ('$startTime' < s.end_time AND '$endTime' > s.start_time)
         ";
-        $resultCheckAssignment = $conn->query($sqlCheckAssignment);
+        $resultCheckRoom = $conn->query($sqlCheckRoom);
 
-        if ($resultCheckAssignment && $resultCheckAssignment->num_rows == 0) {
-            $sqlAssignRoom = "
-                INSERT INTO room_assignments_tbl (room_id, schedule_id)
-                VALUES ('$roomId', '$scheduleId');
-            ";
-            if ($conn->query($sqlAssignRoom)) {
-                $roomAssigned = true;
-                $response['assignedSchedules'][] = $scheduleId;
-                break;
-            }
-        }
-    }
-
-    // Step 4: If no room found, search for rooms in other buildings
-    if (!$roomAssigned) {
-        $sqlAlternateRooms = "
-            SELECT r.*
-            FROM rooms_tbl r
-            WHERE r.room_type = '$classType'
-            AND r.building_id != '$buildingId'
-            AND r.room_status = 'Available';
-        ";
-        $resultAlternateRooms = $conn->query($sqlAlternateRooms);
-
-        if (!$resultAlternateRooms) {
-            $response['success'] = false;
-            $response['message'][] = "Error fetching alternate rooms: " . $conn->error;
-            echo json_encode($response);
-            exit;
-        }
-
-        $alternateRooms = $resultAlternateRooms->fetch_all(MYSQLI_ASSOC);
-
-        foreach ($alternateRooms as $room) {
-            $roomId = $room['room_id'];
-            $sqlCheckAlternateAssignment = "
-                SELECT ra.*
-                FROM room_assignments_tbl ra
-                JOIN schedules s ON ra.schedule_id = s.schedule_id
-                WHERE ra.room_id = '$roomId'
-                AND s.days LIKE '%" . implode("%' OR s.days LIKE '%", $days) . "%'
-                AND ('$startTime' < s.end_time AND '$endTime' > s.start_time);
-            ";
-            $resultCheckAlternateAssignment = $conn->query($sqlCheckAlternateAssignment);
-
-            if ($resultCheckAlternateAssignment && $resultCheckAlternateAssignment->num_rows == 0) {
-                $sqlAssignAlternateRoom = "
+        if ($resultCheckRoom && $resultCheckRoom->num_rows == 0) {
+            // Check if this creates an optimal time slot
+            if (findOptimalTimeSlot($conn, $roomId, $startTime, $endTime, $days)) {
+                $sqlAssignRoom = "
                     INSERT INTO room_assignments_tbl (room_id, schedule_id)
-                    VALUES ('$roomId', '$scheduleId');
+                    VALUES ('$roomId', '$scheduleId')
                 ";
-                if ($conn->query($sqlAssignAlternateRoom)) {
+                if ($conn->query($sqlAssignRoom)) {
                     $roomAssigned = true;
                     $response['assignedSchedules'][] = $scheduleId;
                     break;
@@ -131,23 +179,66 @@ foreach ($pendingSchedules as $schedule) {
         }
     }
 
-    // Update sched_status to 'assigned' when a room is assigned
+    // If no optimal room found in preferred building, search other buildings
+    if (!$roomAssigned) {
+        $sqlAlternateRooms = "
+            SELECT r.*
+            FROM rooms_tbl r
+            WHERE r.room_type = '$classType'
+            AND r.building_id != '$buildingId'
+            AND r.room_status = 'Available'
+            ORDER BY r.building_id
+        ";
+        $resultAlternateRooms = $conn->query($sqlAlternateRooms);
+
+        if ($resultAlternateRooms) {
+            $alternateRooms = $resultAlternateRooms->fetch_all(MYSQLI_ASSOC);
+
+            foreach ($alternateRooms as $room) {
+                $roomId = $room['room_id'];
+                
+                $sqlCheckRoom = "
+                    SELECT ra.*
+                    FROM room_assignments_tbl ra
+                    JOIN schedules s ON ra.schedule_id = s.schedule_id
+                    WHERE ra.room_id = '$roomId'
+                    AND s.days REGEXP '(" . implode("|", explode(',', $days)) . ")'
+                    AND ('$startTime' < s.end_time AND '$endTime' > s.start_time)
+                ";
+                $resultCheckRoom = $conn->query($sqlCheckRoom);
+
+                if ($resultCheckRoom && $resultCheckRoom->num_rows == 0) {
+                    if (findOptimalTimeSlot($conn, $roomId, $startTime, $endTime, $days)) {
+                        $sqlAssignRoom = "
+                            INSERT INTO room_assignments_tbl (room_id, schedule_id)
+                            VALUES ('$roomId', '$scheduleId')
+                        ";
+                        if ($conn->query($sqlAssignRoom)) {
+                            $roomAssigned = true;
+                            $response['assignedSchedules'][] = $scheduleId;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Update schedule status
     if ($roomAssigned) {
         $sqlUpdateStatus = "
             UPDATE schedules 
             SET sched_status = 'assigned' 
-            WHERE schedule_id = '$scheduleId';
+            WHERE schedule_id = '$scheduleId'
         ";
         $conn->query($sqlUpdateStatus);
     } else {
-        // Mark as conflicted if no room assigned
         $sqlMarkConflicted = "
             UPDATE schedules 
             SET sched_status = 'conflicted' 
-            WHERE schedule_id = '$scheduleId';
+            WHERE schedule_id = '$scheduleId'
         ";
         $conn->query($sqlMarkConflicted);
-
         $response['noRoomSchedules'][] = $scheduleId;
     }
 }

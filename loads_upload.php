@@ -241,11 +241,15 @@ function filterSchedules() {
 
                                                 if ($isEditable) {
                                                     echo '<td class="py-2 px-4 space-x-2">';
-                                                    echo '<button onclick="editSched(' . $schedId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
-                                                    echo '<button onclick="deleteSched(' . $schedId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
+                                                    echo '<button onclick="editSched(' . $schedId . ')" class="text-blue-500 hover:text-blue-600" title="Edit">';
+                                                    echo '<i class="fas fa-edit"></i>'; // Font Awesome Edit Icon
+                                                    echo '</button>';
+                                                    echo '<button onclick="deleteSched(' . $schedId . ')" class="text-red-500 hover:text-red-600" title="Delete">';
+                                                    echo '<i class="fas fa-trash-alt"></i>'; // Font Awesome Delete Icon
+                                                    echo '</button>';
                                                     echo '</td>';
                                                 } else {
-                                                    echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-red-500">Not Editable</td>';
+                                                    echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-red-500">Unauthorized</td>';
                                                 }
                                                 echo '</tr>';
                                             }
@@ -456,114 +460,119 @@ function filterSchedules() {
             document.getElementById('parsed-sched-modal').classList.add('hidden');
         });
 
-document.getElementById('save-schedule').addEventListener('click', function() {
-    const schedules = Array.from(document.querySelectorAll('#schedule-table-body tr')).map(row => {
-        return {
-            subjectCode: row.cells[0].innerText,
-            subject: row.cells[1].innerText,
-            section: row.cells[2].innerText,
-            instructor: row.cells[3].innerText,
-            startTime: row.cells[4].innerText,
-            endTime: row.cells[5].innerText,
-            days: row.cells[6].innerText,
-            classType: row.cells[7].innerText,
-        };
-    });
+        document.getElementById('save-schedule').addEventListener('click', function() {
+            const schedules = Array.from(document.querySelectorAll('#schedule-table-body tr')).map(row => {
+                return {
+                    subjectCode: row.cells[0].innerText,
+                    subject: row.cells[1].innerText,
+                    section: row.cells[2].innerText,
+                    instructor: row.cells[3].innerText,
+                    startTime: row.cells[4].innerText,
+                    endTime: row.cells[5].innerText,
+                    days: row.cells[6].innerText,
+                    classType: row.cells[7].innerText,
+                };
+            });
 
-    const aySemester = document.getElementById('aySemester').value;
-    const departmentId = document.getElementById('department-dropdown').value;
+            const aySemester = document.getElementById('aySemester').value;
+            const departmentId = document.getElementById('department-dropdown').value;
 
-    $.ajax({
-        type: 'POST',
-        url: 'handlers/save_schedules.php',
-        data: { schedules: JSON.stringify(schedules), aySemester, departmentId },
-        success: function(response) {
-            console.log("Raw response from save_schedules.php:", response);
-            document.getElementById('parsed-sched-modal').classList.add('hidden');
+            $.ajax({
+                type: 'POST',
+                url: 'handlers/save_schedules.php',
+                data: { schedules: JSON.stringify(schedules), aySemester, departmentId },
+                success: function(response) {
+                    console.log("Raw response from save_schedules.php:", response);
+                    document.getElementById('parsed-sched-modal').classList.add('hidden');
 
-            if (typeof response === "string") {
-                const parsedResponse = JSON.parse(response);
-                document.getElementById('modal-title').innerText = parsedResponse.success ? 'Success' : 'Error';
-                document.getElementById('modal-message').innerText = parsedResponse.message;
-                document.getElementById('message-modal').classList.remove('hidden');
+                    if (typeof response === "string") {
+                        const parsedResponse = JSON.parse(response);
+                        document.getElementById('modal-title').innerText = parsedResponse.success ? 'Success' : 'Error';
+                        document.getElementById('modal-message').innerText = parsedResponse.message;
+                        document.getElementById('message-modal').classList.remove('hidden');
 
-                if (parsedResponse.success) {
-                    // Display saved schedules
-                    if (parsedResponse.savedSchedules.length > 0) {
-                        let savedMessage = "Saved Schedules:\n" + parsedResponse.savedSchedules.map(schedule => {
-                            return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section})`;
-                        }).join("\n");
-                        showToast(savedMessage, "bg-green-500");
-                    }
-
-                    // Display duplicate schedules if any
-                    if (parsedResponse.duplicates.length > 0) {
-                        let duplicateMessage = "Duplicate Schedules:\n" + parsedResponse.duplicates.map(schedule => {
-                            return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section})`;
-                        }).join("\n");
-                        showToast(duplicateMessage, "bg-yellow-500");
-                    }
-
-                    // Display conflicting schedules if any
-                    if (parsedResponse.conflicts && parsedResponse.conflicts.length > 0) {
-                        let conflictMessage = "Conflicting Schedules:\n" + parsedResponse.conflicts.map(schedule => {
-                            return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section}) with ${schedule.instructor} on ${schedule.day} from ${schedule.startTime} to ${schedule.endTime}`;
-                        }).join("\n");
-                        showToast(conflictMessage, "bg-red-500");
-                    }
-
-                    // Proceed with room assignment
-                    showToast("Assigning rooms, please wait...", "bg-blue-500");
-                    $.ajax({
-                        type: 'POST',
-                        url: 'handlers/fcfs_assignment.php',
-                        data: { userId: parsedResponse.userId },
-                        success: function(assignmentResponse) {
-                            console.log("Raw response from fcfs_assignment.php:", assignmentResponse);
-                            const assignmentData = typeof assignmentResponse === "string" ? JSON.parse(assignmentResponse) : assignmentResponse;
-
-                            if (assignmentData.success) {
-                                showToast("Room assignment successful!", "bg-green-500");
-                                setTimeout(function() {
-                                    location.reload();
-                                }, 3000);
-                            } else {
-                                showToast("Room assignment failed: " + assignmentData.message, "bg-red-500");
+                        if (parsedResponse.success) {
+                            // Display saved schedules
+                            if (parsedResponse.savedSchedules.length > 0) {
+                                let savedMessage = "Saved Schedules:\n" + parsedResponse.savedSchedules.map(schedule => {
+                                    return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section})`;
+                                }).join("\n");
+                                showToast(savedMessage, "bg-green-500");
                             }
-                        },
-                        error: function() {
-                            showToast("Error during room assignment.", "bg-red-500");
-                            document.getElementById('modal-message').innerText = "Room assignment process failed.";
-                        }
-                    });
-                } else {
-                    if (parsedResponse.duplicates.length > 0) {
-                        let duplicateMessage = "Duplicates detected:\n" + parsedResponse.duplicates.map(schedule => {
-                            return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section})`;
-                        }).join("\n");
-                        showToast(duplicateMessage, "bg-yellow-500");
-                    }
 
-                    // Display conflicts if any
-                    if (parsedResponse.conflicts && parsedResponse.conflicts.length > 0) {
-                        let conflictMessage = "Conflicting Schedules Detected:\n" + parsedResponse.conflicts.map(schedule => {
-                            return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section}) with ${schedule.instructor} on ${schedule.day} from ${schedule.startTime} to ${schedule.endTime}`;
-                        }).join("\n");
-                        showToast(conflictMessage, "bg-red-500");
+                            // Display duplicate schedules if any
+                            if (parsedResponse.duplicates.length > 0) {
+                                let duplicateMessage = "Duplicate Schedules:\n" + parsedResponse.duplicates.map(schedule => {
+                                    return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section})`;
+                                }).join("\n");
+                                showToast(duplicateMessage, "bg-yellow-500");
+                            }
+
+                            // Display conflicting schedules if any
+                            if (parsedResponse.conflicts && parsedResponse.conflicts.length > 0) {
+                                let conflictMessage = "Conflicting Schedules:\n" + parsedResponse.conflicts.map(schedule => {
+                                    return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section}) with ${schedule.instructor} on ${schedule.day} from ${schedule.startTime} to ${schedule.endTime}`;
+                                }).join("\n");
+                                showToast(conflictMessage, "bg-red-500");
+                            }
+
+                            // Proceed with room assignment
+                            showToast("Assigning rooms, please wait...", "bg-blue-500");
+
+                            const scheduleIds = parsedResponse.savedSchedules.map(schedule => schedule.scheduleId); // Extract schedule IDs
+
+                            console.log("IDs:",scheduleIds);
+                            $.ajax({
+                                type: 'POST',
+                                url: 'handlers/fcfs_assignment.php',
+                                data: { scheduleIds: JSON.stringify(scheduleIds) }, // Send only IDs
+                                success: function(assignmentResponse) {
+                                    console.log("Raw response from fcfs_assignment.php:", assignmentResponse);
+                                    const assignmentData = typeof assignmentResponse === "string" ? JSON.parse(assignmentResponse) : assignmentResponse;
+
+                                    if (assignmentData.success) {
+                                        showToast("Room assignment successful!", "bg-green-500");
+                                        setTimeout(function() {
+                                            //location.reload();
+                                        }, 3000);
+                                    } else {
+                                        showToast("Room assignment failed: " + assignmentData.message, "bg-red-500");
+                                    }
+                                },
+                                error: function() {
+                                    showToast("Error during room assignment.", "bg-red-500");
+                                    document.getElementById('modal-message').innerText = "Room assignment process failed.";
+                                }
+                            });
+
+                        } else {
+                            if (parsedResponse.duplicates.length > 0) {
+                                let duplicateMessage = "Duplicates detected:\n" + parsedResponse.duplicates.map(schedule => {
+                                    return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section})`;
+                                }).join("\n");
+                                showToast(duplicateMessage, "bg-yellow-500");
+                            }
+
+                            // Display conflicts if any
+                            if (parsedResponse.conflicts && parsedResponse.conflicts.length > 0) {
+                                let conflictMessage = "Conflicting Schedules Detected:\n" + parsedResponse.conflicts.map(schedule => {
+                                    return `${schedule.subjectCode} - ${schedule.subject} (${schedule.section}) with ${schedule.instructor} on ${schedule.day} from ${schedule.startTime} to ${schedule.endTime}`;
+                                }).join("\n");
+                                showToast(conflictMessage, "bg-red-500");
+                            }
+                        }
+                    } else {
+                        console.error("Unexpected response format:", response);
+                        showToast("Unexpected response format. Please try again.", "bg-red-500");
                     }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error saving schedules:", error);
+                    document.getElementById('modal-message').innerText = "An error occurred while saving schedules. Please try again.";
+                    showToast("An error occurred while saving schedules.", "bg-red-500");
                 }
-            } else {
-                console.error("Unexpected response format:", response);
-                showToast("Unexpected response format. Please try again.", "bg-red-500");
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error("Error saving schedules:", error);
-            document.getElementById('modal-message').innerText = "An error occurred while saving schedules. Please try again.";
-            showToast("An error occurred while saving schedules.", "bg-red-500");
-        }
-    });
-});
+            });
+        });
 
 
 

@@ -6,8 +6,10 @@ require_once '../database/config.php';
 
 // Get parameters from the query
 $roomId = isset($_GET['roomId']) ? $_GET['roomId'] : null;
-$ayId = isset($_GET['ayId']) ? $_GET['ayId'] : null; // New parameter for academic year
-$buildingId = isset($_GET['buildingId']) ? $_GET['buildingId'] : null; // New parameter for building
+$ayId = isset($_GET['ayId']) ? $_GET['ayId'] : null;
+$buildingId = isset($_GET['buildingId']) ? $_GET['buildingId'] : null;
+$section = isset($_GET['section']) ? $_GET['section'] : null;
+$instructor = isset($_GET['instructor']) ? $_GET['instructor'] : null;
 
 // Start the base query
 $query = "
@@ -24,31 +26,36 @@ $query = "
     LEFT JOIN rooms_tbl ON room_assignments_tbl.room_id = rooms_tbl.room_id
     LEFT JOIN buildings_tbl ON rooms_tbl.building_id = buildings_tbl.building_id
     WHERE 1=1
-"; // Added 'WHERE 1=1' for easier appending of conditions
+";
 
 // Add conditions based on the received parameters
 $params = [];
 $types = "";
 
-// Only add roomId to query if it's not null
-if ($roomId) {
-    $query .= " AND rooms_tbl.room_id = ?";
-    $params[] = $roomId;
-    $types .= "i"; // Assuming room_id is an integer
-}
-
-// Add ayId condition
+// Add ayId condition (always required)
 if ($ayId) {
     $query .= " AND schedules.ay_semester = ?";
     $params[] = $ayId;
-    $types .= "i"; // Assuming academic_year_id is an integer
+    $types .= "i";
 }
 
-// Add buildingId condition
-if ($buildingId) {
-    $query .= " AND rooms_tbl.building_id = ?";
+// Handle different filter types
+if ($section) {
+    // Filter by section
+    $query .= " AND schedules.section = ?";
+    $params[] = $section;
+    $types .= "s";
+} else if ($instructor) {
+    // Filter by instructor
+    $query .= " AND schedules.instructor = ?";
+    $params[] = $instructor;
+    $types .= "s";
+} else if ($roomId && $buildingId) {
+    // Filter by room and building
+    $query .= " AND rooms_tbl.room_id = ? AND rooms_tbl.building_id = ?";
+    $params[] = $roomId;
     $params[] = $buildingId;
-    $types .= "i"; // Assuming building_id is an integer
+    $types .= "ii";
 }
 
 // Prepare and execute the query
@@ -67,24 +74,21 @@ $daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
 
 // Get the current date and set the start date to 1 week ago
 $today = new DateTime(); 
-$startDate = (clone $today)->modify('-1 week'); // Change to '-1 week' if you want it to show only a week before
+$startDate = (clone $today)->modify('-1 week');
 
 while ($row = $result->fetch_assoc()) {
     // Split the days into an array
     $daysArray = explode(',', $row['days']);
 
     foreach ($daysArray as $day) {
-        $day = trim($day); // Remove any whitespace
+        $day = trim($day);
         $dayIndex = array_search($day, $daysOfWeek);
 
         if ($dayIndex !== false) {
-            // Now calculate occurrences from the start date (past and future)
-            for ($i = 0; $i < 8; $i++) { // Loop through 8 weeks (4 weeks back and 4 forward)
-                // Calculate the date by starting from $startDate and moving through weeks
+            for ($i = 0; $i < 8; $i++) {
                 $nextDate = clone $startDate;
                 $nextDate->modify("+$i week");
 
-                // Find the next occurrence of the day
                 if ($nextDate->format('l') !== $day) {
                     $nextDate->modify("next " . $day);
                 }
@@ -92,17 +96,18 @@ while ($row = $result->fetch_assoc()) {
                 $startDateTime = $nextDate->format('Y-m-d') . ' ' . $row['start_time'];
                 $endDateTime = $nextDate->format('Y-m-d') . ' ' . $row['end_time'];
 
-                // Add instructor and section to the event details
                 $events[] = [
-                    'title' => $row['subject_code'], // Subject code
-                    'start' => $startDateTime,        // Start datetime
-                    'end' => $endDateTime,            // End datetime
+                    'title' => $row['subject_code'],
+                    'start' => $startDateTime,
+                    'end' => $endDateTime,
                     'days' => $row['days'],
-                    'section' => $row['section'],     // Course section
-                    'instructor' => $row['instructor'], // Instructor name
+                    'section' => $row['section'],
+                    'instructor' => $row['instructor'],
                     'extendedProps' => [
-                        'room' => $row['room_name'],
-                        'building' => $row['building_name']
+                        'room' => $row['room_name'] ?? 'No Room',
+                        'building' => $row['building_name'] ?? 'No Building',
+                        'section' => $row['section'],
+                        'instructor' => $row['instructor']
                     ]
                 ];
             }

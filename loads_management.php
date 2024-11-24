@@ -35,39 +35,83 @@
             filterSchedules();
         });
 
-        function filterSchedules() {
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-            const facilityRows = document.querySelectorAll('#schedules-body tr');
-            let hasVisibleRows = false;
+function filterSchedules() {
+    const searchSubjCode = document.getElementById('searchSubjCode').value.toLowerCase();
+    const searchTime = document.getElementById('searchTime').value.toLowerCase();
+    const sectionFilter = document.getElementById('sectionFilter').value.toLowerCase();
+    const instructorFilter = document.getElementById('instructorFilter').value.toLowerCase();
+    const dayFilter = document.getElementById('dayFilter').value.toLowerCase();
+    const roomFilter = document.getElementById('roomFilter').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+    const uploaderFilter = document.getElementById('uploaderFilter').value.toLowerCase();
+    const generalSearch = document.getElementById('searchInput').value.toLowerCase();
+    const termsFilter = document.getElementById('termsFilter').value;
+    const scheduleRows = document.querySelectorAll('#schedules-body tr');
+    let hasVisibleRows = false;
 
-            facilityRows.forEach(row => {
-                const facilityName = row.cells[0].textContent.toLowerCase();
-                const reservationStatus = row.cells[6].textContent.toLowerCase(); // Adjusted for Status column
+    scheduleRows.forEach(row => {
+        const termId = row.querySelector('td[data-term-id]').getAttribute('data-term-id');
+        const subjectCode = row.cells[1].textContent.toLowerCase();
+        const section = row.cells[2].textContent.toLowerCase();
+        const instructor = row.cells[3].textContent.toLowerCase();
+        const time = row.cells[4].textContent.toLowerCase();
+        const day = row.cells[5].textContent.toLowerCase();
+        const roomAssignment = row.cells[6].textContent.toLowerCase();
+        const reservationStatus = row.cells[7].textContent.toLowerCase();
+        const uploadedBy = row.cells[8].textContent.toLowerCase();
 
-                const matchesSearch = facilityName.includes(searchQuery);
-                const matchesStatus = statusFilter === 'all' || reservationStatus === statusFilter;
-
-                if (matchesSearch && matchesStatus) {
-                    row.classList.remove('hidden');
-                    hasVisibleRows = true;
-                } else {
-                    row.classList.add('hidden');
-                }
-            });
-
-            const noResultsMessage = document.getElementById('noResultsMessage');
-            if (!hasVisibleRows) {
-                noResultsMessage.classList.remove('hidden');
-            } else {
-                noResultsMessage.classList.add('hidden');
-            }
+        
+        // Fixed terms matching logic
+        const matchesTerm = termsFilter === 'all' || termId === termsFilter;
+        const matchesSubjCode = subjectCode.includes(searchSubjCode);
+        const matchesTime = time.includes(searchTime);
+        const matchesSection = sectionFilter === 'all' || section === sectionFilter;
+        const matchesInstructor = instructorFilter === 'all' || instructor === instructorFilter;
+        const matchesDay = dayFilter === 'all' || day === dayFilter;
+        const matchesRoom = roomFilter === 'all' || roomAssignment === roomFilter;
+        const matchesStatus = statusFilter === 'all' || reservationStatus === statusFilter;
+        const matchesUploader = uploaderFilter === 'all' || uploadedBy === uploaderFilter;
+        const matchesGeneralSearch =
+            subjectCode.includes(generalSearch) ||
+            section.includes(generalSearch) ||
+            instructor.includes(generalSearch) ||
+            time.includes(generalSearch) ||
+            day.includes(generalSearch) ||
+            roomAssignment.includes(generalSearch) ||
+            reservationStatus.includes(generalSearch) ||
+            uploadedBy.includes(generalSearch);
+            /*console.log('Selected term filter:', termsFilter);
+            console.log('Row term ID:', termId);
+            console.log('Matches term:', matchesTerm);*/
+        if (
+            matchesTerm &&
+            matchesSubjCode &&
+            matchesTime &&
+            matchesSection &&
+            matchesInstructor &&
+            matchesDay &&
+            matchesRoom &&
+            matchesStatus &&
+            matchesUploader &&
+            matchesGeneralSearch
+        ) {
+            row.style.display = '';
+            hasVisibleRows = true;
+        } else {
+            row.style.display = 'none';
         }
+    });
 
-
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    if (!hasVisibleRows) {
+        noResultsMessage.style.display = '';
+    } else {
+        noResultsMessage.style.display = 'none';
+    }
+}
 
         function sortTable(columnIndex) {
-            const table = document.getElementById('eventsTable');
+            const table = document.getElementById('schedulesList');
             const rows = Array.from(table.querySelectorAll('tbody tr'));
             const isAscending = table.dataset.sortOrder === 'asc';
 
@@ -85,6 +129,21 @@
             table.querySelector('tbody').append(...rows);
             table.dataset.sortOrder = isAscending ? 'desc' : 'asc';
         }
+        function resetFilters() {
+            // Clear all input and select filter values
+            document.getElementById('searchSubjCode').value = '';
+            document.getElementById('sectionFilter').value = 'all';
+            document.getElementById('instructorFilter').value = 'all';
+            document.getElementById('searchTime').value = '';
+            document.getElementById('dayFilter').value = 'all';
+            document.getElementById('roomFilter').value = 'all';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('uploaderFilter').value = 'all';
+
+            // Call the function to refresh the schedule table
+            filterSchedules();
+        }
+
     </script>
 </head>
 <body class="bg-gray-50">
@@ -107,13 +166,20 @@
                             <i class="fa-solid fa-calendar-check"></i>
                         </button>
                         <div class="h-10 border-2 border-gray-400"></div>
-                        <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
-                            <option value="all">All</option>
-                            <option value="pending">Pending</option>
-                            <option value="assigned">Assigned</option>
-                            <option value="conflicted">Conflicted</option>
-                            <option value="expired">Expired</option>
+                        <select id="termsFilter" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                            <?php
+                                $termsQuery = "SELECT * FROM terms_tbl ORDER BY academic_year";
+                                $termsResult = $conn->query($termsQuery);
+                            ?>
+                            <option value="all">All Terms</option>
+                            <?php while($term = $termsResult->fetch_assoc()): ?>
+                                <option value="<?php echo htmlspecialchars($term['term_id']); ?>">
+                                    <?php echo htmlspecialchars($term['academic_year']); ?>
+                                </option>
+                            <?php endwhile; ?>
                         </select>
+
+
                         <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterSchedules()">
                     </div>
                 </div>
@@ -123,15 +189,150 @@
                         <table id="schedules-table" class="min-w-full divide-y divide-gray-200">
                             <thead>
                                 <tr class="bg-gray-200 border-b">
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Code</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(0)">
+                                        <span class="flex items-center">Subject Code<svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                            </svg>
+                                        </span>
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(1)">
+                                        <span class="flex items-center">Section                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                            </svg>
+                                        </span>
+                                    </th>
+                                    
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(2)">
+                                        <span class="flex items-center">Instructor                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                            </svg>
+                                        </span>
+                                    </th>
+                                    
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                    
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room Assignment</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded By</th>
+                                    
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(5)">
+                                        <span class="flex items-center">Room Assignment                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                            </svg>
+                                        </span>
+                                    </th>
+                                    
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(6)">
+                                        <span class="flex items-center">Status                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                            </svg>
+                                        </span>
+                                    </th>
+
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(7)">
+                                        <span class="flex items-center">Uploaded By                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                            </svg>
+                                        </span>
+                                    </th>
+
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                                                                <?php
+                                    // Fetch unique sections
+                                    $sectionQuery = "SELECT DISTINCT section FROM schedules ORDER BY section";
+                                    $sectionResult = $conn->query($sectionQuery);
+
+                                    // Fetch unique instructors
+                                    $instructorQuery = "SELECT DISTINCT instructor FROM schedules ORDER BY instructor";
+                                    $instructorResult = $conn->query($instructorQuery);
+
+                                    // Fetch all rooms
+                                    $roomQuery = "SELECT room_id, room_name FROM rooms_tbl ORDER BY room_name";
+                                    $roomResult = $conn->query($roomQuery);
+
+                                    // Fetch unique uploaders with their names
+                                    $uploaderQuery = "
+                                        SELECT DISTINCT u.id, CONCAT(u.first_name, ' ', u.last_name) as full_name 
+                                        FROM schedules s 
+                                        JOIN users u ON s.user_id = u.id 
+                                        ORDER BY full_name
+                                    ";
+                                    $uploaderResult = $conn->query($uploaderQuery);
+                                ?>
+                                <tr class="bg-gray-200 border-b">
+                                    <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <input type="text" id="searchSubjCode" class="w-full px-2 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterSchedules()">
+                                    </td>
+                                    <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <select id="sectionFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                                            <option value="all">All Sections</option>
+                                            <?php while($section = $sectionResult->fetch_assoc()): ?>
+                                                <option value="<?php echo htmlspecialchars($section['section']); ?>">
+                                                    <?php echo htmlspecialchars($section['section']); ?>
+                                                </option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                    </td>
+                                    <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <select id="instructorFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                                            <option value="all">All Instructor</option>
+                                            <?php while($instructor = $instructorResult->fetch_assoc()): ?>
+                                                <option value="<?php echo htmlspecialchars($instructor['instructor']); ?>">
+                                                    <?php echo htmlspecialchars($instructor['instructor']); ?>
+                                                </option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                    </td>
+                                    <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <input type="text" id="searchTime" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterSchedules()">
+                                    </td>
+                                    <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <select id="dayFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                                            <option value="all">All Days</option>
+                                            <option value="Monday">Monday</option>
+                                            <option value="Tuesday">Tuesday</option>
+                                            <option value="Wednesday">Wednesday</option>
+                                            <option value="Thursday">Thursday</option>
+                                            <option value="Friday">Friday</option>
+                                            <option value="Saturday">Saturday</option>
+                                        </select>
+                                    </td>
+                                    <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <select id="roomFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                                            <option value="all">All Rooms</option>
+                                            <?php while($room = $roomResult->fetch_assoc()): ?>
+                                                <option value="<?php echo htmlspecialchars($room['room_id']); ?>">
+                                                    <?php echo htmlspecialchars($room['room_name']); ?>
+                                                </option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                    </td>
+                                    <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <select id="statusFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                                            <option value="all">All Status</option>
+                                            <option value="pending">Pending</option>
+                                            <option value="assigned">Assigned</option>
+                                            <option value="conflicted">Conflicted</option>
+                                            <option value="expired">Expired</option>
+                                        </select>
+                                    </td>
+                                    <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <select id="uploaderFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                                            <option value="all">All Uploader</option>
+                                            <?php while($uploader = $uploaderResult->fetch_assoc()): ?>
+                                                <option value="<?php echo htmlspecialchars($uploader['id']); ?>">
+                                                    <?php echo htmlspecialchars($uploader['full_name']); ?>
+                                                </option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                    </td>
+                                    <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <button id="resetFilters" 
+                                                class="w-full px-2 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                                                onclick="resetFilters()">
+                                            Reset Filters
+                                        </button>
+                                    </td>
+
                                 </tr>
                             </thead>
                             <tbody id="schedules-body" class="bg-white divide-y divide-gray-200">
@@ -140,6 +341,8 @@
                                 $query = "
                                     SELECT 
                                         schedules.*, 
+                                        terms_tbl.term_id,
+                                        terms_tbl.academic_year,
                                         room_assignments_tbl.assignment_id, 
                                         rooms_tbl.room_name, 
                                         rooms_tbl.room_type, 
@@ -152,6 +355,7 @@
                                     LEFT JOIN room_assignments_tbl ON schedules.schedule_id = room_assignments_tbl.schedule_id
                                     LEFT JOIN rooms_tbl ON room_assignments_tbl.room_id = rooms_tbl.room_id
                                     LEFT JOIN buildings_tbl ON rooms_tbl.building_id = buildings_tbl.building_id
+                                    LEFT JOIN terms_tbl ON schedules.ay_semester = terms_tbl.term_id
                                     LEFT JOIN users ON schedules.user_id = users.id
                                     ORDER BY schedules.created_at DESC
                                 ";
@@ -177,6 +381,8 @@
                                             $endTime12hr = date("h:i A", strtotime($row['end_time']));
 
                                             echo "<tr class='bg-white hover:bg-gray-100'>"; // Default row styling
+                                            echo '<td class="hidden" data-term-id="' . htmlspecialchars($row['term_id']) . '">' . htmlspecialchars($row['academic_year']) . '</td>';
+
                                             echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['subject_code']) . '</td>';
                                             echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['section']) . '</td>';
                                             echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['instructor']) . '</td>';
@@ -198,7 +404,7 @@
                                             // Action buttons (always editable for admin)
                                             
                                             echo '<td class="py-2 px-4 space-x-2 text-center">';
-                                                                        // Room Assignment Button
+                                            // Room Assignment Button
                                             echo '<button onclick="assignRoom(' . $schedId . ')" class="text-green-500 hover:text-green-600" title="re-assign Room">';
                                             echo '<i class="fas fa-sync-alt fa-spin"></i>'; // Font Awesome Room Icon
                                             echo '</button>';
@@ -368,29 +574,42 @@
     
     <script>
         function assignRoom(scheduleId) {
-            // Handle the room assignment logic here
-            alert('Assigning room to schedule ID: ' + scheduleId);
-
-            // Example: Send a request to the server to assign a room for the selected schedule
-            // You can use AJAX to make the request, for example using Fetch API or jQuery AJAX
-            // Example using Fetch API:
-            /*
-            fetch('/assignRoom.php', {
+            // Show loading state
+            const loadingElement = document.getElementById('loading-status');
+            if (loadingElement) loadingElement.style.display = 'block';
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('scheduleId', scheduleId);
+            
+            // Fetch request to the PHP script
+            fetch('handlers/testscript.php', {
                 method: 'POST',
-                body: JSON.stringify({ scheduleId: scheduleId }),
-                headers: { 'Content-Type': 'application/json' }
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    alert('Room assigned successfully!');
-                    location.reload(); // Reload the page or update the table to reflect the changes
+                if (data.status === 'success') {
+                    // Handle success
+                    alert(`Room assigned successfully!\n
+                        Room: ${data.data.room.room_name}\n
+                        Time: ${data.data.adjusted_times.start} - ${data.data.adjusted_times.end}`);
+                    
+                    // Optionally refresh the page or update the UI
+                    location.reload();
                 } else {
-                    alert('Error assigning room.');
+                    // Handle error
+                    alert(`Error: ${data.message}`);
                 }
             })
-            .catch(error => alert('Error: ' + error));
-            */
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while assigning the room');
+            })
+            .finally(() => {
+                // Hide loading state
+                if (loadingElement) loadingElement.style.display = 'none';
+            });
         }
     </script>
     <script>

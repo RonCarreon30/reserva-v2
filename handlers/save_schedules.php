@@ -97,8 +97,12 @@ foreach ($data as $schedule) {
             $insertSchedule->bind_param("issssssssii", $userId, $subjectCode, $subject, $section, $instructor, $startTime, $endTime, $day, $classType, $aySemester, $departmentId);
             $insertSchedule->execute();
 
-            // Track successful saves
+            // Get the last inserted schedule ID
+            $scheduleId = $conn->insert_id;
+
+            // Track successful saves with the schedule ID
             $savedSchedules[] = [
+                'scheduleId' => $scheduleId, // Include the ID here
                 'subjectCode' => $subjectCode,
                 'subject' => $subject,
                 'section' => $section,
