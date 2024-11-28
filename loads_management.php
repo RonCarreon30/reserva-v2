@@ -35,80 +35,81 @@
             filterSchedules();
         });
 
-function filterSchedules() {
-    const searchSubjCode = document.getElementById('searchSubjCode').value.toLowerCase();
-    const searchTime = document.getElementById('searchTime').value.toLowerCase();
-    const sectionFilter = document.getElementById('sectionFilter').value.toLowerCase();
-    const instructorFilter = document.getElementById('instructorFilter').value.toLowerCase();
-    const dayFilter = document.getElementById('dayFilter').value.toLowerCase();
-    const roomFilter = document.getElementById('roomFilter').value.toLowerCase();
-    const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-    const uploaderFilter = document.getElementById('uploaderFilter').value.toLowerCase();
-    const generalSearch = document.getElementById('searchInput').value.toLowerCase();
-    const termsFilter = document.getElementById('termsFilter').value;
-    const scheduleRows = document.querySelectorAll('#schedules-body tr');
-    let hasVisibleRows = false;
+        function filterSchedules() {
+            const searchSubjCode = document.getElementById('searchSubjCode').value.toLowerCase();
+            const searchTime = document.getElementById('searchTime').value.toLowerCase();
+            const sectionFilter = document.getElementById('sectionFilter').value.toLowerCase();
+            const instructorFilter = document.getElementById('instructorFilter').value.toLowerCase();
+            const dayFilter = document.getElementById('dayFilter').value.toLowerCase();
+            const roomFilter = document.getElementById('roomFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+            const uploaderFilter = document.getElementById('uploaderFilter').value.toLowerCase();
+            const generalSearch = document.getElementById('searchInput').value.toLowerCase();
+            const termsFilter = document.getElementById('termsFilter').value;
+            const scheduleRows = document.querySelectorAll('#schedules-body tr');
+            let hasVisibleRows = false;
 
-    scheduleRows.forEach(row => {
-        const termId = row.querySelector('td[data-term-id]').getAttribute('data-term-id');
-        const subjectCode = row.cells[1].textContent.toLowerCase();
-        const section = row.cells[2].textContent.toLowerCase();
-        const instructor = row.cells[3].textContent.toLowerCase();
-        const time = row.cells[4].textContent.toLowerCase();
-        const day = row.cells[5].textContent.toLowerCase();
-        const roomAssignment = row.cells[6].textContent.toLowerCase();
-        const reservationStatus = row.cells[7].textContent.toLowerCase();
-        const uploadedBy = row.cells[8].textContent.toLowerCase();
+            scheduleRows.forEach(row => {
+                const termId = row.querySelector('td[data-term-id]').getAttribute('data-term-id');
+                const subjectCode = row.cells[1].textContent.toLowerCase();
+                const section = row.cells[2].textContent.toLowerCase();
+                const instructor = row.cells[3].textContent.toLowerCase();
+                const time = row.cells[4].textContent.toLowerCase();
+                const day = row.cells[5].textContent.toLowerCase();
+                const roomAssignment = row.cells[6].textContent.toLowerCase();
+                const reservationStatus = row.cells[7].textContent.toLowerCase();
+                const uploadedBy = row.cells[8].textContent.toLowerCase();
 
-        
-        // Fixed terms matching logic
-        const matchesTerm = termsFilter === 'all' || termId === termsFilter;
-        const matchesSubjCode = subjectCode.includes(searchSubjCode);
-        const matchesTime = time.includes(searchTime);
-        const matchesSection = sectionFilter === 'all' || section === sectionFilter;
-        const matchesInstructor = instructorFilter === 'all' || instructor === instructorFilter;
-        const matchesDay = dayFilter === 'all' || day === dayFilter;
-        const matchesRoom = roomFilter === 'all' || roomAssignment === roomFilter;
-        const matchesStatus = statusFilter === 'all' || reservationStatus === statusFilter;
-        const matchesUploader = uploaderFilter === 'all' || uploadedBy === uploaderFilter;
-        const matchesGeneralSearch =
-            subjectCode.includes(generalSearch) ||
-            section.includes(generalSearch) ||
-            instructor.includes(generalSearch) ||
-            time.includes(generalSearch) ||
-            day.includes(generalSearch) ||
-            roomAssignment.includes(generalSearch) ||
-            reservationStatus.includes(generalSearch) ||
-            uploadedBy.includes(generalSearch);
-            /*console.log('Selected term filter:', termsFilter);
-            console.log('Row term ID:', termId);
-            console.log('Matches term:', matchesTerm);*/
-        if (
-            matchesTerm &&
-            matchesSubjCode &&
-            matchesTime &&
-            matchesSection &&
-            matchesInstructor &&
-            matchesDay &&
-            matchesRoom &&
-            matchesStatus &&
-            matchesUploader &&
-            matchesGeneralSearch
-        ) {
-            row.style.display = '';
-            hasVisibleRows = true;
-        } else {
-            row.style.display = 'none';
+                
+                // Fixed terms matching logic
+                const matchesTerm = termsFilter === 'all' || termId === termsFilter;
+                const matchesSubjCode = subjectCode.includes(searchSubjCode);
+                const matchesTime = time.includes(searchTime);
+                const matchesSection = sectionFilter === 'all' || section === sectionFilter;
+                const matchesInstructor = instructorFilter === 'all' || instructor === instructorFilter;
+                const matchesDay = dayFilter === 'all' || day === dayFilter;
+                const matchesRoom = roomFilter === 'all' || roomAssignment === roomFilter;
+                const matchesStatus = statusFilter === 'all' || reservationStatus === statusFilter;
+                const matchesUploader = uploaderFilter === 'all' || uploadedBy === uploaderFilter;
+                const matchesGeneralSearch =
+                    subjectCode.includes(generalSearch) ||
+                    section.includes(generalSearch) ||
+                    instructor.includes(generalSearch) ||
+                    time.includes(generalSearch) ||
+                    day.includes(generalSearch) ||
+                    roomAssignment.includes(generalSearch) ||
+                    reservationStatus.includes(generalSearch) ||
+                    uploadedBy.includes(generalSearch);
+                    /*console.log('Selected term filter:', termsFilter);
+                    console.log('Row term ID:', termId);
+                    console.log('Matches term:', matchesTerm);*/
+                if (
+                    matchesTerm &&
+                    matchesSubjCode &&
+                    matchesTime &&
+                    matchesSection &&
+                    matchesInstructor &&
+                    matchesDay &&
+                    matchesRoom &&
+                    matchesStatus &&
+                    matchesUploader &&
+                    matchesGeneralSearch
+                ) {
+                    row.style.display = '';
+                    hasVisibleRows = true;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            if (!hasVisibleRows) {
+                noResultsMessage.classList.remove('hidden');  // This is correct
+                noResultsMessage.style.display = 'block';    // Add this line
+            } else {
+                noResultsMessage.style.display = 'none';
+            }
         }
-    });
-
-    const noResultsMessage = document.getElementById('noResultsMessage');
-    if (!hasVisibleRows) {
-        noResultsMessage.style.display = '';
-    } else {
-        noResultsMessage.style.display = 'none';
-    }
-}
 
         function sortTable(columnIndex) {
             const table = document.getElementById('schedulesList');
@@ -174,7 +175,7 @@ function filterSchedules() {
                             <option value="all">All Terms</option>
                             <?php while($term = $termsResult->fetch_assoc()): ?>
                                 <option value="<?php echo htmlspecialchars($term['term_id']); ?>">
-                                    <?php echo htmlspecialchars($term['academic_year']); ?>
+                                    <?php echo htmlspecialchars($term['academic_year'] . " - " . $term['semester']); ?>
                                 </option>
                             <?php endwhile; ?>
                         </select>
@@ -434,7 +435,14 @@ function filterSchedules() {
                         </div>
                     </div>
                 </div>
+                <!-- Include the FAQs section here -->
+                <div class="">
+                    <?php include 'faqBtn.php'; ?>
+                </div>
             </main>
+            <div id="footer-container">
+                <?php include 'footer.php' ?>
+            </div>
         </div>
     </div>
     <!-- Logout confirmation modal -->

@@ -115,106 +115,108 @@ if ($all_reservations_result->num_rows > 0) {
     <title>PLV: RESERVA</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-        <script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Automatically filter reservations on page load
             filterReservations();
         });
 
-    function filterReservations() {
-        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-        const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-        const facilityRows = document.querySelectorAll('#eventsTable tbody tr');
-        let hasVisibleRows = false; // Flag to check if any rows are visible
-
-        facilityRows.forEach(row => {
-            const facilityName = row.cells[0].textContent.toLowerCase(); // Facility name in the first column
-            const reservationStatus = row.cells[6].textContent.toLowerCase(); // Reservation status in the fifth column
-            
-            // Determine if the row should be shown based on search and status filters
-            const matchesSearch = facilityName.includes(searchQuery);
-            let matchesStatus = false;
-
-            // Default status filter behavior
-            if (statusFilter === 'all') {
-                matchesStatus = true; // Show all
-            } else if (statusFilter === 'in review') {
-                matchesStatus = reservationStatus === 'in review';
-            } else if (statusFilter === 'approved') {
-                matchesStatus = reservationStatus === 'approved';                    
-            } else if (statusFilter === 'declined') {
-                matchesStatus = reservationStatus === 'declined';                    
-            } else if (statusFilter === 'expired') {
-                matchesStatus = reservationStatus === 'expired'; // Show only expired
+        function filterReservations() {
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+            const facilityRows = document.querySelectorAll('#eventsTable tbody tr');
+            let hasVisibleRows = false; // Flag to check if any rows are visible
+    
+            facilityRows.forEach(row => {
+                const facilityName = row.cells[0].textContent.toLowerCase(); // Facility name in the first column
+                const reservationStatus = row.cells[6].textContent.toLowerCase(); // Reservation status in the fifth column
+                
+                // Determine if the row should be shown based on search and status filters
+                const matchesSearch = facilityName.includes(searchQuery);
+                let matchesStatus = false;
+    
+                // Default status filter behavior
+                if (statusFilter === 'all') {
+                    matchesStatus = true; // Show all
+                } else if (statusFilter === 'in review') {
+                    matchesStatus = reservationStatus === 'in review';
+                } else if (statusFilter === 'approved') {
+                    matchesStatus = reservationStatus === 'approved';                    
+                } else if (statusFilter === 'declined') {
+                    matchesStatus = reservationStatus === 'declined';                    
+                } else if (statusFilter === 'cancelled') {
+                    matchesStatus = reservationStatus === 'cancelled';                    
+                } else if (statusFilter === 'expired') {
+                    matchesStatus = reservationStatus === 'expired'; // Show only expired
+                } else {
+                    // Default to showing 'In Review' and 'Reserved' statuses
+                    matchesStatus = (reservationStatus === 'in review' || reservationStatus === 'approved');
+                }
+    
+                // Show or hide the row based on matches
+                if (matchesSearch && matchesStatus) {
+                    row.classList.remove('hidden'); // Show row
+                    hasVisibleRows = true; // At least one row is visible
+                } else {
+                    row.classList.add('hidden'); // Hide row
+                }
+            });
+    
+            // Show or hide the "no results found" message based on visibility of rows
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            if (!hasVisibleRows) {
+                noResultsMessage.classList.remove('hidden'); // Show the message
             } else {
-                // Default to showing 'In Review' and 'Reserved' statuses
-                matchesStatus = (reservationStatus === 'in review' || reservationStatus === 'approved');
+                noResultsMessage.classList.add('hidden'); // Hide the message
             }
-
-            // Show or hide the row based on matches
-            if (matchesSearch && matchesStatus) {
-                row.classList.remove('hidden'); // Show row
-                hasVisibleRows = true; // At least one row is visible
-            } else {
-                row.classList.add('hidden'); // Hide row
-            }
-        });
-
-        // Show or hide the "no results found" message based on visibility of rows
-        const noResultsMessage = document.getElementById('noResultsMessage');
-        if (!hasVisibleRows) {
-            noResultsMessage.classList.remove('hidden'); // Show the message
-        } else {
-            noResultsMessage.classList.add('hidden'); // Hide the message
         }
-    }
 
-function sortTable(columnIndex) {
-    const table = document.getElementById('eventsTable');
-    const rows = Array.from(table.querySelectorAll('tbody tr'));
-    const columnHeader = table.querySelector(`th:nth-child(${columnIndex + 1})`);
-    const isAscending = columnHeader.dataset.sortOrder === 'asc';
-
-    // Check if the column contains dates (for the Reservation Date column)
-    const isDateColumn = columnIndex === 3;
-
-    rows.sort((rowA, rowB) => {
-        let cellA = rowA.children[columnIndex].textContent.trim();
-        let cellB = rowB.children[columnIndex].textContent.trim();
-
-        // Parse dates if it’s a date column
-        if (isDateColumn) {
-            cellA = new Date(cellA);
-            cellB = new Date(cellB);
-            return isAscending ? cellA - cellB : cellB - cellA;
-        } else {
-            return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+        function sortTable(columnIndex) {
+            const table = document.getElementById('eventsTable');
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            const columnHeader = table.querySelector(`th:nth-child(${columnIndex + 1})`);
+            const isAscending = columnHeader.dataset.sortOrder === 'asc';
+        
+            // Check if the column contains dates (for the Reservation Date column)
+            const isDateColumn = columnIndex === 3;
+        
+            rows.sort((rowA, rowB) => {
+                let cellA = rowA.children[columnIndex].textContent.trim();
+                let cellB = rowB.children[columnIndex].textContent.trim();
+        
+                // Parse dates if it’s a date column
+                if (isDateColumn) {
+                    cellA = new Date(cellA);
+                    cellB = new Date(cellB);
+                    return isAscending ? cellA - cellB : cellB - cellA;
+                } else {
+                    return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+                }
+            });
+        
+            // Append sorted rows and update the sort order for the next click
+            table.querySelector('tbody').append(...rows);
+            columnHeader.dataset.sortOrder = isAscending ? 'desc' : 'asc';
         }
-    });
 
-    // Append sorted rows and update the sort order for the next click
-    table.querySelector('tbody').append(...rows);
-    columnHeader.dataset.sortOrder = isAscending ? 'desc' : 'asc';
-}
-
-        </script>
-        <style>
+    </script>
+    <style>
             /* Simple spinning animation */
-.loader {
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top: 4px solid white;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-}
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-        </style>
+    </style>
 </head>
 <body>
     <div class="flex h-screen bg-gray-100">
@@ -244,6 +246,7 @@ function sortTable(columnIndex) {
                             <option value="in review">In Review</option>
                             <option value="approved">Approved</option>
                             <option value="declined">Declined</option>
+                            <option value="cancelled">Cancelled</option>
                             <option value="expired">Expired</option>
                         </select>
                         <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterReservations()">
@@ -292,86 +295,104 @@ function sortTable(columnIndex) {
                             </thead>
                             <tbody class="divide-y divide-gray-200" id="reservationTableBody">
                                 <?php
-                                    $all_reservations_result->data_seek(0); // Reset result pointer
-                                    $today = date('Y-m-d');
-                                    $hasInReview = false;
-                                    $hasOtherReservations = false;
+                                $all_reservations_result->data_seek(0); // Reset result pointer
+                                $today = date('Y-m-d');
+                                $hasInReview = false;
+                                $hasOtherReservations = false;
 
-                                    // Preliminary check for "In Review" reservations
-                                    while ($row = $all_reservations_result->fetch_assoc()) {
-                                        if ($row["reservation_status"] === 'In Review') {
-                                            $hasInReview = true;
+                                // Preliminary check for "In Review" reservations
+                                while ($row = $all_reservations_result->fetch_assoc()) {
+                                    if ($row["reservation_status"] === 'In Review') {
+                                        $hasInReview = true;
+                                    } else {
+                                        $hasOtherReservations = true;
+                                    }
+                                }
+
+                                // Reset pointer for actual display loop
+                                $all_reservations_result->data_seek(0);
+                                $inReviewShown = false; // Flag to check if "In Review" header has been shown
+                                $otherShown = false;    // Flag to check if "Other Reservations" header has been shown
+
+                                while ($row = $all_reservations_result->fetch_assoc()) {
+                                    $reservationId = $row["id"];
+                                    $reservationStatus = $row["reservation_status"];
+                                    $isPending = ($reservationStatus === 'In Review');
+
+                                    // Convert start and end times to 12-hour format with AM/PM
+                                    $startTime = new DateTime($row["start_time"]);
+                                    $formattedStartTime = $startTime->format('g:i A');
+
+                                    $endTime = new DateTime($row["end_time"]);
+                                    $formattedEndTime = $endTime->format('g:i A');
+
+                                    $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
+
+                                    // Show "In Review" header only if there are "In Review" reservations
+                                    if ($isPending && $hasInReview && !$inReviewShown) {
+                                        echo '<tr><td colspan="8" class="bg-yellow-200 text-yellow-800 font-bold py-2 px-4">Pending Reservations</td></tr>';
+                                        $inReviewShown = true;
+                                    }
+
+                                    // Show "Other Reservations" header only if there are other reservations and at least one "In Review" reservation
+                                    if (!$isPending && $hasInReview && $hasOtherReservations && !$otherShown) {
+                                        echo '<tr><td colspan="8" class="bg-green-100 text-gray-800 font-bold py-2 px-4 mt-4">Other Reservations</td></tr>';
+                                        $otherShown = true;
+                                    }
+
+                                    echo '<tr class="' . $statusClass . '">';
+                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["building"]) . ' ' . htmlspecialchars($row["facility_name"]) . '</td>';
+                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';
+                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["facultyInCharge"]) . '</td>';
+                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["first_name"]) . ' ' . htmlspecialchars($row["last_name"]) .  '</td>';
+                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
+                                    echo '<td class="py-2 px-4">' . htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime) . '</td>';
+                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_status"]) . '</td>';
+                                    echo '<td class="py-2 px-4 space-x-3">';
+
+                                    // Always show all buttons with different states based on reservation status
+                                    if ($isPending) {
+                                        // Approve and Reject buttons for In Review reservations
+                                        echo '<button onclick="acceptReservation(' . $reservationId . ')" class="text-blue-500 hover:text-blue-600" title="Approve"><i class="fa-regular fa-circle-check"></i></button>';
+                                        echo '<button onclick="declineReservation(' . $reservationId . ')"  class="text-red-500 hover:text-red-600" title="Reject"><i class="fa-solid fa-ban"></i></button>';
+                                        
+                                    } else {
+                                        
+                                        // Active buttons for other statuses
+                                        if ($reservationStatus === 'Expired') {
+                                            echo '<button disabled class="text-gray-300 cursor-not-allowed" title="Cancel Reservation"><i class="fas fa-times-circle"></i></button>';
+                                            echo '<button disabled class="text-gray-300 cursor-not-allowed" title="Edit"><i class="fas fa-edit"></i></button>';
+                                            echo '<button onclick="deleteReservation(' . $reservationId . ')" class="text-red-500 hover:text-red-600" title="Delete"><i class="fas fa-trash-alt"></i></button>';
+                                        } elseif ($reservationStatus === 'Approved') {
+                                            echo '<button onclick="cancelReservation(' . $reservationId . ')" class="text-yellow-500 hover:text-yellow-600" title="Cancel Reservation"><i class="fas fa-times-circle"></i></button>';
+                                            echo '<button disabled class="text-gray-300 cursor-not-allowed" title="Edit"><i class="fas fa-edit"></i></button>';
+                                            echo '<button disabled class="text-gray-300 cursor-not-allowed" title="Delete"><i class="fas fa-trash-alt"></i></button>';
+                                        } elseif ($reservationStatus === 'Declined' || $reservationStatus === 'Cancelled') {
+                                            echo '<button disabled class="text-gray-300 cursor-not-allowed" title="Cancel Reservation"><i class="fas fa-times-circle"></i></button>';
+                                            echo '<button onclick="editReservation(' . $reservationId . ')" class="text-blue-500 hover:text-blue-600" title="Edit"><i class="fas fa-edit"></i></button>';
+                                            echo '<button onclick="deleteReservation(' . $reservationId . ')" class="text-red-500 hover:text-red-600" title="Delete"><i class="fas fa-trash-alt"></i></button>';
                                         } else {
-                                            $hasOtherReservations = true;
+                                            echo '<button onclick="cancelReservation(' . $reservationId . ')" class="text-gray-500 hover:text-gray-600" title="Cancel Reservation"><i class="fas fa-times-circle"></i></button>';
+                                            echo '<button onclick="editReservation(' . $reservationId . ')" class="text-blue-500 hover:text-blue-600" title="Edit"><i class="fas fa-edit"></i></button>';
+                                            echo '<button onclick="deleteReservation(' . $reservationId . ')" class="text-red-500 hover:text-red-600" title="Delete"><i class="fas fa-trash-alt"></i></button>';
                                         }
                                     }
 
-                                    // Reset pointer for actual display loop
-                                    $all_reservations_result->data_seek(0);
-                                    $inReviewShown = false; // Flag to check if "In Review" header has been shown
-                                    $otherShown = false;    // Flag to check if "Other Reservations" header has been shown
-
-                                    while ($row = $all_reservations_result->fetch_assoc()) {
-                                        $reservationId = $row["id"];
-                                        $reservationStatus = $row["reservation_status"];
-                                        $isPending = ($reservationStatus === 'In Review');
-
-                                        // Convert start and end times to 12-hour format with AM/PM
-                                        $startTime = new DateTime($row["start_time"]);
-                                        $formattedStartTime = $startTime->format('g:i A');
-
-                                        $endTime = new DateTime($row["end_time"]);
-                                        $formattedEndTime = $endTime->format('g:i A');
-
-                                        $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
-
-                                        // Show "In Review" header only if there are "In Review" reservations
-                                        if ($isPending && $hasInReview && !$inReviewShown) {
-                                            echo '<tr><td colspan="7" class="bg-yellow-200 text-yellow-800 font-bold py-2 px-4">Pending Reservations</td></tr>';
-                                            $inReviewShown = true;
-                                        }
-
-                                        // Show "Other Reservations" header only if there are other reservations and at least one "In Review" reservation
-                                        if (!$isPending && $hasInReview && $hasOtherReservations && !$otherShown) {
-                                            echo '<tr><td colspan="7" class="bg-green-100 text-gray-800 font-bold py-2 px-4 mt-4">Other Reservations</td></tr>';
-                                            $otherShown = true;
-                                        }
-
-                                        echo '<tr class="' . $statusClass . '">';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["building"]) . ' ' . htmlspecialchars($row["facility_name"]) . '</td>';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["facultyInCharge"]) . '</td>';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["first_name"]) . ' ' . htmlspecialchars($row["last_name"]) .  '</td>';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
-
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime) . '</td>';
-                                        echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_status"]) . '</td>';
-                                        echo '<td class="py-2 px-4 space-x-2">';
-
-                                        // Show buttons based on status
-                                        if ($isPending) {
-                                            echo '<button onclick="acceptReservation(' . $reservationId . ')" class="bg-blue-500 text-white rounded-md px-2 py-2 hover:bg-blue-600">Approve</button>';
-                                            echo '<button onclick="declineReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-2 py-2 hover:bg-red-600">Decline</button>';
-                                        } elseif ($reservationStatus === 'Expired') {
-                                             echo '<button class="bg-gray-300 text-white rounded-md px-4 py-2 hover:bg-gray-200 hover: cursor-not-allowed" disabled>Edit</button>';
-                                            echo '<button onclick="deleteReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
-                                        } else {
-                                            echo '<button onclick="editReservation(' . $reservationId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
-                                            echo '<button onclick="deleteReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
-                                        }
-
-                                        echo '</td>';
-                                        echo '</tr>';
-                                    }
+                                    echo '</td>';
+                                    echo '</tr>';
+                                }
                                 ?>
                             </tbody>
-
                         </table>
                         <div id="noResultsMessage" class="text-center py-4 hidden">
                             <img src="img/undraw_not_found_re_bh2e.svg" alt="No Reservations Found" class="mx-auto mb-2 opacity-40" style="max-width: 250px;">
                             <p class="text-gray-500">No results found for the selected filters.</p>
                         </div>
                     </div>
+                </div>
+                <!-- Include the FAQs section here -->
+                <div class="">
+                    <?php include 'faqBtn.php'; ?>
                 </div>
             </main>
             <div id="footer-container">
@@ -663,7 +684,14 @@ function sortTable(columnIndex) {
                 showErrorMessage('An error occurred while saving the reservation.');
             });
         }
-
+        // Utility functions to show/hide modals
+        function showConfirmModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+                // Close modal
+        function closeModal(modalId) {
+            hideModal(modalId);
+        }
         // Delete reservation
         function deleteReservation(reservationId) {
             // Show confirmation dialog
@@ -691,6 +719,52 @@ function sortTable(columnIndex) {
                     showErrorMessage('An error occurred while deleting the reservation.');
                 });
             });
+        }
+        
+
+        // Cancel Reservation
+        function cancelReservation(reservationId) {
+            // Show confirmation modal with the message
+            document.getElementById('confirmationMessage').textContent = "Are you sure you want to cancel this reservation?";
+            showConfirmModal('confirmationModal');
+
+            // Set action for confirmation button
+            window.confirmAction = function() {
+                // Send request to the server to cancel the reservation
+                fetch('handlers/cancel_reservation.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: reservationId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message and reload the page
+                        showSuccessMessage('Reservation cancelled successfully!');
+                        setTimeout(() => {
+                            location.reload(); // Reload the current page after success
+                        }, 3000);
+                    } else {
+                        // Show error message if cancellation fails
+                        showErrorMessage(data.message || 'Failed to cancel the reservation. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    // Handle network or server errors
+                    console.error('Error:', error);
+                    showErrorMessage('An error occurred while cancelling the reservation.');
+                })
+                .finally(() => {
+                    hideModal('confirmationModal'); // Always hide the modal after an action
+                });
+            };
+
+            // Set action for cancel button
+            window.cancelAction = function() {
+                hideModal('confirmationModal'); // Simply hide the modal if canceled
+            };
         }
 
         // Close modal

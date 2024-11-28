@@ -87,6 +87,8 @@
                 Log in
               </button>
             </div>
+                <!-- Include the FAQs section here -->
+    <div class=""><?php include 'faqBtn.php'; ?></div>
           </form>
         </div>
       </div>

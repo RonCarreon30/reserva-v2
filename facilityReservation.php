@@ -256,59 +256,61 @@
                             <th class="py-3 px-4 text-left">Action</th>
                         </tr>
                     </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <?php
+                        $availableRows = [];
+                        $unavailableRows = [];
 
-<tbody class="divide-y divide-gray-200">
-    <?php
-    $availableRows = [];
-    $unavailableRows = [];
+                        // Separate available and unavailable facilities
+                        if ($facility_result->num_rows > 0) {
+                            while ($row = $facility_result->fetch_assoc()) {
+                                if ($row['status'] === 'Unavailable') {
+                                    $unavailableRows[] = $row;
+                                } else {
+                                    $availableRows[] = $row;
+                                }
+                            }
+                        }
 
-    // Separate available and unavailable facilities
-    if ($facility_result->num_rows > 0) {
-        while ($row = $facility_result->fetch_assoc()) {
-            if ($row['status'] === 'Unavailable') {
-                $unavailableRows[] = $row;
-            } else {
-                $availableRows[] = $row;
-            }
-        }
-    }
+                        // Display available facilities first
+                        foreach ($availableRows as $row): ?>
+                            <tr>
+                                <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>
+                                <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>
+                                <td class="py-2 px-4"><?php echo htmlspecialchars($row['status']); ?></td>
+                                <td class="py-2 px-4"><?php echo htmlspecialchars($row['descri']); ?></td>
+                                <td class="py-2 px-4">
+                                    <button onclick="showReservationForm('<?php echo htmlspecialchars($row['facility_name']); ?>', '<?php echo htmlspecialchars($row['facility_id']); ?>')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Reserve</button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
 
-    // Display available facilities first
-    foreach ($availableRows as $row): ?>
-        <tr>
-            <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>
-            <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>
-            <td class="py-2 px-4"><?php echo htmlspecialchars($row['status']); ?></td>
-            <td class="py-2 px-4"><?php echo htmlspecialchars($row['descri']); ?></td>
-            <td class="py-2 px-4">
-                <button onclick="showReservationForm('<?php echo htmlspecialchars($row['facility_name']); ?>', '<?php echo htmlspecialchars($row['facility_id']); ?>')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Reserve</button>
-            </td>
-        </tr>
-    <?php endforeach; ?>
+                        <!-- Display unavailable facilities next -->
+                        <?php foreach ($unavailableRows as $row): ?>
+                            <tr class="bg-red-100 text-red-600">
+                                <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>
+                                <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>
+                                <td class="py-2 px-4"><?php echo htmlspecialchars($row['status']); ?></td>
+                                <td class="py-2 px-4"><?php echo htmlspecialchars($row['descri']); ?></td>
+                                <td class="py-2 px-4">
+                                    <button disabled class="bg-gray-400 text-white rounded-md px-4 py-2 cursor-not-allowed">Unavailable</button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
 
-    <!-- Display unavailable facilities next -->
-    <?php foreach ($unavailableRows as $row): ?>
-        <tr class="bg-red-100 text-red-600">
-            <td class="py-2 px-4 facility-building"><?php echo htmlspecialchars($row['building']); ?></td>
-            <td class="py-2 px-4 facility-name"><?php echo htmlspecialchars($row['facility_name']); ?></td>
-            <td class="py-2 px-4"><?php echo htmlspecialchars($row['status']); ?></td>
-            <td class="py-2 px-4"><?php echo htmlspecialchars($row['descri']); ?></td>
-            <td class="py-2 px-4">
-                <button disabled class="bg-gray-400 text-white rounded-md px-4 py-2 cursor-not-allowed">Unavailable</button>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-
-    <!-- If no facilities found -->
-    <?php if ($facility_result->num_rows === 0): ?>
-        <tr>
-            <td colspan="5" class="text-center py-4">No facilities found</td>
-        </tr>
-    <?php endif; ?>
-</tbody>
-
+                        <!-- If no facilities found -->
+                        <?php if ($facility_result->num_rows === 0): ?>
+                            <tr>
+                                <td colspan="5" class="text-center py-4">No facilities found</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
                 </table>
-            </div>            
+            </div>    
+            <!-- Include the FAQs section here -->
+            <div class="">
+                <?php include 'faqBtn.php'; ?>
+            </div>                       
         </main>
         <div id="footer-container">
             <?php include 'footer.php' ?>

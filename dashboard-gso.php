@@ -301,6 +301,10 @@ if ($count_result->num_rows > 0) {
                         </div>
                     </div>
                 </div>
+                <!-- Include the FAQs section here -->
+                <div class="">
+                    <?php include 'faqBtn.php'; ?>
+                </div>                
             </main>
             <div id="footer-container">
                 <?php include 'footer.php' ?>

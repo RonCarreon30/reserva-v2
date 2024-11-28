@@ -225,7 +225,7 @@
                                         <th class="px-4 py-2 border">Academic Year</th>
                                         <th class="px-4 py-2 border">Semester</th>
                                         <th class="px-4 py-2 border">Set Status</th>
-                                        <th class="px-4 py-2 border">Actions</th>
+                                        <th class="px-2 py-2 border">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="academicYearTableBody">
@@ -239,9 +239,9 @@
                                             echo "<td class='border px-4 py-2 academic-year-cell'>{$row['academic_year']}</td>";
                                             echo "<td class='border px-4 py-2 semester-cell'>{$row['semester']}</td>";
                                             echo "<td class='border px-4 py-2 status-cell'>{$row['term_status']}</td>";
-                                            echo "<td class='border px-4 py-2'>
-                                                    <button class='edit-btn px-2 py-1 bg-blue-500 text-white rounded'>Edit</button>
-                                                    <button class='delete-btn px-2 py-1 bg-red-500 text-white rounded' data-id='{$row['term_id']}'>Delete</button>
+                                            echo "<td class='border text-center py-2 space-x-2'>
+                                                    <button class='edit-btn text-blue-500 hover:text-blue-600' title='Edit'><i class='fas fa-edit'></i></button>
+                                                    <button class='delete-btn text-red-500 hover:text-red-600' data-id='{$row['term_id']}' title='Delete'><i class='fas fa-trash-alt'></i></button>
                                                 </td>";
                                             echo "</tr>";
                                         }
@@ -270,9 +270,9 @@
                                             echo "<tr data-id='{$row['building_id']}'>";
                                             echo "<td class='border px-4 py-2'>{$row['building_name']}</td>";
                                             echo "<td class='border px-4 py-2'>{$row['building_desc']}</td>";
-                                            echo "<td class='border px-4 py-2'>
-                                                    <button class='edit-building-btn px-2 py-1 bg-blue-500 text-white rounded'>Edit</button>
-                                                    <button class='delete-building-btn px-2 py-1 bg-red-500 text-white rounded' data-id='{$row['building_id']}'>Delete</button></td>";
+                                            echo "<td class='border text-center py-2 space-x-2'>
+                                                    <button class='edit-building-btn  text-blue-500 hover:text-blue-600' title='Edit'><i class='fas fa-edit'></i></button>
+                                                    <button class='delete-building-btn text-red-500 hover:text-red-600' data-id='{$row['building_id']}' title='Delete'><i class='fas fa-trash-alt'></i></button>";
                                             echo "</tr>";
                                         }
                                     ?>
@@ -300,9 +300,9 @@
                                             echo "<tr data-id='{$row['dept_id']}'>";
                                             echo "<td class='border px-4 py-2'>{$row['dept_name']}</td>";
                                             echo "<td class='border px-4 py-2'>{$row['building_name']}</td>";
-                                            echo "<td class='border px-4 py-2'>
-                                                    <button class='edit-department-btn px-2 py-1 bg-blue-500 text-white rounded'>Edit</button>
-                                                    <button class='delete-department-btn px-2 py-1 bg-red-500 text-white rounded' data-id='{$row['dept_id']}'>Delete</button></td>";
+                                            echo "<td class='border text-center py-2 space-x-2'>
+                                                    <button class='edit-department-btn  text-blue-500 hover:text-blue-600' title='Edit'><i class='fas fa-edit'></i></button>
+                                                    <button class='delete-department-btn text-red-500 hover:text-red-600' data-id='{$row['dept_id']}' title='Delete'><i class='fas fa-trash-alt'></i></button>";
                                             echo "</tr>";
                                         }
                                     ?>
@@ -317,6 +317,9 @@
                     <?php include 'faqBtn.php'; ?>
                 </div>
             </main>
+            <div id="footer-container">
+                <?php include 'footer.php' ?>
+            </div>              
         </div>
     </div>
     <!-- Logout Modal -->

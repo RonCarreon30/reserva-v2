@@ -148,11 +148,14 @@ $stmt->close();
 
                     
                 </div>
+                <!-- Include the FAQs section here -->
+                <div class="">
+                    <?php include 'faqBtn.php'; ?>
+                </div>
             </main>
-
             <div id="footer-container">
                 <?php include 'footer.php' ?>
-            </div>        
+            </div>      
         </div>
     </div>
 

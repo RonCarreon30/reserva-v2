@@ -165,28 +165,35 @@ function filterRooms() {
                     <table id="roomsTable" class="min-w-full bg-white rounded-md shadow-md border border-gray-200">
                         <thead>
                             <tr class="bg-gray-200 border-b">
-                                <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
+                                <th class="border-r border-white py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(0)">
                                     <span class="flex items-center">Building
                                         <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                         </svg>
                                     </span>
                                 </th>
-                                <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
+                                <th class="border-r border-white py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(1)">
                                     <span class="flex items-center">Room
                                         <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                         </svg>                                        
                                     </span>
                                 </th>
-                                <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(2)">
+                                <th class="border-r border-white py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(2)">
                                     <span class="flex items-center">Type
                                         <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                         </svg>                                        
                                     </span>
                                 </th>
-                                <th class="py-3 px-4 text-left">Action</th>
+                                <th class="border-r border-white py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(3)">
+                                    <span class="flex items-center">Status
+                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                        </svg>                                        
+                                    </span>
+                                </th>
+                                <th class="border-r border-white py-3 px-4 text-left">Action</th>
                                 </th>
                             </tr>
                         </thead>
@@ -194,12 +201,13 @@ function filterRooms() {
                             <?php if ($result->num_rows > 0): ?>
                                 <?php while ($row = $result->fetch_assoc()): ?>
                                     <tr>
-                                        <td class="py-3 px-4"><?php echo $row["building_name"]; ?></td>
-                                        <td class="py-3 px-4"><?php echo $row["room_name"]; ?></td>
-                                        <td class="py-3 px-4"><?php echo $row["room_type"]; ?></td>
-                                        <td class="py-3 px-4">
-                                            <button onclick="editRoom(<?php echo $row['room_id']; ?>)" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-plv-highlight">Edit</button>
-                                            <button onclick="deleteFacility(<?php echo $row['room_id']; ?>)" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>
+                                        <td class="border py-3 px-4"><?php echo $row["building_name"]; ?></td>
+                                        <td class="border py-3 px-4"><?php echo $row["room_name"]; ?></td>
+                                        <td class="border py-3 px-4"><?php echo $row["room_type"]; ?></td>
+                                        <td class="border py-3 px-4"><?php echo $row["room_status"]; ?></td>
+                                        <td class="border py-3 px-4 space-x-2">
+                                            <button onclick="editRoom(<?php echo $row['room_id']; ?>)" class="text-blue-500 hover:text-blue-600" title='Edit User'><i class="fas fa-edit"></i></button>
+                                            <button onclick="deleteFacility(<?php echo $row['room_id']; ?>)" class="text-red-500 hover:text-red-600" title="Delete"><i class="fas fa-trash-alt"></i></button>
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
@@ -284,7 +292,14 @@ function filterRooms() {
                         </form>
                     </div>
                 </div>
+                <!-- Include the FAQs section here -->
+                <div class="">
+                    <?php include 'faqBtn.php'; ?>
+                </div>
             </main>
+            <div id="footer-container">
+                <?php include 'footer.php' ?>
+            </div>             
         </div>
     </div>
 <!-- Edit Room Form -->

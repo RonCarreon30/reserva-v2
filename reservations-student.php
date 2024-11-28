@@ -59,39 +59,40 @@ $all_reservations_result = $conn->query($all_reservations_sql);
             filterReservations();
         });
 
+
         function filterReservations() {
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-            const buildingFilter = document.getElementById('buildingSelect').value.toLowerCase();
             const facilityRows = document.querySelectorAll('#eventsTable tbody tr');
 
             facilityRows.forEach(row => {
-                const facilityName = row.cells[1].textContent.toLowerCase(); // Facility name
-                const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status
-                const buildingName = row.cells[0].textContent.toLowerCase(); // Building name
-
-                // Apply filters
+                const facilityName = row.cells[1].textContent.toLowerCase(); // Facility name in the first column
+                const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status in the fifth column
+                
+                // Determine if the row should be shown based on search and status filters
                 const matchesSearch = facilityName.includes(searchQuery);
-                const matchesBuilding = buildingFilter === '' || buildingName === buildingFilter;
                 let matchesStatus = false;
 
-                // Apply status filter with specific matching logic
+                // Exact matching for statusFilter
                 if (statusFilter === 'all') {
-                    matchesStatus = true;
+                    matchesStatus = true; // Show all
                 } else if (statusFilter === 'in review') {
                     matchesStatus = reservationStatus === 'in review';
                 } else if (statusFilter === 'approved') {
                     matchesStatus = reservationStatus === 'approved';
                 } else if (statusFilter === 'declined') {
                     matchesStatus = reservationStatus === 'declined';
+                } else if (statusFilter === 'cancelled') {
+                    matchesStatus = reservationStatus === 'cancelled';
                 } else if (statusFilter === 'expired') {
                     matchesStatus = reservationStatus === 'expired';
                 } else {
-                    matchesStatus = (reservationStatus === 'in review' || reservationStatus === 'approved' || reservationStatus === 'declined');
+                    // Default to showing 'In Review' and 'Reserved' statuses
+                    matchesStatus = (reservationStatus === 'in review' || reservationStatus === 'approved');
                 }
 
-                // Show or hide the row based on filter matches
-                if (matchesSearch && matchesBuilding && matchesStatus) {
+                // Show or hide the row based on matches
+                if (matchesSearch && matchesStatus) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -250,11 +251,12 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                             <?php endwhile; ?>
                         </select>
                         <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterReservations()">
-                            <option value="" disabled selected>Status</option> <!-- Placeholder option -->
+                            <option value="" disabled selected>Select Status</option> <!-- Placeholder option -->
                             <option value="all">All</option>
                             <option value="in review">In Review</option>
                             <option value="approved">Approved</option>
                             <option value="declined">Declined</option>
+                            <option value="Cancelled">Cancelled</option>
                             <option value="expired">Expired</option>
                         </select>
                         <input type="text" id="searchInput" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterReservations()">
@@ -301,50 +303,83 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                                 </th>
                             </tr>
                         </thead>
-                            <tbody class="divide-y divide-gray-200" id="reservationTableBody">
-                                <?php
-                                // Output reservations for the events list table
-                                $all_reservations_result->data_seek(0); // Reset result pointer
-                                $today = date('Y-m-d');
-                                while ($row = $all_reservations_result->fetch_assoc()) {
-                                    $reservationId = $row["id"];
-                                    $reservationStatus = $row["reservation_status"];
-                                    $reservationDate = $row["reservation_date"];
+                        <tbody class="divide-y divide-gray-200" id="reservationTableBody">
+                            <?php
+                            $all_reservations_result->data_seek(0);
+                            $today = date('Y-m-d');
+                            while ($row = $all_reservations_result->fetch_assoc()) {
+                                $reservationId = $row["id"];
+                                $reservationStatus = $row["reservation_status"];
+                                $reservationDate = $row["reservation_date"];
+                                $isExpired = strtotime($reservationDate) < strtotime($today);
 
-                                    // Convert start and end times to 12-hour format with AM/PM
-                                    $startTime = new DateTime($row["start_time"]);
-                                    $formattedStartTime = $startTime->format('g:i A');
-
-                                    $endTime = new DateTime($row["end_time"]);
-                                    $formattedEndTime = $endTime->format('g:i A');
-
-                                    $isEditable = ($reservationDate >= $today) || ($reservationStatus === 'In Review' || $reservationStatus === 'Declined');
-                                    
-                                    $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
-                                    echo '<tr class="' . $statusClass . '">';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["building"]) . '</td>'; // Display the building
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["facility_name"]) . '</td>'; // Display the facility name
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_status"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';                                   
-                                    if ($isEditable) {
-                                        echo '<td class="py-2 px-4 space-x-2">';
-                                        echo '<button onclick="editReservation(' . $reservationId . ')" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600">Edit</button>';
-                                        echo '<button onclick="deleteReservation(' . $reservationId . ')" class="bg-red-500 text-white rounded-md px-4 py-2 hover:bg-red-600">Delete</button>';
-                                        echo '</td>';
-                                    } else {
-                                        echo '<td class="py-2 px-4 text-red-500" title="Admin Access Only">Unauthorized</td>';  
-                                    }
+                                // Convert times to 12-hour format
+                                $startTime = new DateTime($row["start_time"]);
+                                $formattedStartTime = $startTime->format('g:i A');
+                                $endTime = new DateTime($row["end_time"]);
+                                $formattedEndTime = $endTime->format('g:i A');
                                 
-                                    echo '</tr>';
-                                }
-
+                                $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
                                 ?>
-                            </tbody>
+                                <tr class="<?php echo $statusClass; ?>">
+                                    <td class="border border-white py-2 px-4"><?php echo htmlspecialchars($row["building"]); ?></td>
+                                    <td class="py-2 px-4"><?php echo htmlspecialchars($row["facility_name"]); ?></td>
+                                    <td class="py-2 px-4"><?php echo htmlspecialchars($row["reservation_date"]); ?></td>
+                                    <td class="py-2 px-4"><?php echo htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime); ?></td>
+                                    <td class="py-2 px-4"><?php echo htmlspecialchars($row["reservation_status"]); ?></td>
+                                    <td class="py-2 px-4"><?php echo htmlspecialchars($row["purpose"]); ?></td>
+                                    <td class="py-2 px-4 space-x-2">
+                                        <?php
+                                    // Define button states based on conditions
+                                    $canEdit = $reservationStatus === 'In Review' || $reservationStatus === 'Declined'|| $reservationStatus === 'Cancelled' ;
+                                    $canDelete = $reservationStatus === 'In Review' || $isExpired || $reservationStatus === 'Declined'|| $reservationStatus === 'Cancelled';
+                                    $canCancel = $reservationStatus === 'Approved';
+
+                                        // Helper function to generate button classes
+                                        $getButtonClasses = function($isEnabled, $baseColor) {
+                                            return $isEnabled 
+                                                ? "text-{$baseColor}-500 hover:text-{$baseColor}-600 cursor-pointer" 
+                                                : "text-gray-300 cursor-not-allowed";
+                                        };
+                                        ?>
+
+                                        <!-- Cancel Button -->
+                                        <button 
+                                            onclick="<?php echo $canCancel ? "cancelReservation($reservationId)" : ''; ?>"
+                                            class="<?php echo $getButtonClasses($canCancel, 'yellow'); ?>"
+                                            <?php echo !$canCancel ? 'title="Unauthorized Action"' : 'title="Cancel Reservation"'; ?>
+                                        >
+                                            <i class="fas fa-times-circle"></i>
+                                        </button>
+
+                                        <!-- Edit Button -->
+                                        <button 
+                                            onclick="<?php echo $canEdit ? "editReservation($reservationId)" : ''; ?>"
+                                            class="<?php echo $getButtonClasses($canEdit, 'blue'); ?>"
+                                            <?php echo !$canEdit ? 'title="Unauthorized Action"' : 'title="Edit"'; ?>
+                                        >
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+
+                                        <!-- Delete Button -->
+                                        <button 
+                                            onclick="<?php echo $canDelete ? "deleteReservation($reservationId)" : ''; ?>"
+                                            class="<?php echo $getButtonClasses($canDelete, 'red'); ?>"
+                                            <?php echo !$canDelete ? 'title="Unauthorized Action"' : 'title="Delete"'; ?>
+                                        >
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        </tbody>
                     </table>
 
                 </div>
+                <!-- Include the FAQs section here -->
+                <div class="">
+                    <?php include 'faqBtn.php'; ?>
+                </div>                
             </main>
             <div id="footer-container">
                 <?php include 'footer.php' ?>
@@ -639,6 +674,51 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                 hideModal('confirmationModal'); // Hide confirmation modal if canceled
             };
         }
+        // Cancel Reservation
+function cancelReservation(reservationId) {
+    // Show confirmation modal with the message
+    document.getElementById('confirmationMessage').textContent = "Are you sure you want to cancel this reservation?";
+    showModal('confirmationModal');
+
+    // Set action for confirmation button
+    window.confirmAction = function() {
+        // Send request to the server to cancel the reservation
+        fetch('handlers/cancel_reservation.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: reservationId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message and reload the page
+                showSuccessMessage('Reservation cancelled successfully!');
+                setTimeout(() => {
+                    location.reload(); // Reload the current page after success
+                }, 3000);
+            } else {
+                // Show error message if cancellation fails
+                showErrorMessage(data.message || 'Failed to cancel the reservation. Please try again.');
+            }
+        })
+        .catch(error => {
+            // Handle network or server errors
+            console.error('Error:', error);
+            showErrorMessage('An error occurred while cancelling the reservation.');
+        })
+        .finally(() => {
+            hideModal('confirmationModal'); // Always hide the modal after an action
+        });
+    };
+
+    // Set action for cancel button
+    window.cancelAction = function() {
+        hideModal('confirmationModal'); // Simply hide the modal if canceled
+    };
+}
+
 
         // Show success modal
         function showSuccessMessage(message) {

@@ -143,78 +143,122 @@
         </div>
     </section>
 
+<section id="chairperson" class="mb-8" data-aos="fade-up">
+    <h3 class="text-xl font-semibold mb-2 accordion-toggle">Chairperson</h3>
+    <div class="accordion-content">
+        <p class="mt-4">Pages:</p>
+        <ul class="list-disc list-inside ml-5">
+            <li>Dashboard: View department event/reservation calendar.</li>
+            <li>Class Schedules: View and export timetables for class schedules.</li>
+            <li>Room Loading: Download and upload schedules with automatic room assignments.</li>
+            <li>Department Reservations: View and manage department reservations.</li>
+            <li>Facility Reservation: Browse and reserve facilities.</li>
+        </ul>
+        <p class="mt-4">Guides:</p>
+        <ol class="list-decimal list-inside ml-5">
+            <li><strong>Viewing of Room Loads:</strong> Learn how to view room loads in your department.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Viewing Room Loads" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+            <li><strong>Exporting Loads:</strong> Export faculty, section, or room loads to a file.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Exporting Loads" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+            <li><strong>Room Loading:</strong> Assign rooms to schedules efficiently.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Room Loading" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+            <li><strong>Viewing Department Reservations:</strong> Check all reservations within your department.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Viewing Reservations" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+            <li><strong>Making a Reservation:</strong> Reserve rooms or facilities for department use.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Making a Reservation" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+        </ol>
+    </div>
+</section>
 
-    <section id="chairperson" class="mb-8" data-aos="fade-up">
-        <h3 class="text-xl font-semibold mb-2 accordion-toggle">Chairperson</h3>
-        <div class="accordion-content">
-            <p class="mt-4">Pages:</p>            
-            <ul class="list-disc list-inside ml-5">
-                <li>Dashboard: View department event/reservation calendar.</li>
-                <li>Class Schedules: View and export timetables for class schedules.</li>
-                <li>Room Loading: Download and upload schedules with automatic room assignments.</li>
-                <li>Department Reservations: View and manage department reservations.</li>
-                <li>Facility Reservation: Browse and reserve facilities.</li>
-            </ul>
-            <p class="mt-4">Guides:</p>   
-            <ol class="list-decimal list-inside ml-5">
-                <li><strong>Logging Out:</strong> Always log out after using the system for security. Click on the "Logout" button located at the bottom part of the sidebar.
-                    <div class="mt-2">
-                        <!-- Visual Guide -->
-                        <p>See the logout button below:</p>
-                        <img src="path_to_logout_button_image.png" alt="Logout Button" class="rounded-lg shadow-lg">
-                    </div>
-                </li>
-            </ol>
-        </div>
-    </section>
+<section id="gso" class="mb-8" data-aos="fade-up">
+    <h3 class="text-xl font-semibold mb-2 accordion-toggle">General Services Office (GSO)</h3>
+    <div class="accordion-content">
+        <p class="mt-4">Pages:</p>
+        <ul class="list-disc list-inside ml-5">
+            <li>Dashboard: View event and reservation calendar.</li>
+            <li>Facility Management: Add, edit, and delete facilities.</li>
+            <li>Reservations Management: Approve/decline reservations, edit and delete pending reservations.</li>
+            <li>Facility Reservation: Reserve facilities without needing approval.</li>
+        </ul>
+        <p class="mt-4">Guides:</p>
+        <ol class="list-decimal list-inside ml-5">
+            <li><strong>Managing Facilities:</strong> Add, edit, or delete facilities as needed.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Managing Facilities" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+            <li><strong>Reservation Management:</strong> Approve, reject, cancel, edit, or delete reservations.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Managing Reservations" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+            <li><strong>Making a Reservation:</strong> Create a reservation directly in the system.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Making a Reservation" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+        </ol>
+    </div>
+</section>
 
-    <section id="gso" class="mb-8" data-aos="fade-up">
-        <h3 class="text-xl font-semibold mb-2 accordion-toggle">General Services Office (GSO)</h3>
-        <div class="accordion-content">
-            <p class="mt-4">Pages:</p>            
-            <ul class="list-disc list-inside ml-5">
-                <li>Dashboard: View event and reservation calendar.</li>
-                <li>Facility Management: Add, edit, and delete facilities.</li>
-                <li>Reservations Management: Approve/decline reservations, edit and delete pending reservations.</li>
-                <li>Facility Reservation: Reserve facilities without needing approval.</li>
-            </ul>
-            <p class="mt-4">Guides:</p>  
-            <ol class="list-decimal list-inside ml-5">
-                <li><strong>Logging Out:</strong> Always log out after using the system for security. Click on the "Logout" button located at the bottom part of the sidebar.
-                    <div class="mt-2">
-                        <!-- Visual Guide -->
-                        <p>See the logout button below:</p>
-                        <img src="path_to_logout_button_image.png" alt="Logout Button" class="rounded-lg shadow-lg">
-                    </div>
-                </li>            
-            </ol>          
-        </div>
-    </section>
+<section id="registrar" class="mb-8" data-aos="fade-up">
+    <h3 class="text-xl font-semibold mb-2 accordion-toggle">Registrar</h3>
+    <div class="accordion-content">
+        <p class="mt-4">Pages:</p>
+        <ul class="list-disc list-inside ml-5">
+            <li>Dashboard: View event and reservation calendar.</li>
+            <li>Account Management: Add, edit, and delete users.</li>
+            <li>Data Setup: Manage academic year, departments, and buildings.</li>
+            <li>Class Schedules: View and export timetables.</li>
+            <li>Room Loading: Download/upload schedules with room assignments.</li>
+            <li>Room Management: Add, edit, and delete rooms.</li>
+        </ul>
+        <p class="mt-4">Guides:</p>
+        <ol class="list-decimal list-inside ml-5">
+            <li><strong>Account Management:</strong> Add, edit, or delete users for the system.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Account Management" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+            <li><strong>Manage Academic Year:</strong> Set up the academic year for scheduling.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Manage Academic Year" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+            <li><strong>Managing Rooms:</strong> Add, edit, or delete rooms for room loading.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Managing Rooms" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+            <li><strong>Exporting Loads:</strong> Export faculty, section, or room loads.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Exporting Loads" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+            <li><strong>Room Loading:</strong> Assign rooms to schedules efficiently.
+                <div class="mt-2">
+                    <img src="path_to_your_gif.gif" alt="Room Loading" class="rounded-lg shadow-lg">
+                </div>
+            </li>
+        </ol>
+    </div>
+</section>
 
-    <section id="registrar" class="mb-8" data-aos="fade-up">
-        <h3 class="text-xl font-semibold mb-2 accordion-toggle">Registrar</h3>
-        <div class="accordion-content">
-            <p class="mt-4">Pages:</p>
-            <ul class="list-disc list-inside ml-5">
-                <li>Dashboard: View event and reservation calendar.</li>
-                <li>Account Management: Add, edit, and delete users.</li>
-                <li>Data Setup: Manage academic year, departments, and buildings.</li>
-                <li>Class Schedules: View and export timetables.</li>
-                <li>Room Loading: Download/upload schedules with room assignments.</li>
-                <li>Room Management: Add, edit, and delete rooms.</li>
-            </ul>
-            <p class="mt-4">Guides:</p>  
-            <ol class="list-decimal list-inside ml-5">
-                <li><strong>Logging Out:</strong> Always log out after using the system for security. Click on the "Logout" button located at the bottom part of the sidebar.
-                    <div class="mt-2">
-                        <!-- Visual Guide -->
-                        <p>See the logout button below:</p>
-                        <img src="path_to_logout_button_image.png" alt="Logout Button" class="rounded-lg shadow-lg">
-                    </div>
-                </li>            
-            </ol>                      
-        </div>
-    </section>
 
     <!-- Troubleshooting -->
     <section id="troubleshooting" class="mb-8" data-aos="fade-up">
@@ -232,21 +276,28 @@
         <h3 class="text-xl font-semibold mb-2">Frequently Asked Questions</h3>
         <ul class="list-disc list-inside ml-5">
             <li><strong>How do I reserve a room?</strong> Navigate to the "Room Reservations" section and select the desired room and time.</li>
-            <li><strong>Can I edit my reservations?</strong> Yes, reservations can be edited before approval by the GSO or Registrar.</li>
+            <li><strong>Can I edit my reservations?</strong> Yes, reservations can be edited before approval by the GSO or Admins.</li>
             <li><strong>What should I do if I face technical issues?</strong> Contact support via the support section.</li>
+            <li><strong>How to logout?:</strong>Click on the "Logout" button located at the bottom part of the sidebar.
+                <div class="mt-2">
+                    <!-- Visual Guide -->
+                    <p>See the logout button below:</p>
+                    <img src="gif/logout.gif" alt="Logout Button" class="rounded-lg shadow-lg">
+                </div>
+            </li>
         </ul>
     </section>
 
     <!-- Support -->
     <section id="support" class="mb-8" data-aos="fade-up">
         <h3 class="text-xl font-semibold mb-2">Support</h3>
-        <p>If you encounter issues or need assistance, please contact our support team at <strong>reserva.support@gmail.com</strong></p>
+        <p>If you encounter issues or need assistance, please contact our support team at <strong>infinityfree.reserva@gmail.com</strong></p>
     </section>
 </main>
 
 <!-- Footer -->
 <footer class="bg-plv-blue text-white p-4 text-center">
-    <p>&copy; 2024 PLV: RESERVA System. All rights reserved.</p>
+    <p>&copy; 2024 PLV: RESERVA.</p>
 </footer>
 
 <script>

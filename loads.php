@@ -336,7 +336,14 @@ while ($room = $roomsResult->fetch_assoc()) {
                         <img src="img/undraw_schedule_re_2vro.svg" alt="Data Setup" class="w-full h-auto object-cover">
                     </div>
                 </div>
+                <!-- Include the FAQs section here -->
+                <div class="">
+                    <?php include 'faqBtn.php'; ?>
+                </div>
             </main>
+            <div id="footer-container">
+                <?php include 'footer.php' ?>
+            </div>
         </div>
     </div>
     <!-- Logout confirmation modal -->
@@ -607,210 +614,291 @@ function exportTableFormat() {
 }
 
 function exportTimetableFormat() {
+  // Validate input selections
   const filterType = document.getElementById("filterType").value;
   const ayId = document.getElementById("AYSelect").value;
 
-  // Validate basic requirements
   if (!filterType || !ayId) {
     alert("Please select a Filter Type and Academic Year.");
     return;
   }
 
-  // Build the query parameters based on filter type
+  // Build query parameters based on filter type
   let params = `ayId=${ayId}`;
   let filterDescription = "";
   let exportIdentifier = "";
 
-  switch (filterType) {
-    case "section":
-      const section = document.getElementById("sectionSelect").value;
-      if (!section) {
-        alert("Please select a Section.");
+  try {
+    // Filter type selection (similar to previous implementation)
+    switch (filterType) {
+      case "section":
+        const section = document.getElementById("sectionSelect").value;
+        if (!section) {
+          alert("Please select a Section.");
+          return;
+        }
+        params += `&section=${encodeURIComponent(section)}`;
+        filterDescription = `Section: ${section}`;
+        exportIdentifier = section;
+        break;
+
+      case "faculty":
+        const faculty = document.getElementById("facultySelect").value;
+        if (!faculty) {
+          alert("Please select a Faculty member.");
+          return;
+        }
+        params += `&instructor=${encodeURIComponent(faculty)}`;
+        filterDescription = `Faculty: ${faculty}`;
+        exportIdentifier = faculty;
+        break;
+
+      case "room":
+        const buildingId = document.getElementById("buildingSelect").value;
+        const roomId = document.getElementById("roomSelect").value;
+        if (!buildingId || !roomId) {
+          alert("Please select both Building and Room.");
+          return;
+        }
+        params += `&roomId=${roomId}&buildingId=${buildingId}`;
+        const buildingName = document.getElementById("buildingSelect").options[
+          document.getElementById("buildingSelect").selectedIndex
+        ].text;
+        const roomName = document.getElementById("roomSelect").options[
+          document.getElementById("roomSelect").selectedIndex
+        ].text;
+        filterDescription = `Building/Room: ${buildingName} - ${roomName}`;
+        exportIdentifier = `${buildingName}_${roomName}`;
+        break;
+
+      default:
+        alert("Please select a valid filter type.");
         return;
-      }
-      params += `&section=${encodeURIComponent(section)}`;
-      filterDescription = `Section: ${section}`;
-      exportIdentifier = section;
-      break;
+    }
 
-    case "faculty":
-      const faculty = document.getElementById("facultySelect").value;
-      if (!faculty) {
-        alert("Please select a Faculty member.");
-        return;
-      }
-      params += `&instructor=${encodeURIComponent(faculty)}`;
-      filterDescription = `Faculty: ${faculty}`;
-      exportIdentifier = faculty;
-      break;
-
-    case "room":
-      const buildingId = document.getElementById("buildingSelect").value;
-      const roomId = document.getElementById("roomSelect").value;
-      if (!buildingId || !roomId) {
-        alert("Please select both Building and Room.");
-        return;
-      }
-      params += `&roomId=${roomId}&buildingId=${buildingId}`;
-      const buildingName = document.getElementById("buildingSelect").options[
-        document.getElementById("buildingSelect").selectedIndex
-      ].text;
-      const roomName = document.getElementById("roomSelect").options[
-        document.getElementById("roomSelect").selectedIndex
-      ].text;
-      filterDescription = `Building/Room: ${buildingName} - ${roomName}`;
-      exportIdentifier = `${buildingName}_${roomName}`;
-      break;
-
-    default:
-      alert("Please select a valid filter type.");
-      return;
-  }
-
-  // Fetch the data
-  fetch(`handlers/export_sched.php?${params}`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data && data.length > 0) {
-        const wb = XLSX.utils.book_new();
-        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-        // Create header rows for the worksheet
-        const wsData = [
-          [`Schedule - ${data[0].extendedProps.AcademicYear} - ${data[0].extendedProps.semester}`, "", "", "", "", "", ""],
-          [filterDescription, "", "", "", "", "", ""],
-          [""], // Empty row for spacing
-          ["Time", ...days] // Column headers
-        ];
-
-        // Create time slots from 7:00 AM to 10:00 PM
-        for (let hour = 7; hour <= 22; hour++) {
-          const timeSlot = `${hour.toString().padStart(2, "0")}:00`;
-          const row = [timeSlot];
-
-          // Add data for each day
-          for (const day of days) {
-            const eventsInSlot = data.filter(event => {
-              return (
-                event.extendedProps.days.includes(day) &&
-                timeSlot >= event.startTime &&
-                timeSlot < event.endTime
-              );
-            });
-
-            if (eventsInSlot.length > 0) {
-              const event = eventsInSlot[0]; // Take the first event if multiple exist
-              row.push(`${event.title}\n${event.section}\n${event.extendedProps.building} - ${event.extendedProps.room}\n${event.instructor}`);
-            } else {
-              row.push(""); // Empty cell if no event
-            }
-          }
-          wsData.push(row);
+    // Fetch schedule data
+    fetch(`handlers/export_sched.php?${params}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (!data || data.length === 0) {
+          alert("No schedules found for the selected filters.");
+          return;
         }
 
-        // Create worksheet
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new();
+        const days = [
+          "Monday",
+          "Tuesday", 
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ];
+
+        // Generate time slots from 7:00 AM to 10:00 PM with 30-minute intervals in 12-hour format
+        const timeSlots = generateTimeSlots();
+
+        // Prepare worksheet data with time slots
+        const wsData = [
+          [
+            `Schedule - ${data[0].extendedProps.AcademicYear} - ${data[0].extendedProps.semester}`,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+          ],
+          [filterDescription, "", "", "", "", "", ""],
+          [""], // Spacing row
+          ["Time", ...days], // Column headers
+        ];
+
+        // Add time slots as rows
+        timeSlots.forEach((timeSlot) => {
+          const row = [timeSlot, "", "", "", "", "", ""];
+          wsData.push(row);
+        });
+
+        // Create worksheet first
         const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-        // Merge cells for header rows
-        ws["!merges"] = [
+        // Prepare merge ranges
+        const mergeRanges = [
           { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Title row
-          { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } }  // Filter description row
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } }, // Filter description row
         ];
+
+        // Process and map schedules to appropriate cells
+        data.forEach((schedule) => {
+          const dayIndex = days.indexOf(schedule.extendedProps.days) + 1;
+          if (dayIndex === 0) return; // Skip if day not found
+
+          // Convert start and end times to 30-minute interval indices
+          const startTimeIndex = findTimeSlotIndex(
+            timeSlots,
+            convertTo12HourFormat(schedule.startTime)
+          );
+          const endTimeIndex = findTimeSlotIndex(
+            timeSlots,
+            convertTo12HourFormat(schedule.endTime)
+          );
+
+          // Adjust end index to be the cell BEFORE the end time
+          const adjustedEndTimeIndex = Math.max(0, endTimeIndex - 1);
+
+          if (startTimeIndex !== -1 && adjustedEndTimeIndex !== -1) {
+            // Prepare schedule details with 12-hour format times
+            const startTime12hr = convertTo12HourFormat(schedule.startTime);
+            const endTime12hr = convertTo12HourFormat(schedule.endTime);
+            const scheduleDetails =
+              `${startTime12hr} - ${endTime12hr}\n` +
+              `${schedule.title}\n` +
+              `${schedule.section}\n` +
+              `${schedule.instructor}\n` +
+              `${schedule.extendedProps.building} - ${schedule.extendedProps.room}`;
+
+            // Merge cells for the entire schedule duration
+            const mergeRange = {
+              s: { r: startTimeIndex + 4, c: dayIndex },
+              e: { r: adjustedEndTimeIndex + 4, c: dayIndex },
+            };
+
+            // Add schedule details to the first cell of the merged range
+            ws[XLSX.utils.encode_cell({ r: startTimeIndex + 4, c: dayIndex })] =
+              {
+                v: scheduleDetails,
+                t: "s", // string type
+              };
+
+            // Add merge range
+            mergeRanges.push(mergeRange);
+          }
+        });
+
+        // Set merge ranges
+        ws["!merges"] = mergeRanges;
 
         // Set column widths
         ws["!cols"] = [
-          { wch: 8 },  // Time column
-          { wch: 25 }, // Monday
-          { wch: 25 }, // Tuesday
-          { wch: 25 }, // Wednesday
-          { wch: 25 }, // Thursday
-          { wch: 25 }, // Friday
-          { wch: 25 }  // Saturday
+          { wch: 10 },   // Time column
+          { wch: 35 },   // Monday
+          { wch: 35 },   // Tuesday
+          { wch: 35 },   // Wednesday
+          { wch: 35 },   // Thursday
+          { wch: 35 },   // Friday
+          { wch: 35 }    // Saturday
         ];
 
-        // Apply styling
+        // Styling
         const range = XLSX.utils.decode_range(ws["!ref"]);
         for (let R = range.s.r; R <= range.e.r; R++) {
           for (let C = range.s.c; C <= range.e.c; C++) {
             const cell_ref = XLSX.utils.encode_cell({ r: R, c: C });
-            if (!ws[cell_ref]) continue;
-
-            // Initialize style object if it doesn't exist
+            
+            // Initialize style if not exists
+            if (!ws[cell_ref]) ws[cell_ref] = {};
             if (!ws[cell_ref].s) ws[cell_ref].s = {};
 
-            // Header rows styling (first two rows)
-            if (R < 2) {
-              ws[cell_ref].s = {
-                font: { bold: true, sz: 12 },
-                alignment: { horizontal: "left", vertical: "center" }
-              };
-            }
-            // Day headers styling (fourth row)
-            else if (R === 3) {
-              ws[cell_ref].s = {
-                font: { bold: true, sz: 12 },
-                fill: { fgColor: { rgb: "4F81BD" }, patternType: "solid" },
-                font: { bold: true, color: { rgb: "FFFFFF" } },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                  top: { style: "thin" },
-                  bottom: { style: "thin" },
-                  left: { style: "thin" },
-                  right: { style: "thin" }
-                }
-              };
-            }
-            // Time slots and schedule data
-            else {
-              ws[cell_ref].s = {
-                font: { sz: 11 },
-                alignment: {
-                  horizontal: C === 0 ? "center" : "left",
-                  vertical: "center",
-                  wrapText: true
-                },
-                border: {
-                  top: { style: "thin" },
-                  bottom: { style: "thin" },
-                  left: { style: "thin" },
-                  right: { style: "thin" }
-                }
-              };
+            ws[cell_ref].s = {
+              font: { 
+                sz: R < 2 ? 14 : (R === 3 ? 12 : 11),
+                bold: R < 4
+              },
+              alignment: { 
+                horizontal: R === 3 || C === 0 ? "center" : "left", 
+                vertical: "center", 
+                wrapText: true 
+              },
+              border: (R > 2 && R <= range.e.r) ? {
+                top: { style: "thin" },
+                bottom: { style: "thin" },
+                left: { style: "thin" },
+                right: { style: "thin" }
+              } : undefined
+            };
 
-              // Add background color for scheduled slots
-              if (wsData[R][C] !== "" && C !== 0) {
-                ws[cell_ref].s.fill = {
-                  fgColor: { rgb: "E8F0FE" },
-                  patternType: "solid"
-                };
-              }
+            // Additional styling for headers and schedule cells
+            if (R === 3) { // Day headers
+              ws[cell_ref].s.fill = {
+                fgColor: { rgb: "4F81BD" },
+                patternType: "solid"
+              };
+              ws[cell_ref].s.font.color = { rgb: "FFFFFF" };
+            }
+
+            // Background for scheduled slots
+            if (R > 3 && C > 0 && ws[cell_ref] && ws[cell_ref].v !== "") {
+              ws[cell_ref].s.fill = {
+                fgColor: { rgb: "E8F0FE" },
+                patternType: "solid"
+              };
             }
           }
         }
 
-        // Set row heights (approximately 60 pixels)
-        ws["!rows"] = Array(range.e.r + 1).fill({ hpt: 45 }); // hpt is height in points
+        // Set row heights
+        ws["!rows"] = Array(range.e.r + 1).fill({ hpt: 45 });
 
+        // Add worksheet to workbook
         XLSX.utils.book_append_sheet(wb, ws, "Schedule");
 
-        // Generate filename and save
+        // Generate filename
         const cleanAcademicInfo = `${data[0].extendedProps.AcademicYear}_${data[0].extendedProps.semester}`
-          .replace(/\s+/g, "_");
+          .replace(/\s+/g, "_")
+          .replace(/[^a-zA-Z0-9_-]/g, "");
         const cleanIdentifier = exportIdentifier
           .replace(/[^\w\s-]/g, "_")
           .replace(/\s+/g, "_");
         const filename = `${cleanIdentifier}_${cleanAcademicInfo}_timetable.xlsx`;
 
+        // Export the file
         XLSX.writeFile(wb, filename);
-      } else {
-        alert("No schedules found for the selected filters.");
-      }
-    })
-    .catch((error) => {
-      console.error("Error exporting schedules:", error);
-      alert("An error occurred while exporting the schedules.");
-    });
+      })
+      .catch((error) => {
+        console.error("Error exporting schedules:", error);
+        alert(
+          `An error occurred while exporting the schedules: ${error.message}`
+        );
+      });
+  } catch (error) {
+    console.error("Unexpected error in export function:", error);
+    alert("An unexpected error occurred during export.");
+  }
 }
+
+// Helper function to generate time slots in 12-hour format
+function generateTimeSlots() {
+  const timeSlots = [];
+  for (let hour = 7; hour <= 22; hour++) {
+    const amPm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    
+    timeSlots.push(`${displayHour}:00 ${amPm}`);
+    timeSlots.push(`${displayHour}:30 ${amPm}`);
+  }
+  return timeSlots;
+}
+
+// Helper function to convert 24-hour time to 12-hour format
+function convertTo12HourFormat(time24hr) {
+  const [hours, minutes] = time24hr.split(':').map(Number);
+  const amPm = hours >= 12 ? 'PM' : 'AM';
+  const displayHour = hours % 12 || 12;
+  return `${displayHour}:${minutes.toString().padStart(2, '0')} ${amPm}`;
+}
+
+// Helper function to find the index of a time slot
+function findTimeSlotIndex(timeSlots, targetTime) {
+  return timeSlots.findIndex((slot) => slot === targetTime);
+}
+
     </script>
 </body>
 </html>
