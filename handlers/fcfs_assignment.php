@@ -137,6 +137,7 @@ foreach ($schedules as $schedule) {
         WHERE r.room_type = '$classType'
         AND r.building_id = '$buildingId'
         AND r.room_status = 'Available'
+        ORDER BY r.room_name
     ";
     $resultMatchingRooms = $conn->query($sqlMatchingRooms);
 

@@ -241,7 +241,6 @@ if ($all_reservations_result->num_rows > 0) {
                             </button>
                         </div>
                         <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-md" onchange="filterReservations()">
-                            <option value="" disabled selected>Select Status</option> <!-- Placeholder option -->
                             <option value="all">All</option>
                             <option value="in review">In Review</option>
                             <option value="approved">Approved</option>

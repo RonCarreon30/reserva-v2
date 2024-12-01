@@ -129,12 +129,14 @@
                             <div class="mb-2">
                                 <label for="academicYear" class="block text-xs font-medium text-gray-700 ml-1">Academic Year</label>
                                 <select id="academicYear" class="p-1 border border-gray-300 rounded-md w-full">
+                                    <option value="" disabled selected>Select Year</option>
                                     <!-- Will be populated dynamically via JavaScript -->
                                 </select>
                             </div>
                             <div class="mb-2">
                                 <label for="semester" class="block text-xs font-medium text-gray-700 ml-1">Semester</label>
                                 <select id="semester" class="p-1 border border-gray-300 rounded-md w-full">
+                                    <option value="" disabled selected>Selected Semester</option>
                                     <option value="1st Semester">1st Semester</option>
                                     <option value="2nd Semester">2nd Semester</option>
                                     <option value="Summer">Summer</option>
@@ -143,6 +145,7 @@
                             <div class="mb-2">
                                 <label for="ayStatus" class="block text-xs font-medium text-gray-700 ml-1">Status:</label>
                                 <select id="ayStatus" name="ayStatus" required class="w-full px-2 py-1 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
+                                    <option value="" disbaled selected>Select Status</option>
                                     <option value="Current">Current</option>
                                     <option value="Upcoming">Upcoming</option>
                                 </select>

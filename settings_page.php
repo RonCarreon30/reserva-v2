@@ -91,7 +91,7 @@ $stmt->close();
                                     <label for="email" class="text-gray-600">Email Address</label>
                                     <input type="email" id="email" name="email" class="border border-gray-300 p-2 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value="<?php echo htmlspecialchars($user_email); ?>" required>
                                 </div>
-                                <button type="button" class="mt-4 w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none">Save Changes</button>
+                                <!--<button type="button" class="mt-4 w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none">Save Changes</button>-->
                             </form>
                         </section>
 

@@ -57,6 +57,72 @@ while ($room = $roomsResult->fetch_assoc()) {
     $facultyResult = $conn->query($facultyQuery);
 
 
+// Fetch the current term and its term_id
+$currentTermQuery = "SELECT term_id FROM terms_tbl WHERE term_status = 'Current' LIMIT 1"; // Add LIMIT 1 to ensure only one result
+$currentTermResult = $conn->query($currentTermQuery);
+$termId = ''; // Initialize termId variable
+
+// Check if the query was successful and if we have any result
+if ($currentTermResult && $currentTermResult->num_rows > 0) {
+    // Fetch the row containing term_id
+    $currentTermRow = $currentTermResult->fetch_assoc();
+    // Assign the term_id value to $termId
+    $termId = $currentTermRow['term_id'];
+} else {
+    // Handle the case when no current term is found
+    die("No current term found.");
+}
+
+// Define the predefined order of days (Monday to Saturday)
+$dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Fetch schedules from the database
+$query = "SELECT ay_semester, user_id, section, GROUP_CONCAT(DISTINCT days ORDER BY FIELD(days, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday') SEPARATOR ', ') AS days, subject_code, start_time, end_time
+    FROM schedules
+    WHERE ay_semester = '$termId' AND user_id = '{$_SESSION['user_id']}'
+    GROUP BY section, subject_code, start_time, end_time";
+$result = $conn->query($query);
+
+$data = [];
+
+while ($row = $result->fetch_assoc()) {
+    $section = $row['section'];
+    $daysArray = explode(',', $row['days']); // Split the comma-separated days into an array
+    $daysArray = array_unique($daysArray);   // Remove duplicate days
+
+    // Sort days based on predefined order
+    usort($daysArray, function ($a, $b) use ($dayOrder) {
+        return array_search($a, $dayOrder) - array_search($b, $dayOrder);
+    });
+
+    $sortedDays = implode(', ', $daysArray); // Join sorted days into a string
+
+    // Store the data in the array
+    if (!isset($data[$section])) {
+        $data[$section] = [
+            'days' => $sortedDays,
+            'schedules' => []
+        ];
+    }
+
+    // Add each schedule for that section
+    foreach ($daysArray as $day) {
+        $data[$section]['schedules'][] = [
+            'subject_code' => $row['subject_code'],
+            'start_time' => $row['start_time'],
+            'end_time' => $row['end_time'],
+            'day' => $day
+        ];
+    }
+}
+
+// Sort the schedules within each section by day
+foreach ($data as &$sectionData) {
+    usort($sectionData['schedules'], function ($a, $b) use ($dayOrder) {
+        return array_search($a['day'], $dayOrder) - array_search($b['day'], $dayOrder);
+    });
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -70,6 +136,23 @@ while ($room = $roomsResult->fetch_assoc()) {
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
     <script>
+
+function toggleAccordion(element) {
+    const bodies = document.querySelectorAll('.accordion-body'); // Select all accordion bodies
+    const body = element.nextElementSibling; // The body of the clicked accordion item
+
+    // Loop through all bodies and hide them, except the one that is clicked
+    bodies.forEach(b => {
+        if (b !== body) {
+            b.classList.add('hidden');
+        }
+    });
+
+    // Toggle the visibility of the clicked accordion body
+    body.classList.toggle('hidden');
+}
+
+
         function toggleFilters() {
             const filterType = document.getElementById('filterType').value;
             
@@ -330,12 +413,60 @@ while ($room = $roomsResult->fetch_assoc()) {
 
                     <div id="calendar" class="rounded-lg bg-white p-1 shadow-md flex-1"></div>
                 </div>
+                <!--Line Spacer-->
+                <div class="h-full border-l ml-2 border-gray-300"></div>
+                <!--Right Side-->
+<div class="flex flex-col h-full w-1/4 pl-2">
+    <div class="accordion">
+        <h1 class="py-2 mb-2 text-lg font-semibold ">Your uploaded schedules this Semester</h1>
 
-                <div class="flex flex-col h-full w-1/4 pl-4">
-                    <div class="mt-auto opacity-50">
-                        <img src="img/undraw_schedule_re_2vro.svg" alt="Data Setup" class="w-full h-auto object-cover">
+        <?php if (empty($data)): ?>
+            <!-- Show message and image when no schedules are uploaded -->
+            <div class="flex flex-col items-center justify-center text-center bg-white p-4 rounded-md">
+                <img src="img/undraw_not_found_re_bh2e.svg" alt="No Schedules" class="w-1/2 h-1/2 opacity-30">
+                <p class="text-md text-gray-600">No uploaded schedules yet</p>
+            </div>
+        <?php else: ?>
+            <!-- Display the schedules when data is available -->
+            <?php foreach ($data as $section => $details): ?>
+                <div class="accordion-item border-b border-gray-200">
+                    <!-- Accordion Header -->
+                    <button onclick="toggleAccordion(this)" class="accordion-header w-full text-left py-2 px-4 bg-blue-300 hover:bg-blue-200 transition">
+                        <span class="font-bold"><?php echo $section; ?></span> | 
+                        <span class="text-gray-700"><?php echo count($details['schedules']); ?> Schedule/s</span> <!-- Display schedule count -->
+                    </button>
+                    
+                    <!-- Accordion Body -->
+                    <div class="accordion-body hidden bg-gray-200 ">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="text-left">
+                                    <th class="border-b py-2 px-2">Subject</th>
+                                    <th class="border-b py-2 px-2">Time</th>
+                                    <th class="border-b py-2 px-2">Day</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($details['schedules'] as $schedule): ?>
+                                <tr>
+                                    <td class="border-b py-2 px-2"><?php echo $schedule['subject_code']; ?></td>
+                                    <td class="border-b py-2 px-2">
+                                        <?php echo date('h:iA', strtotime($schedule['start_time'])); ?> - 
+                                        <?php echo date('h:iA', strtotime($schedule['end_time'])); ?>
+                                    </td>
+                                    <td class="border-b py-2 px-4"><?php echo $schedule['day']; ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+</div>
+
+
                 <!-- Include the FAQs section here -->
                 <div class="">
                     <?php include 'faqBtn.php'; ?>

@@ -536,7 +536,8 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Time</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Time</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day/s</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Type</th>
                             </tr>
@@ -576,47 +577,60 @@
             document.getElementById('file-input').value = ''; // Clear the file input
         }
 
-        document.getElementById('parse-upload').addEventListener('click', function() {
-            const fileInput = document.getElementById('file-input');
-            const file = fileInput.files[0];
+document.getElementById('parse-upload').addEventListener('click', function() {
+    const fileInput = document.getElementById('file-input');
+    const file = fileInput.files[0];
 
-            if (!file) {
-                alert('Please upload an Excel file.');
-                return;
+    if (!file) {
+        alert('Please upload an Excel file.');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+        // Remove headers
+        jsonData.shift();
+
+        // Initialize an array for parsed schedules
+        const parsedSchedules = [];
+
+        // Function to convert Excel time to HH:MM AM/PM format
+        function convertExcelTime(excelTime) {
+            if (excelTime) {
+                const hours = Math.floor(excelTime * 24); // Get the hours (fractional part of 24 hours)
+                const minutes = Math.round((excelTime * 24 - hours) * 60); // Get the minutes
+                const date = new Date(0); // Initialize a new Date object
+                date.setHours(hours, minutes, 0, 0); // Set the time
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }); // Format time
             }
+            return '';
+        }
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-
-                // Remove headers
-                jsonData.shift();
-
-                // Initialize an array for parsed schedules
-                const parsedSchedules = []; 
-
-                jsonData.forEach(row => {
-                    parsedSchedules.push({
-                        subjectCode: row[0],
-                        subject: row[1],
-                        section: row[2],
-                        instructor: row[3],
-                        startTime: row[4], // Capture Start Time
-                        endTime: row[5],   // Capture End Time
-                        days: row[6],      // Days column
-                        classType: row[7]  // Class Type
-                    });
-                });
-
-                populateScheduleTable(parsedSchedules);
-                document.getElementById('upload-modal').classList.add('hidden');
-                document.getElementById('parsed-sched-modal').classList.remove('hidden');
-            };
-            reader.readAsArrayBuffer(file);
+        jsonData.forEach(row => {
+            parsedSchedules.push({
+                subjectCode: row[0],
+                subject: row[1],
+                section: row[2],
+                instructor: row[3],
+                startTime: convertExcelTime(row[4]), // Convert Start Time
+                endTime: convertExcelTime(row[5]),   // Convert End Time
+                days: row[6],                        // Days column
+                classType: row[7]                    // Class Type
+            });
         });
+
+        populateScheduleTable(parsedSchedules);
+        document.getElementById('upload-modal').classList.add('hidden');
+        document.getElementById('parsed-sched-modal').classList.remove('hidden');
+    };
+    reader.readAsArrayBuffer(file);
+});
+
 
         function populateScheduleTable(parsedSchedules) {
             const scheduleTableBody = document.getElementById('schedule-table-body');

@@ -247,7 +247,7 @@ function filterRooms() {
                                 <div class="w-1/2">
                                     <label for="building" class="block text-sm font-medium text-gray-700">Building:</label>
                                     <select id="building" name="building" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
-                                        <option value="">Select Building</option>
+                                        <option value="" disabled selected>Select Building</option>
                                         <?php 
                                             // Query to get terms values
                                             $query = "SELECT * FROM buildings_tbl";
@@ -271,9 +271,17 @@ function filterRooms() {
                                 <div class="w-1/2">
                                     <label for="type" class="block text-sm font-medium text-gray-700">Type:</label>
                                     <select id="type" name="type" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
-                                        <option value="">Select Type</option>
+                                        <option value="" disabled selected>Select Type</option>
                                         <option value="Lecture">Lecture</option>
-                                        <option value="Laboratory">Laboratory</option>
+                                        <option value="Biology Laboratory">Biology Laboratory</option>
+                                        <option value="Chemistry Laboratory">Chemistry Laboratory</option>
+                                        <option value="Computer Laboratory">Computer Laboratory</option>
+                                        <option value="Electrical Engineering Laboratory">Electrical Engineering Laboratory</option>
+                                        <option value="Electronics Engineering Laboratory">Electronics Engineering Laboratory</option>
+                                        <option value="Fluid Mechanics Laboratory">Fluid Mechanics Laboratory</option>
+                                        <option value="Materials Testing Laboratory">Materials Testing Laboratory</option>
+                                        <option value="Mechanical Engineering Laboratory">Mechanical Engineering Laboratory</option>
+                                        <option value="Physics Laboratory">Physics Laboratory</option>
                                     </select>
                                 </div>
                                 <div class="w-1/2">
@@ -314,7 +322,7 @@ function filterRooms() {
                 <div class="w-1/2">
                     <label for="editBuilding" class="block text-sm font-medium text-gray-700">Building:</label>
                     <select id="editBuilding" name="building" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
-                        <option value="">Select Building</option>
+                        <option value="" disabled selected>Select Building</option>
                         <?php 
                             $query = "SELECT * FROM buildings_tbl";
                             $result = $conn->query($query);
@@ -337,9 +345,17 @@ function filterRooms() {
                 <div class="w-1/2">
                     <label for="editType" class="block text-sm font-medium text-gray-700">Type:</label>
                     <select id="editType" name="room_type" required class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
-                        <option value="">Select Type</option>
+                        <option value="" disabled selected>Select Type</option>
                         <option value="Lecture">Lecture</option>
-                        <option value="Laboratory">Laboratory</option>
+                        <option value="Biology Laboratory">Biology Laboratory</option>
+                        <option value="Chemistry Laboratory">Chemistry Laboratory</option>
+                        <option value="Computer Laboratory">Computer Laboratory</option>
+                        <option value="Electrical Engineering Laboratory">Electrical Engineering Laboratory</option>
+                        <option value="Electronics Engineering Laboratory">Electronics Engineering Laboratory</option>
+                        <option value="Fluid Mechanics Laboratory">Fluid Mechanics Laboratory</option>
+                        <option value="Materials Testing Laboratory">Materials Testing Laboratory</option>
+                        <option value="Mechanical Engineering Laboratory">Mechanical Engineering Laboratory</option>
+                        <option value="Physics Laboratory">Physics Laboratory</option>
                     </select>
                 </div>
                 <div class="w-1/2">
@@ -491,7 +507,7 @@ function filterRooms() {
                     closeModal(); // Close the modal
                     setTimeout(() => {
                         location.reload(); // Reloads the current page
-                    }, 3000); // 3000 milliseconds = 3 seconds
+                    }, 1000); // 3000 milliseconds = 3 seconds
 
                 } else {
                     // Show error message

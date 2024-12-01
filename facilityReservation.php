@@ -194,6 +194,20 @@
             #toast {
                 z-index: 10000; /* Ensures the logout modal appears on top of everything */
             }
+                        /* Simple spinning animation */
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
         </style>
 </head>
@@ -435,6 +449,9 @@
             <button id="closeSuccessModal" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Close</button>
         </div>
     </div>
+    <div id="loadingIcon" class="hidden fixed inset-0 flex justify-center items-center bg-gray-800 bg-opacity-50">
+        <div class="loader"></div>
+    </div>
 
     <script src="scripts/logout.js"></script>
     <script>
@@ -499,7 +516,7 @@
 
             const reservationForm = document.getElementById('reservationForm');
             const formData = new FormData(reservationForm);
-
+            document.getElementById('loadingIcon').classList.remove('hidden');
             fetch('handlers/reserve_facility.php', {
                 method: 'POST',
                 body: formData
@@ -508,6 +525,7 @@
             .then(data => {
                 if (data.success) {
                     closeModal('reservationModal');
+                    document.getElementById('loadingIcon').classList.add('hidden');
                     const successModal = document.getElementById('successModal');
                     const successMessage = document.getElementById('successMessage'); // Assuming you have an element for success message
                     successMessage.textContent = data.message; // Update the content of the success message
@@ -524,6 +542,7 @@
                         } 
                     }, 2000);
                 } else {
+                    document.getElementById('loadingIcon').classList.add('hidden');
                     const errorModal = document.getElementById('errorModal');
                     const errorList = document.getElementById('errorList');
                     errorList.innerHTML = `<li>${data.error}</li>`;
@@ -532,6 +551,7 @@
 
             })
             .catch(error => {
+                document.getElementById('loadingIcon').classList.add('hidden');
                 console.error('Error submitting reservation:', error);
             });
         });

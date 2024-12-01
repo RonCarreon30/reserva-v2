@@ -222,6 +222,7 @@ $result = $conn->query($sql);
                                     <label for="building" class="block text-gray-700 font-semibold mb-2">Building:</label>
                                     <select id="building" name="building" required
                                         class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
+                                        <option value="" disabled selected>Select Building</option>
                                         <option value="SC/MAIN">SC/MAIN</option>
                                         <option value="CABA">CABA</option>
                                         <option value="CAS">CAS</option>
@@ -292,6 +293,7 @@ $result = $conn->query($sql);
                         <label for="editBuilding" class="block text-gray-700 font-semibold mb-2">Building:</label>
                         <select id="editBuilding" name="building" required
                             class="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500">
+                            <option value="" disabled selected>Select Building</option>
                             <option value="SC/MAIN">SC/MAIN</option>
                             <option value="CABA">CABA</option>
                             <option value="CAS">CAS</option>
