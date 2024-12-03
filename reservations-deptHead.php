@@ -76,7 +76,7 @@ $all_reservations_result = $stmt->get_result();
 
             facilityRows.forEach(row => {
                 const facilityName = row.cells[1].textContent.toLowerCase(); // Facility name in the first column
-                const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status in the fifth column
+                const reservationStatus = row.cells[5].textContent.toLowerCase(); // Reservation status in the fifth column
                 
                 // Determine if the row should be shown based on search and status filters
                 const matchesSearch = facilityName.includes(searchQuery);
@@ -334,8 +334,26 @@ $all_reservations_result = $stmt->get_result();
                                 <td class="border py-2 px-4"><?php echo htmlspecialchars($row["facility_name"]); ?></td>
                                 <td class="border py-2 px-4"><?php echo htmlspecialchars($row["reservation_date"]); ?></td>
                                 <td class="border py-2 px-4"><?php echo htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime); ?></td>
-                                <td class="border py-2 px-4"><?php echo htmlspecialchars($row["reservation_status"]); ?></td>
-                                <td class="border py-2 px-4"><?php echo htmlspecialchars($row["purpose"]); ?></td>
+                                <td class="border py-2 px-4"><?php echo htmlspecialchars($row["purpose"]); ?></td>                                    
+                                <td class="border py-2 px-4"><?php 
+                                    switch ($row["reservation_status"]) {
+                                        case "In Review":
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-yellow-400 rounded-full">In Review</span>';
+                                            break;
+                                        case "Approved":
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-white bg-green-600 rounded-full">Approved</span>';
+                                            break;
+                                        case "Declined":
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-white bg-red-500 rounded-full">Declined</span>';
+                                            break;
+                                        case "Cancelled":
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-gray-400 rounded-full">Cancelled</span>';
+                                            break;
+                                        default:
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-blue-300 rounded-full">' . htmlspecialchars($row["reservation_status"]) . '</span>';
+                                            break;
+                                    }
+                                ?></td>
                                 <td class="border py-2 px-4 space-x-2">
                                     <?php
                                     // Define button states based on conditions

@@ -76,11 +76,20 @@ if ($currentTermResult && $currentTermResult->num_rows > 0) {
 // Define the predefined order of days (Monday to Saturday)
 $dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+// Check user role
+$userRole = $_SESSION['role']; // Assuming user role is stored in the session
+$userIdCondition = ($userRole === 'Admin' || $userRole === 'Registrar') 
+    ? '' // No additional condition for Admin or Registrar
+    : "AND user_id = '{$_SESSION['user_id']}'"; // Filter by user_id for other roles
+
 // Fetch schedules from the database
-$query = "SELECT ay_semester, user_id, section, GROUP_CONCAT(DISTINCT days ORDER BY FIELD(days, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday') SEPARATOR ', ') AS days, subject_code, start_time, end_time
-    FROM schedules
-    WHERE ay_semester = '$termId' AND user_id = '{$_SESSION['user_id']}'
-    GROUP BY section, subject_code, start_time, end_time";
+$query = "SELECT ay_semester, user_id, section, 
+            GROUP_CONCAT(DISTINCT days ORDER BY FIELD(days, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday') SEPARATOR ', ') AS days, 
+            subject_code, start_time, end_time
+          FROM schedules
+          WHERE ay_semester = '$termId' $userIdCondition
+          GROUP BY section, subject_code, start_time, end_time";
+
 $result = $conn->query($query);
 
 $data = [];
@@ -418,7 +427,15 @@ function toggleAccordion(element) {
                 <!--Right Side-->
 <div class="flex flex-col h-full w-1/4 pl-2">
     <div class="accordion">
-        <h1 class="py-2 mb-2 text-lg font-semibold ">Your uploaded schedules this Semester</h1>
+    <h1 class="py-2 mb-2 text-lg font-semibold">
+        <?php
+        if ($userRole === 'Admin' || $userRole === 'Registrar') {
+            echo "All sections with schedules | Current Term";
+        } else {
+            echo "Your uploaded schedules this Semester";
+        }
+        ?>
+    </h1>
 
         <?php if (empty($data)): ?>
             <!-- Show message and image when no schedules are uploaded -->

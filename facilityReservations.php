@@ -134,7 +134,6 @@ if ($all_reservations_result->num_rows > 0) {
                 // Determine if the row should be shown based on search and status filters
                 const matchesSearch = facilityName.includes(searchQuery);
                 let matchesStatus = false;
-    
                 // Default status filter behavior
                 if (statusFilter === 'all') {
                     matchesStatus = true; // Show all
@@ -325,9 +324,16 @@ if ($all_reservations_result->num_rows > 0) {
                                     $endTime = new DateTime($row["end_time"]);
                                     $formattedEndTime = $endTime->format('g:i A');
 
-                                    $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
+                                // Determine status classes for highlighting
+                                    $statusClass = match($reservationStatus) {
+                                        'In Review' => 'bg-blue-50 text-blue-800',
+                                        'Cancelled' => 'bg-yellow-50 text-yellow-800',
+                                        'Declined' => 'bg-red-50 text-red-800',
+                                        'Approved' => 'bg-green-50 text-green-800',
+                                        default => ''
+                                    };
 
-                                    // Show "In Review" header only if there are "In Review" reservations
+                                    /*/ Show "In Review" header only if there are "In Review" reservations
                                     if ($isPending && $hasInReview && !$inReviewShown) {
                                         echo '<tr><td colspan="8" class="bg-yellow-200 text-yellow-800 font-bold py-2 px-4">Pending Reservations</td></tr>';
                                         $inReviewShown = true;
@@ -337,16 +343,35 @@ if ($all_reservations_result->num_rows > 0) {
                                     if (!$isPending && $hasInReview && $hasOtherReservations && !$otherShown) {
                                         echo '<tr><td colspan="8" class="bg-green-100 text-gray-800 font-bold py-2 px-4 mt-4">Other Reservations</td></tr>';
                                         $otherShown = true;
-                                    }
+                                    }*/
 
-                                    echo '<tr class="' . $statusClass . '">';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["building"]) . ' ' . htmlspecialchars($row["facility_name"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["facultyInCharge"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["first_name"]) . ' ' . htmlspecialchars($row["last_name"]) .  '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime) . '</td>';
-                                    echo '<td class="py-2 px-4">' . htmlspecialchars($row["reservation_status"]) . '</td>';
+                                    echo '<tr>';
+                                    echo '<td class="border py-2 px-4">' . htmlspecialchars($row["building"]) . ' ' . htmlspecialchars($row["facility_name"]) . '</td>';
+                                    echo '<td class="border py-2 px-4">' . htmlspecialchars($row["purpose"]) . '</td>';
+                                    echo '<td class="border py-2 px-4">' . htmlspecialchars($row["facultyInCharge"]) . '</td>';
+                                    echo '<td class="border py-2 px-4">' . htmlspecialchars($row["first_name"]) . ' ' . htmlspecialchars($row["last_name"]) .  '</td>';
+                                    echo '<td class="border py-2 px-4">' . htmlspecialchars($row["reservation_date"]) . '</td>';
+                                    echo '<td class="border py-2 px-4">' . htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime) . '</td>';
+                                    echo '<td class="border py-2 px-4">';
+                                    switch ($row["reservation_status"]) {
+                                        case "In Review":
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-yellow-400 rounded-full">In Review</span>';
+                                            break;
+                                        case "Approved":
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-white bg-green-600 rounded-full">Approved</span>';
+                                            break;
+                                        case "Declined":
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-white bg-red-500 rounded-full">Declined</span>';
+                                            break;
+                                        case "Cancelled":
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-gray-400 rounded-full">Cancelled</span>';
+                                            break;
+                                        default:
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-blue-300 rounded-full">' . htmlspecialchars($row["reservation_status"]) . '</span>';
+                                            break;
+                                    }
+                                    echo '</td>';
+
                                     echo '<td class="py-2 px-4 space-x-3">';
 
                                     // Always show all buttons with different states based on reservation status

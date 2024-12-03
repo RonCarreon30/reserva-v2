@@ -67,7 +67,7 @@ $all_reservations_result = $conn->query($all_reservations_sql);
 
             facilityRows.forEach(row => {
                 const facilityName = row.cells[1].textContent.toLowerCase(); // Facility name in the first column
-                const reservationStatus = row.cells[4].textContent.toLowerCase(); // Reservation status in the fifth column
+                const reservationStatus = row.cells[5].textContent.toLowerCase(); // Reservation status in the fifth column
                 
                 // Determine if the row should be shown based on search and status filters
                 const matchesSearch = facilityName.includes(searchQuery);
@@ -288,15 +288,15 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                                 <th class="py-3 px-4">
                                     <span class="flex items-center">Time</span>
                                 </th>
+                                <th class="py-3 px-4">
+                                    <span class="flex items-center">Purpose</span>
+                                </th>
                                 <th class="py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(4)">
                                     <span class="flex items-center">Status
                                         <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                         </svg>
                                     </span>
-                                </th>
-                                <th class="py-3 px-4">
-                                    <span class="flex items-center">Purpose</span>
                                 </th>
                                 <th class="py-3 px-4">
                                     <span class="flex items-center">Actions</span>
@@ -319,15 +319,41 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                                 $endTime = new DateTime($row["end_time"]);
                                 $formattedEndTime = $endTime->format('g:i A');
                                 
-                                $statusClass = ($reservationStatus === 'Declined') ? 'text-red-600 bg-red-100' : '';
+
+                                // Determine status classes for highlighting
+                                    $statusClass = match($reservationStatus) {
+                                        'In Review' => 'bg-blue-50 text-blue-800',
+                                        'Cancelled' => 'bg-yellow-50 text-yellow-800',
+                                        'Declined' => 'bg-red-50 text-red-800',
+                                        'Approved' => 'bg-green-50 text-green-800',
+                                        default => ''
+                                    };
                                 ?>
-                                <tr class="<?php echo $statusClass; ?>">
-                                    <td class="border border-white py-2 px-4"><?php echo htmlspecialchars($row["building"]); ?></td>
-                                    <td class="py-2 px-4"><?php echo htmlspecialchars($row["facility_name"]); ?></td>
-                                    <td class="py-2 px-4"><?php echo htmlspecialchars($row["reservation_date"]); ?></td>
-                                    <td class="py-2 px-4"><?php echo htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime); ?></td>
-                                    <td class="py-2 px-4"><?php echo htmlspecialchars($row["reservation_status"]); ?></td>
-                                    <td class="py-2 px-4"><?php echo htmlspecialchars($row["purpose"]); ?></td>
+                                <tr>
+                                    <td class="border py-2 px-4"><?php echo htmlspecialchars($row["building"]); ?></td>
+                                    <td class="border py-2 px-4"><?php echo htmlspecialchars($row["facility_name"]); ?></td>
+                                    <td class="border py-2 px-4"><?php echo htmlspecialchars($row["reservation_date"]); ?></td>
+                                    <td class="border py-2 px-4"><?php echo htmlspecialchars($formattedStartTime) . ' - ' . htmlspecialchars($formattedEndTime); ?></td>
+                                    <td class="border py-2 px-4"><?php echo htmlspecialchars($row["purpose"]); ?></td>                                    
+                                    <td class="border py-2 px-4"><?php 
+                                        switch ($row["reservation_status"]) {
+                                            case "In Review":
+                                                echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-yellow-400 rounded-full">In Review</span>';
+                                                break;
+                                            case "Approved":
+                                                echo '<span class="inline-block px-3 py-1 text-sm font-medium text-white bg-green-600 rounded-full">Approved</span>';
+                                                break;
+                                            case "Declined":
+                                                echo '<span class="inline-block px-3 py-1 text-sm font-medium text-white bg-red-500 rounded-full">Declined</span>';
+                                                break;
+                                            case "Cancelled":
+                                                echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-gray-400 rounded-full">Cancelled</span>';
+                                                break;
+                                            default:
+                                                echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-blue-300 rounded-full">' . htmlspecialchars($row["reservation_status"]) . '</span>';
+                                                break;
+                                        }
+                                    ?></td>
                                     <td class="py-2 px-4 space-x-2">
                                         <?php
                                     // Define button states based on conditions
