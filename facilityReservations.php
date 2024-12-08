@@ -363,8 +363,8 @@ if ($all_reservations_result->num_rows > 0) {
                                         case "Declined":
                                             echo '<span class="inline-block px-3 py-1 text-sm font-medium text-white bg-red-500 rounded-full">Declined</span>';
                                             break;
-                                        case "Cancelled":
-                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-gray-400 rounded-full">Cancelled</span>';
+                                        case "Cancelled" || "Expired":
+                                            echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-gray-400 rounded-full">' . htmlspecialchars($row["reservation_status"]) . '</span>';
                                             break;
                                         default:
                                             echo '<span class="inline-block px-3 py-1 text-sm font-medium text-black bg-blue-300 rounded-full">' . htmlspecialchars($row["reservation_status"]) . '</span>';
@@ -524,11 +524,11 @@ if ($all_reservations_result->num_rows > 0) {
                 </div>
                 <div class="flex flex-col space-y-2">
                     <label for="purpose" class="text-gray-700">Purpose:</label>
-                    <input type="text" id="purpose" name="purpose" class="border border-gray-300 rounded-md p-2">
+                    <input type="text" id="purpose" name="purpose" class="border border-gray-300 rounded-md p-2" required>
                 </div>
                 <div class="flex flex-col space-y-2">
                     <label for="additionalInfo" class="text-gray-700">Additional Information:</label>
-                    <textarea id="additionalInfo" name="additionalInfo" class="border border-gray-300 rounded-md p-2"></textarea>
+                    <textarea id="additionalInfo" name="additionalInfo" class="border border-gray-300 rounded-md p-2" required></textarea>
                 </div>
                 <div class="flex justify-between">
                     <button type="button" id="saveChangesButton" class="bg-blue-500 text-white rounded-md px-4 py-2 hover:bg-blue-600" onclick="saveChanges()">Save Changes</button>
@@ -651,6 +651,43 @@ if ($all_reservations_result->num_rows > 0) {
                 });
         }
 
+                function validateReservationForm({ reservationDate, startTime, endTime, purpose, additionalInfo, facultyInCharge}) {
+            // Check if all required fields are filled
+            if (!reservationDate || !startTime || !endTime || !purpose || !additionalInfo || !facultyInCharge) {
+                alert('Please fill in all required fields.');
+                return false;
+            }
+
+            // Convert times to minutes since midnight
+            const convertTimeToMinutes = (timeStr) => {
+                const [time, period] = timeStr.split(' ');
+                let [hours, minutes] = time.split(':').map(Number);
+                
+                // Convert to 24-hour format
+                if (period === 'PM' && hours !== 12) {
+                    hours += 12;
+                }
+                if (period === 'AM' && hours === 12) {
+                    hours = 0;
+                }
+                
+                return hours * 60 + minutes;
+            };
+
+            // Convert start and end times to minutes
+            const startMinutes = convertTimeToMinutes(startTime);
+            const endMinutes = convertTimeToMinutes(endTime);
+
+            // Check if end time is before start time
+            if (endMinutes < startMinutes) {
+                alert('End time must be later than start time.');
+                return false;
+            }
+
+            return true;
+        }
+
+
         // Save changes to reservation
         function saveChanges() {
             // Gather the updated form values
@@ -681,6 +718,9 @@ if ($all_reservations_result->num_rows > 0) {
                 rejectionReason: rejectionReason,
                 reservationStatus: updatedReservationStatus // Set reservation status to 'In Review'
             };
+            if (!validateReservationForm(updatedReservation)) {
+                return;
+            }
 
             // Make an AJAX request to update the reservation on the server
             fetch('handlers/update_reservation.php', {
@@ -766,7 +806,7 @@ if ($all_reservations_result->num_rows > 0) {
                 .then(data => {
                     if (data.success) {
                         // Show success message and reload the page
-                        showSuccessMessage('Reservation cancelled successfully!');
+                        showSuccessModal('Reservation cancelled successfully!');
                         setTimeout(() => {
                             location.reload(); // Reload the current page after success
                         }, 3000);
@@ -781,7 +821,7 @@ if ($all_reservations_result->num_rows > 0) {
                     showErrorMessage('An error occurred while cancelling the reservation.');
                 })
                 .finally(() => {
-                    hideModal('confirmationModal'); // Always hide the modal after an action
+                    document.getElementById('confirmationModal').classList.add('hidden'); // Always hide the modal after an action
                 });
             };
 
@@ -946,7 +986,7 @@ function acceptReservation(reservationId) {
                             location.reload(); // Reload the current page after success
                         }, 3000); // 3000 milliseconds = 3 seconds
                     } else {
-                        showErrorMessage('Failed to approve reservation. Please try again.');
+                        showErrorMessage('Failed to approve reservation: ' + data.error);
                     }
                 })
                 .catch(error => {

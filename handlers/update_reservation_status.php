@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require '../database/config.php';
 
     // Fetch reservation details
-    $query = "SELECT r.reservation_date, r.start_time, r.end_time, r.purpose, r.facultyInCharge, u.first_name, u.last_name, u.email, f.facility_name 
+    $query = "SELECT r.reservation_date, r.start_time, r.end_time, r.purpose, r.facultyInCharge, u.first_name, u.last_name, u.email, f.facility_name, r.reservation_status 
               FROM reservations r
               JOIN users u ON r.user_id = u.id
               JOIN facilities f ON r.facility_id = f.facility_id
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $reservationId);
     $stmt->execute();
-    $stmt->bind_result($reservation_date, $start_time, $end_time, $purpose, $facultyInCharge, $first_name, $last_name, $email, $facility_name);
+    $stmt->bind_result($reservation_date, $start_time, $end_time, $purpose, $facultyInCharge, $first_name, $last_name, $email, $facility_name, $current_status);
 
     if (!$stmt->fetch()) {
         http_response_code(404);
@@ -39,6 +39,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
     $stmt->close();
+
+    // Skip checks for declined reservations
+    if ($status === 'Approved') {
+        // Check if the reservation date is in the past
+        $reservation_datetime = new DateTime($reservation_date . ' ' . $start_time);
+        $current_datetime = new DateTime();
+
+        if ($reservation_datetime < $current_datetime) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Reservation expired']);
+            exit();
+        }
+
+        // Check if reservation is already processed
+        if ($current_status === 'Approved' || $current_status === 'Declined') {
+            http_response_code(400);
+            echo json_encode(['error' => 'Reservation has already been processed']);
+            exit();
+        }
+    }
 
     // Format date and time
     $formatted_date = (new DateTime($reservation_date))->format('m/d/Y');

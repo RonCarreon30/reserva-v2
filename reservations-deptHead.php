@@ -608,6 +608,41 @@ $all_reservations_result = $stmt->get_result();
                 })
                 .catch(error => console.error('Error:', error));
         }
+        function validateReservationForm({ reservationDate, startTime, endTime, purpose, additionalInfo, facultyInCharge}) {
+            // Check if all required fields are filled
+            if (!reservationDate || !startTime || !endTime || !purpose || !additionalInfo || !facultyInCharge) {
+                alert('Please fill in all required fields.');
+                return false;
+            }
+
+            // Convert times to minutes since midnight
+            const convertTimeToMinutes = (timeStr) => {
+                const [time, period] = timeStr.split(' ');
+                let [hours, minutes] = time.split(':').map(Number);
+                
+                // Convert to 24-hour format
+                if (period === 'PM' && hours !== 12) {
+                    hours += 12;
+                }
+                if (period === 'AM' && hours === 12) {
+                    hours = 0;
+                }
+                
+                return hours * 60 + minutes;
+            };
+
+            // Convert start and end times to minutes
+            const startMinutes = convertTimeToMinutes(startTime);
+            const endMinutes = convertTimeToMinutes(endTime);
+
+            // Check if end time is before start time
+            if (endMinutes < startMinutes) {
+                alert('End time must be later than start time.');
+                return false;
+            }
+
+            return true;
+        }
 
         // Save changes to reservation
         function saveChanges() {
@@ -636,6 +671,9 @@ $all_reservations_result = $stmt->get_result();
                 rejectionReason: rejectionReason,
                 reservationStatus: updatedReservationStatus
             };
+            if (!validateReservationForm(updatedReservation)) {
+                return;
+            }            
 
             fetch('handlers/update_reservation.php', {
                 method: 'POST',
@@ -677,14 +715,15 @@ $all_reservations_result = $stmt->get_result();
                     },
                     body: JSON.stringify({ id: reservationId })
                 })
-                .then(response => {
-                    if (response.ok) {
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
                         showSuccessMessage('Reservation deleted successfully!');
                         setTimeout(() => {
                             location.reload(); // Reload the current page after success
                         }, 3000); // 3000 milliseconds = 3 seconds // Reload the page if deletion is successful
                     } else {
-                        showErrorMessage('Failed to delete the reservation. Please try again.');
+                        showErrorMessage(data.message);
                     }
                 })
                 .catch(error => {

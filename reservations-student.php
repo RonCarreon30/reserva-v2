@@ -489,7 +489,7 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                 <div class="flex mb-4 gap-2">
                     <div class="w-1/2">
                         <div class="flex flex-col space-y-2">
-                            <label for="startTime" class="text-gray-700">Starting Time:</label>
+                            <label for="startTime" class="text-gray-700">Starting Time:<span class="text-red-500">*</span></label>
                             <select id="startTime" name="startTime" class="border border-gray-300 rounded-md p-2" required>
                                 <?php foreach ($timeOptions as $time): ?>
                                     <option value="<?php echo $time; ?>" <?php echo (isset($row['start_time']) && $time == $row['start_time']) ? 'selected' : ''; ?>>
@@ -501,7 +501,7 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                     </div>
                     <div class="w-1/2">
                         <div class="flex flex-col space-y-2">
-                            <label for="endTime" class="text-gray-700">End Time:</label>
+                            <label for="endTime" class="text-gray-700">End Time:<span class="text-red-500">*</span></label>
                             <select id="endTime" name="endTime" class="border border-gray-300 rounded-md p-2" required>
                                 <?php foreach ($timeOptions as $time): ?>
                                     <option value="<?php echo $time; ?>" <?php echo (isset($row['end_time']) && $time == $row['end_time']) ? 'selected' : ''; ?>>
@@ -513,15 +513,15 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                     </div>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <label for="facultyInCharge" class="text-gray-700">Faculty in Charge:</label>
+                    <label for="facultyInCharge" class="text-gray-700">Faculty in Charge:<span class="text-red-500">*</span></label>
                     <input type="text" id="facultyInCharge" name="facultyInCharge" class="border border-gray-300 rounded-md p-2" required>
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <label for="purpose" class="text-gray-700">Purpose:</label>
+                    <label for="purpose" class="text-gray-700">Purpose:<span class="text-red-500">*</span></label>
                     <input type="text" id="purpose" name="purpose" class="border border-gray-300 rounded-md p-2">
                 </div>
                 <div class="flex flex-col space-y-2">
-                    <label for="additionalInfo" class="text-gray-700">Additional Information:</label>
+                    <label for="additionalInfo" class="text-gray-700">Additional Information:<span class="text-red-500">*</span></label>
                     <textarea id="additionalInfo" name="additionalInfo" class="border border-gray-300 rounded-md p-2" required></textarea>
                 </div>
                 <div class="flex justify-between">
@@ -611,6 +611,41 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                 })
                 .catch(error => console.error('Error:', error));
         }
+        function validateReservationForm({ reservationDate, startTime, endTime, purpose, additionalInfo, facultyInCharge}) {
+            // Check if all required fields are filled
+            if (!reservationDate || !startTime || !endTime || !purpose || !additionalInfo || !facultyInCharge) {
+                alert('Please fill in all required fields.');
+                return false;
+            }
+
+            // Convert times to minutes since midnight
+            const convertTimeToMinutes = (timeStr) => {
+                const [time, period] = timeStr.split(' ');
+                let [hours, minutes] = time.split(':').map(Number);
+                
+                // Convert to 24-hour format
+                if (period === 'PM' && hours !== 12) {
+                    hours += 12;
+                }
+                if (period === 'AM' && hours === 12) {
+                    hours = 0;
+                }
+                
+                return hours * 60 + minutes;
+            };
+
+            // Convert start and end times to minutes
+            const startMinutes = convertTimeToMinutes(startTime);
+            const endMinutes = convertTimeToMinutes(endTime);
+
+            // Check if end time is before start time
+            if (endMinutes < startMinutes) {
+                alert('End time must be later than start time.');
+                return false;
+            }
+
+            return true;
+        }
 
         // Save changes to reservation
         function saveChanges() {
@@ -639,6 +674,9 @@ $all_reservations_result = $conn->query($all_reservations_sql);
                 rejectionReason: rejectionReason,
                 reservationStatus: updatedReservationStatus
             };
+            if (!validateReservationForm(updatedReservation)) {
+                return;
+            }
 
             fetch('handlers/update_reservation.php', {
                 method: 'POST',

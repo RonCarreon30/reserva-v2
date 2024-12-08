@@ -22,6 +22,139 @@ $additionalInfo = $data['additionalInfo'];
 $reservationStatus = $data['reservationStatus'];
 $userRole = $_SESSION['role']; // User role of the person editing
 
+// Function to check if the reservation date is in the past
+function isDateInPast($reservationDate) {
+    // Create DateTime objects for today and the reservation date
+    $today = new DateTime('today');
+    $reservationDateTime = DateTime::createFromFormat('Y-m-d', $reservationDate);
+
+    // If date creation fails, consider it invalid
+    if ($reservationDateTime === false) {
+        return true;
+    }
+
+    // Compare dates
+    return $reservationDateTime < $today;
+}
+
+// Check for past date after the existing overlap and duplicate checks
+if (isDateInPast($reservationDate)) {
+    echo json_encode([
+        "success" => false, 
+        "message" => "Reservation date cannot be in the past."
+    ]);
+    exit;
+}
+
+// Function to check for reservation overlaps
+function checkReservationOverlap($conn, $facilityId, $reservationDate, $startTime, $endTime, $currentReservationId = null) {
+    // Check for overlapping reservations
+    $overlapQuery = "SELECT id FROM reservations 
+                     WHERE facility_id = ? 
+                     AND reservation_date = ? 
+                     AND reservation_status NOT IN ('Declined', 'Cancelled')
+                     AND (
+                         (? < end_time AND ? > start_time) OR 
+                         (? <= end_time AND ? >= start_time) OR
+                         (start_time >= ? AND start_time < ?) OR
+                         (end_time > ? AND end_time <= ?)
+                     )";
+    
+    if ($currentReservationId !== null) {
+        $overlapQuery .= " AND id != ?";
+    }
+    
+    $overlapStmt = $conn->prepare($overlapQuery);
+    
+    if ($currentReservationId !== null) {
+        $overlapStmt->bind_param("isssssssssi", 
+            $facilityId, 
+            $reservationDate, 
+            $startTime, $startTime,
+            $endTime, $endTime,
+            $startTime, $endTime,
+            $startTime, $endTime,
+            $currentReservationId
+        );
+    } else {
+        $overlapStmt->bind_param("isssssssss", 
+            $facilityId, 
+            $reservationDate, 
+            $startTime, $startTime,
+            $endTime, $endTime,
+            $startTime, $endTime,
+            $startTime, $endTime
+        );
+    }
+    
+    $overlapStmt->execute();
+    $overlapResult = $overlapStmt->get_result();
+    
+    return $overlapResult->num_rows > 0;
+}
+
+// Function to check for duplicate reservations
+function checkDuplicateReservation($conn, $facilityId, $reservationDate, $startTime, $endTime, $facultyInCharge, $purpose, $currentReservationId = null) {
+    $duplicateQuery = "SELECT id FROM reservations 
+                       WHERE facility_id = ? 
+                       AND reservation_date = ? 
+                       AND start_time = ? 
+                       AND end_time = ? 
+                       AND facultyInCharge = ? 
+                       AND purpose = ?
+                       AND reservation_status NOT IN ('Declined', 'Cancelled')";
+    
+    if ($currentReservationId !== null) {
+        $duplicateQuery .= " AND id != ?";
+    }
+    
+    $duplicateStmt = $conn->prepare($duplicateQuery);
+    
+    if ($currentReservationId !== null) {
+        $duplicateStmt->bind_param("isssssi", 
+            $facilityId, 
+            $reservationDate, 
+            $startTime, 
+            $endTime, 
+            $facultyInCharge, 
+            $purpose,
+            $currentReservationId
+        );
+    } else {
+        $duplicateStmt->bind_param("isssss", 
+            $facilityId, 
+            $reservationDate, 
+            $startTime, 
+            $endTime, 
+            $facultyInCharge, 
+            $purpose
+        );
+    }
+    
+    $duplicateStmt->execute();
+    $duplicateResult = $duplicateStmt->get_result();
+    
+    return $duplicateResult->num_rows > 0;
+}
+
+// Check for overlapping reservations
+if (checkReservationOverlap($conn, $facilityId, $reservationDate, $startTime, $endTime, $reservationId)) {
+    echo json_encode([
+        "success" => false, 
+        "message" => "This reservation conflicts with an existing reservation for the same facility and time."
+    ]);
+    exit;
+}
+
+// Check for duplicate reservations
+if (checkDuplicateReservation($conn, $facilityId, $reservationDate, $startTime, $endTime, $facultyInCharge, $purpose, $reservationId)) {
+    echo json_encode([
+        "success" => false, 
+        "message" => "An identical reservation already exists."
+    ]);
+    exit;
+}
+
 // Fetch reservation and user details
 $userQuery = "SELECT u.first_name, u.last_name, u.email AS user_email, r.facility_id, r.user_id 
               FROM reservations r 
