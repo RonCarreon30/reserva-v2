@@ -33,12 +33,38 @@ $user_id = $_SESSION['user_id'];
 $buildings_sql = "SELECT * FROM buildings_tbl";
 $buildings_result = $conn->query($buildings_sql);
 
-//Query to fetch rooms data from the database
-$sql = "SELECT r.room_id, r.room_name, r.room_type, r.room_status, r.created_at, b.building_name
-        FROM rooms_tbl r
-        JOIN buildings_tbl b ON r.building_id = b.building_id
-        ORDER BY room_id DESC";
-
+//Query to fetch rooms data from the database with LEFT JOIN to include all rooms
+$sql = "SELECT 
+    r.room_id, 
+    r.room_name, 
+    r.room_type, 
+    r.room_status, 
+    r.created_at, 
+    b.building_name,
+    COALESCE(COUNT(DISTINCT ra.schedule_id), 0) AS assigned_schedules,
+    COALESCE(SUM(TIMESTAMPDIFF(HOUR, s.start_time, s.end_time)), 0) AS total_hours,
+    COALESCE(ROUND(
+        (SUM(TIMESTAMPDIFF(HOUR, s.start_time, s.end_time)) * 1.0) / 90 * 100, 2
+    ), 0) AS occupancy_percentage,
+    CASE 
+        WHEN COALESCE(SUM(TIMESTAMPDIFF(HOUR, s.start_time, s.end_time)), 0) = 0 THEN 'Empty'
+        WHEN (COALESCE(SUM(TIMESTAMPDIFF(HOUR, s.start_time, s.end_time)) * 1.0) / 90 * 100) < 30 THEN 'Low Occupancy'
+        WHEN (COALESCE(SUM(TIMESTAMPDIFF(HOUR, s.start_time, s.end_time)) * 1.0) / 90 * 100) BETWEEN 30 AND 70 THEN 'Moderate Occupancy'
+        ELSE 'High Occupancy'
+    END AS occupancy_status
+FROM rooms_tbl r
+JOIN buildings_tbl b ON r.building_id = b.building_id
+LEFT JOIN room_assignments_tbl ra ON r.room_id = ra.room_id
+LEFT JOIN schedules s ON ra.schedule_id = s.schedule_id 
+    AND s.sched_status = 'assigned'
+    AND s.ay_semester = (
+        SELECT term_id 
+        FROM terms_tbl 
+        WHERE term_status = 'Current' 
+        LIMIT 1
+    )
+GROUP BY r.room_id, r.room_name, r.room_type, r.room_status, r.created_at, b.building_name
+ORDER BY r.room_id DESC";
 $result = $conn->query($sql);
 ?>
 <!DOCTYPE html>
@@ -50,51 +76,51 @@ $result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script>
-function filterRooms() {
-    const searchInput = document.getElementById('searchInput').value.toLowerCase();
-    const selectedBuilding = document.getElementById('buildingSelect').value.toLowerCase();
-    const table = document.getElementById('roomsTable');
-    const tr = table.getElementsByTagName('tr');
-    let resultsFound = false; // Flag to check if any results are found
+        function filterRooms() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const selectedBuilding = document.getElementById('buildingSelect').value.toLowerCase();
+            const table = document.getElementById('roomsTable');
+            const tr = table.getElementsByTagName('tr');
+            let resultsFound = false;
 
-    for (let i = 1; i < tr.length; i++) {
-        const td = tr[i].getElementsByTagName('td');
-        let roomContainsSearchTerm = false;
-        let roomMatchesBuilding = false;
+            for (let i = 1; i < tr.length; i++) {
+                const td = tr[i].getElementsByTagName('td');
+                let roomContainsSearchTerm = false;
+                let roomMatchesBuilding = false;
 
-        // Check if the row matches the search input
-        for (let j = 0; j < td.length; j++) {
-            if (td[j]) {
-                const textValue = td[j].textContent || td[j].innerText;
-                if (textValue.toLowerCase().indexOf(searchInput) > -1) {
-                    roomContainsSearchTerm = true;
+                // Check if the row matches the search input
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        const textValue = td[j].textContent || td[j].innerText;
+                        if (textValue.toLowerCase().indexOf(searchInput) > -1) {
+                            roomContainsSearchTerm = true;
+                        }
+                    }
+                }
+
+                // Check if the room belongs to the selected building
+                const buildingCell = td[0];
+                if (buildingCell && (selectedBuilding === '' || buildingCell.textContent.toLowerCase() === selectedBuilding)) {
+                    roomMatchesBuilding = true;
+                }
+
+                // Show the row if it matches both the search input and the building filter
+                if (roomContainsSearchTerm && roomMatchesBuilding) {
+                    tr[i].style.display = ''; 
+                    resultsFound = true;
+                } else {
+                    tr[i].style.display = 'none';
                 }
             }
-        }
 
-        // Check if the room belongs to the selected building
-        const buildingCell = td[0]; // Assuming Building is the first column (index 0)
-        if (buildingCell && (selectedBuilding === '' || buildingCell.textContent.toLowerCase() === selectedBuilding)) {
-            roomMatchesBuilding = true;
+            // Show or hide the "No Results Found" message
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            if (resultsFound) {
+                noResultsMessage.classList.add('hidden');
+            } else {
+                noResultsMessage.classList.remove('hidden');
+            }
         }
-
-        // Show the row if it matches both the search input and the building filter
-        if (roomContainsSearchTerm && roomMatchesBuilding) {
-            tr[i].style.display = ''; // Show the row
-            resultsFound = true; // Set flag to true
-        } else {
-            tr[i].style.display = 'none'; // Hide the row
-        }
-    }
-
-    // Show or hide the "No Results Found" message based on results
-    const noResultsMessage = document.getElementById('noResultsMessage');
-    if (resultsFound) {
-        noResultsMessage.classList.add('hidden'); // Hide the message if results are found
-    } else {
-        noResultsMessage.classList.remove('hidden'); // Show the message if no results found
-    }
-}
 
         function sortTable(columnIndex) {
             const table = document.getElementById('roomsTable');
@@ -112,6 +138,32 @@ function filterRooms() {
             table.dataset.sortOrder = isAscending ? 'desc' : 'asc';
         }
 
+        function createOccupancyBar(percentage) {
+            const barWidth = Math.min(percentage, 100);
+            const colorClass = percentage < 30 ? 'bg-green-500' : 
+                               percentage < 70 ? 'bg-yellow-500' : 
+                               'bg-red-500';
+            
+            return `
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="h-2.5 rounded-full ${colorClass}" style="width: ${barWidth}%"></div>
+                </div>
+            `;
+        }
+
+        // Dynamically add occupancy bars after page load
+        window.onload = function() {
+            const occupancyRows = document.querySelectorAll('.occupancy-cell');
+            occupancyRows.forEach(cell => {
+                const percentage = parseFloat(cell.dataset.percentage);
+                cell.innerHTML = `
+                    ${createOccupancyBar(percentage)} 
+                    <div class="text-xs text-gray-500 mt-1">
+                        ${cell.dataset.status} (${percentage.toFixed(1)}%)
+                    </div>
+                `;
+            });
+        }
     </script>
 </head>
 <body>
@@ -193,35 +245,48 @@ function filterRooms() {
                                         </svg>                                        
                                     </span>
                                 </th>
+                                <th class="border-r border-white py-3 px-4 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable(4)">
+                                    <span class="flex items-center">Occupancy
+                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                        </svg>                                        
+                                    </span>
+                                </th>
                                 <th class="border-r border-white py-3 px-4 text-left">Action</th>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody id="roomList" class="bg-white divide-y divide-gray-200">
-                            <?php if ($result->num_rows > 0): ?>
-                                <?php while ($row = $result->fetch_assoc()): ?>
-                                    <tr>
-                                        <td class="border py-3 px-4"><?php echo $row["building_name"]; ?></td>
-                                        <td class="border py-3 px-4"><?php echo $row["room_name"]; ?></td>
-                                        <td class="border py-3 px-4"><?php echo $row["room_type"]; ?></td>
-                                        <td class="border py-3 px-4"><?php echo $row["room_status"]; ?></td>
-                                        <td class="border py-3 px-4 space-x-2">
-                                            <button onclick="editRoom(<?php echo $row['room_id']; ?>)" class="text-blue-500 hover:text-blue-600" title='Edit User'><i class="fas fa-edit"></i></button>
-                                            <button onclick="deleteFacility(<?php echo $row['room_id']; ?>)" class="text-red-500 hover:text-red-600" title="Delete"><i class="fas fa-trash-alt"></i></button>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="4" class="py-4 px-4 text-center"> <!-- Adjust colspan if needed -->
-                                        <div class="text-center py-4">
-                                            <img src="img/undraw_not_found_re_bh2e.svg" alt="No Rooms Found" class="mx-auto mb-2 opacity-40" style="max-width: 250px;">
-                                            <p class="text-gray-500">No results found.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endif; ?> 
-                        </tbody>
+    <tbody id="roomList" class="bg-white divide-y divide-gray-200">
+        <?php if ($result->num_rows > 0): ?>
+            <?php while ($row = $result->fetch_assoc()): ?>
+                <tr>
+                    <td class="border py-3 px-4"><?php echo htmlspecialchars($row["building_name"]); ?></td>
+                    <td class="border py-3 px-4"><?php echo htmlspecialchars($row["room_name"]); ?></td>
+                    <td class="border py-3 px-4"><?php echo htmlspecialchars($row["room_type"]); ?></td>
+                    <td class="border py-3 px-4"><?php echo htmlspecialchars($row["room_status"]); ?></td>
+                    <td class="border py-3 px-4 occupancy-cell" 
+                        data-percentage="<?php echo $row['occupancy_percentage']; ?>" 
+                        data-status="<?php echo htmlspecialchars($row['occupancy_status']); ?>">
+                        <span class="hidden"><?php echo $row['occupancy_status']; ?> 
+                        (<?php echo $row['assigned_schedules']; ?> schedules)</span>
+                    </td>
+                    <td class="border py-3 px-4 space-x-2">
+                        <button onclick="editRoom(<?php echo $row['room_id']; ?>)" class="text-blue-500 hover:text-blue-600" title='Edit Room'><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteFacility(<?php echo $row['room_id']; ?>)" class="text-red-500 hover:text-red-600" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="6" class="py-4 px-4 text-center">
+                    <div class="text-center py-4">
+                        <img src="img/undraw_not_found_re_bh2e.svg" alt="No Rooms Found" class="mx-auto mb-2 opacity-40" style="max-width: 250px;">
+                        <p class="text-gray-500">No results found.</p>
+                    </div>
+                </td>
+            </tr>
+        <?php endif; ?> 
+    </tbody>
 
                     </table>
                         <div id="noResultsMessage" class="text-center py-4 px-4 hidden">

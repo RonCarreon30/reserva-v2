@@ -20,6 +20,37 @@
     $user_department = isset($_SESSION['department']) ? $_SESSION['department'] : 'Unknown';
 
     require 'database/config.php'; 
+
+    // Define the table and column name
+$table_name = 'rooms_tbl';
+$column_name = 'room_type';
+
+// Query to fetch the ENUM values for the column
+$query = "
+    SELECT COLUMN_TYPE 
+    FROM information_schema.columns 
+    WHERE table_schema = 'reservadb' 
+      AND table_name = ? 
+      AND column_name = ?
+";
+
+// Prepare and execute the query
+$stmt = $conn->prepare($query);
+$stmt->bind_param("ss", $table_name, $column_name);
+$stmt->execute();
+$result = $stmt->get_result();
+
+// Fetch the column type (ENUM values)
+if ($row = $result->fetch_assoc()) {
+    $enum_values = $row['COLUMN_TYPE'];
+    
+    // Extract values from the ENUM definition string
+    preg_match_all("/'([^']+)'/", $enum_values, $matches);
+    $enum_values_array = $matches[1];  // This will contain all the ENUM values
+} else {
+    $enum_values_array = []; // No ENUM values found or invalid table/column
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -42,6 +73,7 @@
             const instructorFilter = document.getElementById('instructorFilter').value.toLowerCase();
             const dayFilter = document.getElementById('dayFilter').value.toLowerCase();
             const roomFilter = document.getElementById('roomFilter').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
             const uploaderFilter = document.getElementById('uploaderFilter').value.toLowerCase();
             const generalSearch = document.getElementById('searchInput').value.toLowerCase();
@@ -57,8 +89,9 @@
                 const time = row.cells[4].textContent.toLowerCase();
                 const day = row.cells[5].textContent.toLowerCase();
                 const roomAssignment = row.cells[6].textContent.toLowerCase();
-                const reservationStatus = row.cells[7].textContent.toLowerCase();
-                const uploadedBy = row.cells[8].textContent.toLowerCase();
+                const roomType = row.cells[7].textContent.toLowerCase();
+                const reservationStatus = row.cells[8].textContent.toLowerCase();
+                const uploadedBy = row.cells[9].textContent.toLowerCase();
 
                 
                 // Fixed terms matching logic
@@ -69,6 +102,7 @@
                 const matchesInstructor = instructorFilter === 'all' || instructor === instructorFilter;
                 const matchesDay = dayFilter === 'all' || day === dayFilter;
                 const matchesRoom = roomFilter === 'all' || roomAssignment === roomFilter;
+                const matchesRoomType = typeFilter === 'all' || roomType === typeFilter;
                 const matchesStatus = statusFilter === 'all' || reservationStatus === statusFilter;
                 const matchesUploader = uploaderFilter === 'all' || uploadedBy === uploaderFilter;
                 const matchesGeneralSearch =
@@ -91,6 +125,7 @@
                     matchesInstructor &&
                     matchesDay &&
                     matchesRoom &&
+                    matchesRoomType &&
                     matchesStatus &&
                     matchesUploader &&
                     matchesGeneralSearch
@@ -138,6 +173,7 @@
             document.getElementById('searchTime').value = '';
             document.getElementById('dayFilter').value = 'all';
             document.getElementById('roomFilter').value = 'all';
+            document.getElementById('typeFilter').value = 'all';
             document.getElementById('statusFilter').value = 'all';
             document.getElementById('uploaderFilter').value = 'all';
 
@@ -185,57 +221,70 @@
                     </div>
                 </div>
                 <!-- Table for Schedules -->
-                <div class="mt-6">
+                <div class="mt-2">
                     <div id="schedulesList" class="overflow-x-auto max-h-[calc(100vh-200px)] bg-white rounded-md shadow-md border border-gray-200">
                         <table id="schedules-table" class="min-w-full divide-y divide-gray-200">
                             <thead>
                                 <tr class="bg-gray-200 border-b">
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(0)">
+                                    <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(1)">
                                         <span class="flex items-center">Subject Code<svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                             </svg>
                                         </span>
                                     </th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(1)">
+                                    <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(2)">
                                         <span class="flex items-center">Section                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                             </svg>
                                         </span>
                                     </th>
                                     
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(2)">
-                                        <span class="flex items-center">Instructor                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTable(3)">
+                                        <span class="flex items-center">Instructor
+                                            <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                             </svg>
                                         </span>
                                     </th>
                                     
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                    <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onclick="sortTable(4)">
+                                        <span class="flex items-center">Time
+                                            <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                            </svg>
+                                        </span>
+                                    </th>
                                     
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                                    <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
                                     
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(5)">
+                                    <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(6)">
                                         <span class="flex items-center">Room Assignment                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                             </svg>
                                         </span>
                                     </th>
+                                    <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(7)">
+                                        <span class="flex items-center">Type<svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
+                                            </svg>
+                                        </span>
+                                    </th>
                                     
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(6)">
+                                    <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(8)">
                                         <span class="flex items-center">Status                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                             </svg>
                                         </span>
                                     </th>
 
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(7)">
+                                    <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"onclick="sortTable(9)">
                                         <span class="flex items-center">Uploaded By                                        <svg class="w-4 h-4 ml-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6"></path>
                                             </svg>
                                         </span>
                                     </th>
 
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                    <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                                 </tr>
                                                                 <?php
                                     // Fetch unique sections
@@ -261,7 +310,7 @@
                                 ?>
                                 <tr class="bg-gray-200 border-b">
                                     <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
-                                        <input type="text" id="searchSubjCode" class="w-full px-2 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterSchedules()">
+                                        <input type="text" id="searchSubjCode" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterSchedules()">
                                     </td>
                                     <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
                                         <select id="sectionFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
@@ -284,7 +333,7 @@
                                         </select>
                                     </td>
                                     <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
-                                        <input type="text" id="searchTime" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterSchedules()">
+                                        <input type="text" id="searchTime" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterSchedules()">
                                     </td>
                                     <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
                                         <select id="dayFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
@@ -308,6 +357,14 @@
                                         </select>
                                     </td>
                                     <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <select id="typeFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                                            <option value="all">All Types</option>
+                                            <?php foreach ($enum_values_array as $value): ?>
+                                                <option value="<?php echo htmlspecialchars($value); ?>"><?php echo htmlspecialchars($value); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </td>
+                                    <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
                                         <select id="statusFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
                                             <option value="all">All Status</option>
                                             <option value="pending">Pending</option>
@@ -328,7 +385,7 @@
                                     </td>
                                     <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
                                         <button id="resetFilters" 
-                                                class="w-full px-2 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                                                class="w-full p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
                                                 onclick="resetFilters()">
                                             Reset Filters
                                         </button>
@@ -373,7 +430,7 @@
                                         // Output data for each row
                                         while ($row = $result->fetch_assoc()) {
                                             $schedId = $row["schedule_id"];
-                                            $isAssigned = (strtolower($row['sched_status']) === 'assigned');
+                                            //$isAssigned = (strtolower($row['sched_status']) === 'assigned');
 
                                             date_default_timezone_set('Asia/Manila'); // Set to your local timezone
 
@@ -384,37 +441,55 @@
                                             echo "<tr class='bg-white hover:bg-gray-100'>"; // Default row styling
                                             echo '<td class="hidden" data-term-id="' . htmlspecialchars($row['term_id']) . '">' . htmlspecialchars($row['academic_year']) . '</td>';
 
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['subject_code']) . '</td>';
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['section']) . '</td>';
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['instructor']) . '</td>';
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($startTime12hr) . ' - ' . htmlspecialchars($endTime12hr) . '</td>'; // Updated time format
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['days']) . '</td>';
+                                            echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['subject_code']) . '</td>';
+                                            echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['section']) . '</td>';
+                                            echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['instructor']) . '</td>';
+                                            echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($startTime12hr) . ' - ' . htmlspecialchars($endTime12hr) . '</td>'; // Updated time format
+                                            echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['days']) . '</td>';
 
-                                            if ($isAssigned) {
-                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['building_name']) . ' - ' . htmlspecialchars($row['room_name']) . '</td>';
-                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-green-500">' . htmlspecialchars($row['sched_status']) . '</td>';
+                                            if ((strtolower($row['sched_status']) === 'assigned')) {
+                                                echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['building_name']) . ' - ' . htmlspecialchars($row['room_name']) . '</td>';
+                                                echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['class_type']) . '</td>';
+                                                echo '<td class="border p-2"><span class="inline-block px-2 py-1 text-sm font-normal text-white bg-green-600 rounded-full">' . htmlspecialchars($row['sched_status']) . '</span></td>';
                                             } else {
-                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-500">Not Assigned</td>';
-                                                echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['sched_status']) . '</td>';
+                                                echo '<td class="border p-2 whitespace-nowrap text-sm font-semibold text-red-500">Not Assigned</td>';
+                                                echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['class_type']) . '</td>';
+                                                echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['sched_status']) . '</td>';
                                             }
 
                                             // Add the "Uploaded by" column
                                             $uploadedBy = htmlspecialchars($row['uploaded_by_first_name']) . ' ' . htmlspecialchars($row['uploaded_by_last_name']);
-                                            echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">' . $uploadedBy . '</td>';
+                                            echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . $uploadedBy . '</td>';
 
                                             // Action buttons (always editable for admin)
                                             
-                                            echo '<td class="py-2 px-4 space-x-2 text-center">';
+                                            echo '<td class="border px-3 py-2 space-x-2 text-center">';
                                             // Room Assignment Button
-                                            echo '<button onclick="assignRoom(' . $schedId . ')" class="text-green-500 hover:text-green-600" title="re-assign Room">';
-                                            echo '<i class="fas fa-sync-alt fa-spin"></i>'; // Font Awesome Room Icon
-                                            echo '</button>';
-                                            echo '<button onclick="editSched(' . $schedId . ')" class="text-blue-500 hover:text-blue-600" title="Edit">';
-                                            echo '<i class="fas fa-edit"></i>'; // Font Awesome Edit Icon
-                                            echo '</button>';
-                                            echo '<button onclick="deleteSched(' . $schedId . ')" class="text-red-500 hover:text-red-600" title="Delete">';
-                                            echo '<i class="fas fa-trash-alt"></i>'; // Font Awesome Delete Icon
-                                            echo '</button>';
+                                            if ((strtolower($row['sched_status']) === 'assigned')) {
+                                                echo '<button class="text-gray-500 cursor-not-allowed" title="Already assigned" disabled>';
+                                                echo '<i class="fas fa-sync-alt fa-spin"></i>'; // Font Awesome Room Icon
+                                                echo '</button>';
+
+                                                echo '<button onclick="editSched(' . $schedId . ')" class="text-blue-500 hover:text-blue-600" title="Edit">';
+                                                echo '<i class="fas fa-edit"></i>'; // Font Awesome Edit Icon
+                                                echo '</button>';
+                                                
+                                                echo '<button onclick="deleteSched(' . $schedId . ')" class="text-red-500 hover:text-red-600" title="Delete">';
+                                                echo '<i class="fas fa-trash-alt"></i>'; // Font Awesome Delete Icon
+                                                echo '</button>';
+                                            } else {
+                                                echo '<button onclick="assignRoom(' . $schedId . ')" class="text-green-500 hover:text-green-600" title="re-assign Room">';
+                                                echo '<i class="fas fa-sync-alt fa-spin"></i>'; // Font Awesome Room Icon
+                                                echo '</button>';
+
+                                                echo '<button onclick="editSched(' . $schedId . ')" class="text-blue-500 hover:text-blue-600" title="Edit">';
+                                                echo '<i class="fas fa-edit"></i>'; // Font Awesome Edit Icon
+                                                echo '</button>';
+                                                
+                                                echo '<button onclick="deleteSched(' . $schedId . ')" class="text-red-500 hover:text-red-600" title="Delete">';
+                                                echo '<i class="fas fa-trash-alt"></i>'; // Font Awesome Delete Icon
+                                                echo '</button>';
+                                            }
 
                                             echo '</td>';
 

@@ -1,9 +1,6 @@
 <?php
 session_start(); // Start the session
 
-$data = json_decode($_POST['schedules'], true);
-error_log(print_r($data, true)); // Log the incoming data for debugging
-
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'User not logged in.']);
     exit;
@@ -16,10 +13,10 @@ $data = json_decode($_POST['schedules'], true);
 $aySemester = $_POST['aySemester'];
 $departmentId = $_POST['departmentId'];
 
-// Prepare the insert statement
+// Prepare the insert statement with modified status option
 $insertSchedule = $conn->prepare("
     INSERT INTO schedules (user_id, subject_code, subject, section, instructor, start_time, end_time, days, class_type, ay_semester, department_id, sched_status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ");
 
 // Prepare a statement to check for duplicates of the entire row
@@ -36,7 +33,7 @@ $checkDuplicate = $conn->prepare("
     AND ay_semester = ? 
 ");
 
-// Prepare a statement to check if the subject is already assigned to the section (regardless of instructor)
+// Prepare a statement to check if the subject is already assigned to the same section (regardless of instructor)
 $checkSameSubjectSection = $conn->prepare("
     SELECT COUNT(*) FROM schedules 
     WHERE subject_code = ? 
@@ -45,10 +42,11 @@ $checkSameSubjectSection = $conn->prepare("
     AND ay_semester = ?
 ");
 
-// Initialize arrays to hold successful saves and duplicates
+// Initialize arrays to hold successful saves, duplicates, and other statuses
 $savedSchedules = [];
 $duplicateSchedules = [];
 $sameSubjectSectionConflict = [];
+$invalidDurationSchedules = [];
 
 // Process each schedule entry
 foreach ($data as $schedule) {
@@ -56,8 +54,53 @@ foreach ($data as $schedule) {
     $subject = $schedule['subject'];
     $section = $schedule['section'];
     $instructor = $schedule['instructor'];
-    $startTime = DateTime::createFromFormat('h:i A', $schedule['startTime'])->format('H:i');
-    $endTime = DateTime::createFromFormat('h:i A', $schedule['endTime'])->format('H:i');
+    
+    // Parse start and end times
+    $startTimeObj = DateTime::createFromFormat('h:i A', $schedule['startTime']);
+    $endTimeObj = DateTime::createFromFormat('h:i A', $schedule['endTime']);
+    
+    // Validate time duration
+    if (!$startTimeObj || !$endTimeObj) {
+        // Invalid time format
+        $invalidDurationSchedules[] = [
+            'subjectCode' => $subjectCode,
+            'subject' => $subject,
+            'section' => $section,
+            'instructor' => $instructor,
+            'startTime' => $schedule['startTime'],
+            'endTime' => $schedule['endTime'],
+            'error' => 'Invalid time format'
+        ];
+        continue;
+    }
+    
+    // Convert to 24-hour format
+    $startTime = $startTimeObj->format('H:i');
+    $endTime = $endTimeObj->format('H:i');
+    
+    // Calculate time difference
+    $interval = $startTimeObj->diff($endTimeObj);
+    $durationHours = $interval->h + ($interval->i / 60);
+    
+    // Determine schedule status based on duration and other conflicts
+    $schedStatus = 'pending';
+    
+    // Check if duration is less than 2 hours
+    if ($durationHours < 2) {
+        $schedStatus = 'conflicted';
+        
+        $invalidDurationSchedules[] = [
+            'subjectCode' => $subjectCode,
+            'subject' => $subject,
+            'section' => $section,
+            'instructor' => $instructor,
+            'startTime' => $startTime,
+            'endTime' => $endTime,
+            'duration' => $durationHours,
+            'error' => 'Schedule duration must be at least 2 hours'
+        ];
+    }
+    
     $days = explode(',', $schedule['days']);
     $classType = $schedule['classType'];
 
@@ -72,7 +115,10 @@ foreach ($data as $schedule) {
         $checkSameSubjectSection->fetch();
 
         if ($sameSubjectSectionCount > 0) {
-            // Conflict found, track it in the conflict array
+            // Mark as conflicted if same subject is already in the section
+            $schedStatus = 'conflicted';
+            
+            // Track the conflict
             $sameSubjectSectionConflict[] = [
                 'subjectCode' => $subjectCode,
                 'subject' => $subject,
@@ -83,7 +129,6 @@ foreach ($data as $schedule) {
                 'endTime' => $endTime,
                 'classType' => $classType
             ];
-            continue; // Skip saving this schedule
         }
 
         // Check for exact duplicate in the entire row
@@ -94,15 +139,29 @@ foreach ($data as $schedule) {
         $checkDuplicate->fetch();
 
         if ($duplicateCount == 0) {
-            $insertSchedule->bind_param("issssssssii", $userId, $subjectCode, $subject, $section, $instructor, $startTime, $endTime, $day, $classType, $aySemester, $departmentId);
+            // Bind parameters including the determined schedule status
+            $insertSchedule->bind_param("isssssssssis", 
+                $userId, 
+                $subjectCode, 
+                $subject, 
+                $section, 
+                $instructor, 
+                $startTime, 
+                $endTime, 
+                $day, 
+                $classType, 
+                $aySemester, 
+                $departmentId,
+                $schedStatus
+            );
             $insertSchedule->execute();
 
             // Get the last inserted schedule ID
             $scheduleId = $conn->insert_id;
 
-            // Track successful saves with the schedule ID
+            // Track successful saves with the schedule ID and status
             $savedSchedules[] = [
-                'scheduleId' => $scheduleId, // Include the ID here
+                'scheduleId' => $scheduleId,
                 'subjectCode' => $subjectCode,
                 'subject' => $subject,
                 'section' => $section,
@@ -110,7 +169,8 @@ foreach ($data as $schedule) {
                 'day' => $day,
                 'startTime' => $startTime,
                 'endTime' => $endTime,
-                'classType' => $classType
+                'classType' => $classType,
+                'schedStatus' => $schedStatus
             ];
         } else {
             // Track duplicates
@@ -131,20 +191,21 @@ foreach ($data as $schedule) {
 
 // Determine success message
 if (count($savedSchedules) > 0) {
-    $successMessage = 'Schedules processed successfully.';
-} else if (count($duplicateSchedules) > 0 || count($sameSubjectSectionConflict) > 0) {
-    $successMessage = 'Schedules not saved due to conflicts.';
+    $successMessage = 'Schedules processed. Some may be marked as conflicted.';
+} else if (count($duplicateSchedules) > 0 || count($sameSubjectSectionConflict) > 0 || count($invalidDurationSchedules) > 0) {
+    $successMessage = 'No schedules saved due to conflicts.';
 } else {
     $successMessage = 'No new schedules were saved and no conflicts detected.';
 }
 
-// Return success response with saved schedules, duplicates, and conflicts
+// Return success response with saved schedules, duplicates, conflicts, and invalid durations
 echo json_encode([
     'success' => count($savedSchedules) > 0,
     'message' => $successMessage,
     'savedSchedules' => $savedSchedules,
     'duplicates' => $duplicateSchedules,
-    'conflicts' => $sameSubjectSectionConflict // Return specific subject-section conflicts
+    'conflicts' => $sameSubjectSectionConflict,
+    'invalidDurations' => $invalidDurationSchedules
 ]);
 
 $checkDuplicate->close();

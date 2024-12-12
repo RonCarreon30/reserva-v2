@@ -24,7 +24,7 @@ $sqlFetchSchedules = "
     SELECT s.*, d.building_id, d.dept_name
     FROM schedules s
     JOIN dept_tbl d ON s.department_id = d.dept_id
-    WHERE s.schedule_id IN ($ids)
+    WHERE s.schedule_id IN ($ids) AND sched_status = 'pending';
 ";
 
 $resultFetchSchedules = $conn->query($sqlFetchSchedules);

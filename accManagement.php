@@ -179,18 +179,39 @@ $role_result = $conn->query($role_sql);
                                         </svg>
                                     </span>
                                 </th>
+                                <th class="border-r border-white py-3 px-4 text-left">Deletion Request</th>
                                 <th class="py-3 px-4 text-left">Action</th>
                             </tr>
                         </thead>
                         <tbody id="userList" class="bg-white divide-y divide-gray-200">
                             <?php if ($result->num_rows > 0): ?>
-                                <?php while ($row = $result->fetch_assoc()): ?>
+                                <?php while ($row = $result->fetch_assoc()): 
+                                    // Check if there's a pending deletion request for this user
+                                    $deletion_request_query = "SELECT * FROM deletion_requests WHERE user_id = ? AND status = 'pending'";
+                                    $stmt = $conn->prepare($deletion_request_query);
+                                    $stmt->bind_param("i", $row['id']);
+                                    $stmt->execute();
+                                    $deletion_result = $stmt->get_result();
+                                    $has_deletion_request = $deletion_result->num_rows > 0;
+                                    $stmt->close();
+                                ?>                                    
                                     <tr>
                                         <td class="border py-3 px-4"><?php echo $row['first_name']; ?></td>
                                         <td class="border py-3 px-4"><?php echo $row['last_name']; ?></td>
                                         <td class="border py-3 px-4"><?php echo $row['email']; ?></td>
                                         <td class="border py-3 px-4"><?php echo $row['dept_name']; ?></td>
                                         <td class="border py-3 px-4"><?php echo $row['userRole']; ?></td>
+                                        <td class="border py-3 px-4">
+                                            <?php if ($has_deletion_request): ?>
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                    Pending
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    None
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="border py-2 px-4 space-x-2">
                                             <button onclick="editUser(<?php echo $row['id']; ?>)" class="text-blue-500 hover:text-blue-600" title='Edit User'><i class="fas fa-edit"></i></button>
                                             <button onclick="deleteUser(<?php echo $row['id']; ?>)" class="text-red-500 hover:text-red-600" title="Delete"><i class="fas fa-trash-alt"></i></button>

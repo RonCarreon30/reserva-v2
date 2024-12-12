@@ -418,14 +418,34 @@
                                                 if ($isEditable) {
                                                     echo '<td class="border py-2 px-4 space-x-2">';
                                                     echo '<button onclick="editSched(' . $schedId . ')" class="text-blue-500 hover:text-blue-600" title="Edit">';
-                                                    echo '<i class="fas fa-edit"></i>'; // Font Awesome Edit Icon
+                                                    echo '<i class="fas fa-edit"></i>';
                                                     echo '</button>';
                                                     echo '<button onclick="deleteSched(' . $schedId . ')" class="text-red-500 hover:text-red-600" title="Delete">';
-                                                    echo '<i class="fas fa-trash-alt"></i>'; // Font Awesome Delete Icon
+                                                    echo '<i class="fas fa-trash-alt"></i>';
+                                                    echo '</button>';
+                                                    // Add new room request button
+                                                    echo '<button onclick="requestRoom(' . $schedId . ')" class="text-green-500 hover:text-green-600" title="Request Room Change">';
+                                                    echo '<i class="fa-solid fa-repeat"></i>';
                                                     echo '</button>';
                                                     echo '</td>';
                                                 } else {
-                                                    echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-red-500">Unauthorized</td>';
+                                                    // For assigned schedules, only show the room request button
+                                                    if ($isAssigned) {
+                                                    echo '<td class="border py-2 px-4 space-x-2">';
+                                                    // Add new room request button
+                                                    echo '<button onclick="requestRoom(' . $schedId . ')" class="text-green-500 hover:text-green-600" title="Request Room Change">';
+                                                    echo '<i class="fa-solid fa-repeat"></i>';
+                                                    echo '</button>';                                                    
+                                                    echo '<button onclick="editSched(' . $schedId . ')" class="text-gray-300 cursor-not-allowed" title="Unauthorized" disabled>';
+                                                    echo '<i class="fas fa-edit"></i>';
+                                                    echo '</button>';
+                                                    echo '<button onclick="deleteSched(' . $schedId . ')" class="text-gray-300 cursor-not-allowed" title="Unauthorized" disabled>';
+                                                    echo '<i class="fas fa-trash-alt"></i>';
+                                                    echo '</button>';
+                                                    echo '</td>';
+                                                    } else {
+                                                        echo '<td class="px-6 py-4 whitespace-nowrap text-sm text-red-500">Unauthorized</td>';
+                                                    }
                                                 }
                                                 echo '</tr>';
                                             }
@@ -460,6 +480,103 @@
 <div id="toast" class="fixed bottom-5 right-5 z-50 flex items-center p-4 max-w-xs text-white rounded-lg shadow-lg opacity-0 transform translate-y-4 transition-all duration-300">
     <span id="toast-message"></span>
 </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full relative">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Edit Schedule</h2>
+
+            <!-- Schedule Details Section -->
+            <div class="mb-4">
+                <!-- Hidden Fields for IDs -->
+                <h3 class="font-semibold text-gray-600 mb-3">Schedule Details</h3>
+                <input type="hidden" id="modalSchedulesId">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Subject Code -->
+                    <div>
+                        <label for="modalSubjectCode" class="block text-sm text-gray-700">Subject Code</label>
+                        <input type="text" id="modalSubjectCode" class="w-full border rounded-lg px-3 py-2 text-gray-900 focus:ring-blue-500 focus:border-blue-500" disabled>
+                    </div>
+                    <!-- Section -->
+                    <div>
+                        <label for="modalSection" class="block text-sm text-gray-700">Section</label>
+                        <input type="text" id="modalSection" class="w-full border rounded-lg px-3 py-2 text-gray-900 focus:ring-blue-500 focus:border-blue-500" disabled>
+                    </div>
+                    <!-- Instructor -->
+                    <div>
+                        <label for="modalInstructor" class="block text-sm text-gray-700">Instructor</label>
+                        <input type="text" id="modalInstructor" class="w-full border rounded-lg px-3 py-2 text-gray-900 focus:ring-blue-500 focus:border-blue-500" disabled>
+                    </div>
+                    <!-- Days -->
+                    <div>
+                        <label for="modalDays" class="block text-sm text-gray-700">Day</label>
+                        <select id="modalDays" class="w-full border rounded-lg px-3 py-2 text-gray-900 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                        </select>
+                    </div>
+                    <!-- Time -->
+                    <div>
+                        <label for="modalStartTime" class="block text-sm text-gray-700">Time</label>
+                        <input type="time" id="modalStartTime" class="w-full border rounded-lg px-3 py-2 text-gray-900 focus:ring-blue-500 focus:border-blue-500" placeholder="Start Time">                    
+                    </div>
+                    <!-- Time -->
+                    <div>
+                        <label for="modalEndTime" class="block text-sm text-gray-700">Time</label>
+                        <input type="time" id="modalEndTime" class="w-full border rounded-lg px-3 py-2 text-gray-900 focus:ring-blue-500 focus:border-blue-500" placeholder="End Time">
+                    </div>
+                </div>
+            </div>
+            <hr class="my-6">
+            
+            <!-- Room Assignment Section -->
+            <div class="mb-4">
+                <h3 class="font-semibold text-gray-600 mb-3">Room Assignment</h3>
+                <input type="hidden" id="modalAssignmentId">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Room -->
+                    <div>
+                        <label for="modalRoomName" class="block text-sm text-gray-700">Room</label>
+                        <input type="text" id="modalRoomName" class="w-full border rounded-lg px-3 py-2 text-gray-900 focus:ring-blue-500 focus:border-blue-500" disabled>
+                    </div>
+                    <!-- Building -->
+                    <div>
+                        <label for="modalBuildingName" class="block text-sm text-gray-700">Building</label>
+                        <input type="text" id="modalBuildingName" class="w-full border rounded-lg px-3 py-2 text-gray-900 focus:ring-blue-500 focus:border-blue-500" disabled>
+                    </div>
+                </div>
+
+                <!-- Remove Room Assignment Button -->
+                <div class="mt-4 flex items-center space-x-2">
+                    <button onclick="removeRoomAssignment()" class="flex items-center text-red-500 hover:text-red-600 focus:ring-2 focus:ring-red-400">
+                        <i class="fas fa-trash-alt"></i>
+                        <span class="ml-2 text-sm">Remove Assignment</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Actions -->
+            <div class="mt-6 flex justify-end gap-4">
+                <button onclick="closeEditModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:ring-2 focus:ring-gray-400">
+                    Cancel
+                </button>
+                <button onclick="saveChanges()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-400">
+                    Save
+                </button>
+            </div>
+
+            <!-- Close Button -->
+            <button onclick="closeEditModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M6.293 6.293a1 1 0 011.414 0L10 8.586l2.293-2.293a1 1 0 111.414 1.414L11.414 10l2.293 2.293a1 1 0 01-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 01-1.414-1.414L8.586 10 6.293 7.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+    </div>
 
     <!-- Modal Structure -->
     <div id="message-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
@@ -566,6 +683,19 @@
             </div>
         </div>
     </div> 
+        <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-99">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md flex flex-col items-center">
+
+            <img class="w-1/2 mb-4" src="img/undraw_warning_re_eoyh.svg" alt="">
+            <h2 class="text-xl text-red-500 font-semibold mb-4">Are you sure you want to continue?</h2>
+            <p class="text-gray-700 font-semibold">Changes made cannot be undone!</p>
+            <div class="flex justify-center mt-5 space-x-4">
+                <button id="cancel-continue" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</button>
+                <button id="confirm-continue" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">Continue</button>
+            </div>
+        </div>
+    </div>
     <script src="scripts/logout.js"></script>
     <script>
         function showUploadModal() {
@@ -577,59 +707,59 @@
             document.getElementById('file-input').value = ''; // Clear the file input
         }
 
-document.getElementById('parse-upload').addEventListener('click', function() {
-    const fileInput = document.getElementById('file-input');
-    const file = fileInput.files[0];
+        document.getElementById('parse-upload').addEventListener('click', function() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
 
-    if (!file) {
-        alert('Please upload an Excel file.');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        const data = new Uint8Array(event.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-
-        // Remove headers
-        jsonData.shift();
-
-        // Initialize an array for parsed schedules
-        const parsedSchedules = [];
-
-        // Function to convert Excel time to HH:MM AM/PM format
-        function convertExcelTime(excelTime) {
-            if (excelTime) {
-                const hours = Math.floor(excelTime * 24); // Get the hours (fractional part of 24 hours)
-                const minutes = Math.round((excelTime * 24 - hours) * 60); // Get the minutes
-                const date = new Date(0); // Initialize a new Date object
-                date.setHours(hours, minutes, 0, 0); // Set the time
-                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }); // Format time
+            if (!file) {
+                alert('Please upload an Excel file.');
+                return;
             }
-            return '';
-        }
 
-        jsonData.forEach(row => {
-            parsedSchedules.push({
-                subjectCode: row[0],
-                subject: row[1],
-                section: row[2],
-                instructor: row[3],
-                startTime: convertExcelTime(row[4]), // Convert Start Time
-                endTime: convertExcelTime(row[5]),   // Convert End Time
-                days: row[6],                        // Days column
-                classType: row[7]                    // Class Type
-            });
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                // Remove headers
+                jsonData.shift();
+
+                // Initialize an array for parsed schedules
+                const parsedSchedules = [];
+
+                // Function to convert Excel time to HH:MM AM/PM format
+                function convertExcelTime(excelTime) {
+                    if (excelTime) {
+                        const hours = Math.floor(excelTime * 24); // Get the hours (fractional part of 24 hours)
+                        const minutes = Math.round((excelTime * 24 - hours) * 60); // Get the minutes
+                        const date = new Date(0); // Initialize a new Date object
+                        date.setHours(hours, minutes, 0, 0); // Set the time
+                        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }); // Format time
+                    }
+                    return '';
+                }
+
+                jsonData.forEach(row => {
+                    parsedSchedules.push({
+                        subjectCode: row[0],
+                        subject: row[1],
+                        section: row[2],
+                        instructor: row[3],
+                        startTime: convertExcelTime(row[4]), // Convert Start Time
+                        endTime: convertExcelTime(row[5]),   // Convert End Time
+                        days: row[6],                        // Days column
+                        classType: row[7]                    // Class Type
+                    });
+                });
+
+                populateScheduleTable(parsedSchedules);
+                document.getElementById('upload-modal').classList.add('hidden');
+                document.getElementById('parsed-sched-modal').classList.remove('hidden');
+            };
+            reader.readAsArrayBuffer(file);
         });
-
-        populateScheduleTable(parsedSchedules);
-        document.getElementById('upload-modal').classList.add('hidden');
-        document.getElementById('parsed-sched-modal').classList.remove('hidden');
-    };
-    reader.readAsArrayBuffer(file);
-});
 
 
         function populateScheduleTable(parsedSchedules) {
@@ -732,7 +862,7 @@ document.getElementById('parse-upload').addEventListener('click', function() {
                                     if (assignmentData.success) {
                                         showToast("Room assignment successful!", "bg-green-500");
                                         setTimeout(function() {
-                                            //location.reload();
+                                            location.reload();
                                         }, 3000);
                                     } else {
                                         showToast("Room assignment failed: " + assignmentData.message, "bg-red-500");
@@ -824,6 +954,156 @@ document.getElementById('parse-upload').addEventListener('click', function() {
                     toast.classList.add("opacity-0", "translate-y-4");
                 }, 5000);
             }
+        }
+
+        function editSched(scheduleId) {
+            // Fetch schedule and room details
+            fetch(`handlers/get_schedule_details.php?schedule_id=${scheduleId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Populate modal fields
+                    console.log(data)
+                    document.getElementById('modalSchedulesId').value = data.schedule_id; // Store schedule ID
+                    document.getElementById('modalAssignmentId').value = data.assignment_id || null; // Store assignment ID
+                    document.getElementById('modalSubjectCode').value = data.subject_code;
+                    document.getElementById('modalSection').value = data.section;
+                    document.getElementById('modalInstructor').value = data.instructor;
+                    document.getElementById('modalStartTime').value = data.start_time;
+                    document.getElementById('modalEndTime').value = data.end_time;
+                    document.getElementById('modalDays').value = data.days;
+                    document.getElementById('modalRoomName').value = data.room_name || null;
+                    document.getElementById('modalBuildingName').value = data.building_name || null;
+
+                    // Show the modal
+                    document.getElementById('editModal').classList.remove('hidden');
+                })
+                .catch(error => console.error('Error fetching schedule details:', error));
+        }
+
+                function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        function saveChanges() {
+            // Get the assignment ID from the modal
+            let assignmentId = document.getElementById('modalAssignmentId').value;
+
+            // Check if the schedule has a room assignment
+            if (assignmentId) {
+                // Change the confirmation modal's text to warn about room assignment removal
+                document.querySelector('#confirmation-modal p').innerHTML = "You are about to edit a schedule with an assigned room. Proceeding will remove the room assignment, and any changes made cannot be undone.";
+            } else {
+                // Default confirmation text if no assignment exists
+                document.querySelector('#confirmation-modal p').innerHTML = "Changes made cannot be undone!";
+            }
+
+            // Show the confirmation modal
+            document.getElementById('confirmation-modal').classList.remove('hidden');
+            document.getElementById('editModal').classList.add('hidden');
+
+            // Attach event listener for confirmation
+            document.getElementById('confirm-continue').onclick = function() {
+                document.getElementById('confirmation-modal').classList.add('hidden');
+                // Proceed with the save operation if the user confirms
+                let scheduleId = document.getElementById('modalSchedulesId').value;
+                let subjectCode = document.getElementById('modalSubjectCode').value;
+                let section = document.getElementById('modalSection').value;
+                let instructor = document.getElementById('modalInstructor').value;
+                let days = document.getElementById('modalDays').value;
+                let startTime = document.getElementById('modalStartTime').value;
+                let endTime = document.getElementById('modalEndTime').value;
+                let roomName = document.getElementById('modalRoomName').value;
+                let buildingName = document.getElementById('modalBuildingName').value;
+                showToast('loading', 'Loading...')
+                // Send the data to PHP for saving
+                fetch('handlers/update_schedule.php', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        scheduleId: scheduleId,
+                        subjectCode: subjectCode,
+                        section: section,
+                        instructor: instructor,
+                        days: days,
+                        startTime: startTime,
+                        endTime: endTime,
+                        assignmentId: assignmentId, // Include the assignment ID to remove it if needed
+                        roomName: roomName,
+                        buildingName: buildingName
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success toast
+                        setTimeout(() => {
+                            location.reload(); // Reloads the current page
+                        }, 2000);
+                        showToast(data.message, 'success');
+                        // Close the modal
+                        closeEditModal();
+                    } else {
+                        // Show error toast if there was an issue
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving changes:', error);
+                    showToast('An error occurred while saving changes. Please try again.', 'error');
+                });
+            };
+
+            // Attach event listener for cancellation
+            document.getElementById('cancel-continue').onclick = function() {
+                // Close the confirmation modal and show the edit modal again
+                document.getElementById('confirmation-modal').classList.add('hidden');
+                document.getElementById('editModal').classList.remove('hidden');
+            };
+        }
+
+        function deleteSched(scheduleId) {
+            // Show the confirmation modal
+            document.getElementById('confirmation-modal').classList.remove('hidden');
+            document.querySelector('#confirmation-modal p').innerHTML = "You are about to delete a schedule. Any changes made cannot be undone, please proceed with caution.";
+            // Set the schedule ID in a hidden input to pass it to the PHP handler
+            document.getElementById('confirm-continue').onclick = function() {
+                // Hide the confirmation modal
+                document.getElementById('confirmation-modal').classList.add('hidden');
+                // Make a fetch request to the PHP script to delete the schedule
+                fetch('handlers/delete_schedule.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ scheduleId: scheduleId }), // Send schedule ID to PHP
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message
+                        showToast(data.message, 'success');
+                        setTimeout(() => {
+                            location.reload(); // Reloads the page
+                        }, 2000);                
+                        // Optionally reload the page or remove the row from the table
+                        setTimeout(() => {
+                            location.reload(); // Reloads the page
+                        }, 2000);
+                    } else {
+                        // Show error message
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting schedule:', error);
+                    showToast('An error occurred while deleting the schedule. Please try again.', 'error');
+                });
+            };
+
+            // Attach event listener for cancellation
+            document.getElementById('cancel-continue').onclick = function() {
+                document.getElementById('confirmation-modal').classList.add('hidden');
+            };
         }
 
     </script>

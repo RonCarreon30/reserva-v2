@@ -45,6 +45,21 @@ $changesMade = (
 if (empty($assignmentId)) {
     // Update query for schedule details
     if ($changesMade) {
+        // Calculate the difference between start and end times in hours
+        $startTimestamp = strtotime($startTime);
+        $endTimestamp = strtotime($endTime);
+        $timeDifference = ($endTimestamp - $startTimestamp) / 3600; // Convert seconds to hours
+
+        // If the time difference is less than 2 hours, return an error response
+        if ($timeDifference < 2) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'End time must be at least 2 hours later than the start time.'
+            ]);
+            exit; // Stop execution
+        }
+
+        // Update the schedule details
         $updateScheduleQuery = "
             UPDATE schedules
             SET
@@ -53,18 +68,31 @@ if (empty($assignmentId)) {
                 instructor = ?,
                 days = ?,
                 start_time = ?,
-                end_time = ?
+                end_time = ?,
+                sched_status = 'pending'
             WHERE schedule_id = ?;
         ";
-
-
 
         $stmt = $conn->prepare($updateScheduleQuery);
         $stmt->bind_param('ssssssi', $subjectCode, $section, $instructor, $days, $startTime, $endTime, $scheduleId);
         $stmt->execute();
+        $stmt->close();
 
         echo json_encode(['success' => true, 'message' => 'Schedule updated successfully.']);
     } else {
+                // Calculate the difference between start and end times in hours
+        $startTimestamp = strtotime($startTime);
+        $endTimestamp = strtotime($endTime);
+        $timeDifference = ($endTimestamp - $startTimestamp) / 3600; // Convert seconds to hours
+
+        // If the time difference is less than 2 hours, return an error response
+        if ($timeDifference < 2) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'End time must be at least 2 hours later than the start time.'
+            ]);
+            exit; // Stop execution
+        }
         echo json_encode(['success' => true, 'message' => 'No Changes Made.']);
     }
 } else {
@@ -103,7 +131,14 @@ if (empty($assignmentId)) {
         $stmt->execute();
         $stmt->close();
 
-        echo json_encode(['success' => true, 'message' => 'Schedule updated successfully.']);
+        // Automatically delete the room assignment when schedule changes
+        $deleteAssignmentQuery = "DELETE FROM room_assignments_tbl WHERE schedule_id = ?";
+        $stmt = $conn->prepare($deleteAssignmentQuery);
+        $stmt->bind_param('i', $scheduleId);
+        $stmt->execute();
+        $stmt->close();
+
+        echo json_encode(['success' => true, 'message' => 'Schedule updated and room assignment removed.']);
     } else {
         echo json_encode(['success' => true, 'message' => 'No Changes Made.']);
     }

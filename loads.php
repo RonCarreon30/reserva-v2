@@ -88,7 +88,10 @@ $query = "SELECT ay_semester, user_id, section,
             subject_code, start_time, end_time
           FROM schedules
           WHERE ay_semester = '$termId' $userIdCondition
-          GROUP BY section, subject_code, start_time, end_time";
+          GROUP BY section, subject_code, start_time, end_time
+          ORDER BY section, 
+          FIELD(days, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'),
+          start_time";
 
 $result = $conn->query($query);
 
@@ -292,7 +295,7 @@ function toggleAccordion(element) {
             }
         }
 
-        function filterRooms() {
+        /*function filterRooms() {
             const buildingId = document.getElementById('buildingSelect').value;
             const roomSelect = document.getElementById('roomSelect');
             const roomOptions = roomSelect.getElementsByTagName('option');
@@ -310,7 +313,34 @@ function toggleAccordion(element) {
             if (visibleOptions.length === 1) {
                 roomSelect.value = '';
             }
-        }
+        }*/
+       document.addEventListener('DOMContentLoaded', function() {
+    // Add event listener to building select
+    const buildingSelect = document.getElementById('buildingSelect');
+    if (buildingSelect) {
+        buildingSelect.addEventListener('change', function() {
+            const buildingId = this.value;
+            const roomSelect = document.getElementById('roomSelect');
+            
+            // Reset room selection
+            roomSelect.value = '';
+            
+            // Show/hide options based on building selection
+            Array.from(roomSelect.options).forEach(option => {
+                if (option.value === '') { // Always show the default "All Rooms" option
+                    option.style.display = '';
+                } else {
+                    option.style.display = (buildingId === '' || option.getAttribute('data-building-id') === buildingId) 
+                        ? ''
+                        : 'none';
+                }
+            });
+        });
+
+        // Trigger initial filter
+        buildingSelect.dispatchEvent(new Event('change'));
+    }
+});
 
     </script>
     <style>
@@ -364,7 +394,7 @@ function toggleAccordion(element) {
                             <select id="AYSelect" class="filter-option px-4 py-2 border border-gray-300 rounded-md mb-2 hidden">
                                 <option value="">Academic Year...</option>
                                 <?php
-                                    $query = "SELECT * FROM terms_tbl";
+                                    $query = "SELECT * FROM terms_tbl where term_status != 'Expired'";
                                     $result = $conn->query($query);
                                     if ($result->num_rows > 0) {
                                         while ($row = $result->fetch_assoc()) {
@@ -425,63 +455,63 @@ function toggleAccordion(element) {
                 <!--Line Spacer-->
                 <div class="h-full border-l ml-2 border-gray-300"></div>
                 <!--Right Side-->
-<div class="flex flex-col h-full w-1/4 pl-2">
-    <div class="accordion">
-    <h1 class="py-2 mb-2 text-lg font-semibold">
-        <?php
-        if ($userRole === 'Admin' || $userRole === 'Registrar') {
-            echo "All sections with schedules | Current Term";
-        } else {
-            echo "Your uploaded schedules this Semester";
-        }
-        ?>
-    </h1>
+                <div class="flex flex-col h-full w-1/4 pl-2">
+                    <div class="accordion">
+                    <h1 class="py-2 mb-2 text-lg font-semibold">
+                        <?php
+                        if ($userRole === 'Admin' || $userRole === 'Registrar') {
+                            echo "All sections with schedules | Current Term";
+                        } else {
+                            echo "Your uploaded schedules this Semester";
+                        }
+                        ?>
+                    </h1>
 
-        <?php if (empty($data)): ?>
-            <!-- Show message and image when no schedules are uploaded -->
-            <div class="flex flex-col items-center justify-center text-center bg-white p-4 rounded-md">
-                <img src="img/undraw_not_found_re_bh2e.svg" alt="No Schedules" class="w-1/2 h-1/2 opacity-30">
-                <p class="text-md text-gray-600">No uploaded schedules yet</p>
-            </div>
-        <?php else: ?>
-            <!-- Display the schedules when data is available -->
-            <?php foreach ($data as $section => $details): ?>
-                <div class="accordion-item border-b border-gray-200">
-                    <!-- Accordion Header -->
-                    <button onclick="toggleAccordion(this)" class="accordion-header w-full text-left py-2 px-4 bg-blue-300 hover:bg-blue-200 transition">
-                        <span class="font-bold"><?php echo $section; ?></span> | 
-                        <span class="text-gray-700"><?php echo count($details['schedules']); ?> Schedule/s</span> <!-- Display schedule count -->
-                    </button>
-                    
-                    <!-- Accordion Body -->
-                    <div class="accordion-body hidden bg-gray-200 ">
-                        <table class="w-full border-collapse">
-                            <thead>
-                                <tr class="text-left">
-                                    <th class="border-b py-2 px-2">Subject</th>
-                                    <th class="border-b py-2 px-2">Time</th>
-                                    <th class="border-b py-2 px-2">Day</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($details['schedules'] as $schedule): ?>
-                                <tr>
-                                    <td class="border-b py-2 px-2"><?php echo $schedule['subject_code']; ?></td>
-                                    <td class="border-b py-2 px-2">
-                                        <?php echo date('h:iA', strtotime($schedule['start_time'])); ?> - 
-                                        <?php echo date('h:iA', strtotime($schedule['end_time'])); ?>
-                                    </td>
-                                    <td class="border-b py-2 px-4"><?php echo $schedule['day']; ?></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                        <?php if (empty($data)): ?>
+                            <!-- Show message and image when no schedules are uploaded -->
+                            <div class="flex flex-col items-center justify-center text-center bg-white p-4 rounded-md">
+                                <img src="img/undraw_not_found_re_bh2e.svg" alt="No Schedules" class="w-1/2 h-1/2 opacity-30">
+                                <p class="text-md text-gray-600">No uploaded schedules yet</p>
+                            </div>
+                        <?php else: ?>
+                            <!-- Display the schedules when data is available -->
+                            <?php foreach ($data as $section => $details): ?>
+                                <div class="accordion-item border-b border-gray-200">
+                                    <!-- Accordion Header -->
+                                    <button onclick="toggleAccordion(this)" class="accordion-header w-full text-left py-2 px-4 bg-blue-300 hover:bg-blue-200 transition">
+                                        <span class="font-bold"><?php echo $section; ?></span> | 
+                                        <span class="text-gray-700"><?php echo count($details['schedules']); ?> Schedule/s</span> <!-- Display schedule count -->
+                                    </button>
+                                    
+                                    <!-- Accordion Body -->
+                                    <div class="accordion-body hidden bg-gray-200 ">
+                                        <table class="w-full border-collapse">
+                                            <thead>
+                                                <tr class="text-left">
+                                                    <th class="border-b py-2 px-2">Subject</th>
+                                                    <th class="border-b py-2 px-2">Time</th>
+                                                    <th class="border-b py-2 px-2">Day</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($details['schedules'] as $schedule): ?>
+                                                <tr>
+                                                    <td class="border-b py-2 px-2"><?php echo $schedule['subject_code']; ?></td>
+                                                    <td class="border-b py-2 px-2">
+                                                        <?php echo date('h:iA', strtotime($schedule['start_time'])); ?> - 
+                                                        <?php echo date('h:iA', strtotime($schedule['end_time'])); ?>
+                                                    </td>
+                                                    <td class="border-b py-2 px-4"><?php echo $schedule['day']; ?></td>
+                                                </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-</div>
 
 
                 <!-- Include the FAQs section here -->

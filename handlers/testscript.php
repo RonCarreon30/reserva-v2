@@ -257,6 +257,56 @@ function findAvailableRoom($roomsResult, $schedule) {
     $originalStart = timeToMinutes($schedule['start_time']);
     $originalEnd = timeToMinutes($schedule['end_time']);
     
+    // First pass: Find rooms available EXACTLY in the original time slot
+    $exactMatchRooms = [];
+    
+    // Reset the result pointer to beginning
+    $roomsResult->data_seek(0);
+    
+    while ($room = $roomsResult->fetch_assoc()) {
+        $assignmentsQuery = "SELECT s.* 
+                            FROM room_assignments_tbl ra
+                            JOIN schedules s ON ra.schedule_id = s.schedule_id
+                            WHERE ra.room_id = ? AND s.days LIKE ?";
+        
+        $stmt = $conn->prepare($assignmentsQuery);
+        $dayPattern = "%{$schedule['days']}%";
+        $stmt->bind_param("is", $room['room_id'], $dayPattern);
+        $stmt->execute();
+        $assignmentsResult = $stmt->get_result();
+        
+        $isOriginalTimeAvailable = true;
+        while ($assignment = $assignmentsResult->fetch_assoc()) {
+            $existingStart = timeToMinutes($assignment['start_time']);
+            $existingEnd = timeToMinutes($assignment['end_time']);
+            
+            if (!($originalEnd <= $existingStart || $originalStart >= $existingEnd)) {
+                $isOriginalTimeAvailable = false;
+                break;
+            }
+        }
+        
+        if ($isOriginalTimeAvailable) {
+            $exactMatchRooms[] = $room;
+        }
+    }
+    
+    // If rooms are available in the exact time slot, return the first one
+    if (!empty($exactMatchRooms)) {
+        $bestRoom = $exactMatchRooms[0];
+        return [
+            'room_id' => $bestRoom['room_id'],
+            'room_name' => $bestRoom['room_name'],
+            'adjusted_start' => $schedule['start_time'],
+            'adjusted_end' => $schedule['end_time'],
+            'original_duration' => getTimeDuration($schedule['start_time'], $schedule['end_time'])
+        ];
+    }
+    
+    // If no rooms available in exact time, fall back to existing time-finding logic
+    // Reset the result pointer to beginning again
+    $roomsResult->data_seek(0);
+    
     while ($room = $roomsResult->fetch_assoc()) {
         // Get existing assignments for this room
         $assignmentsQuery = "SELECT s.* 
@@ -369,6 +419,7 @@ function isValidTimeRange($start, $end) {
 
 // Modify the findOptimalTimeSlot function to include stricter validation
 function findOptimalTimeSlot($existingSlots, $requiredDuration, $originalStart) {
+    $ORIGINAL_TIME_PENALTY = 10000; 
     $dayStart = timeToMinutes('07:00');  // 7 AM
     $dayEnd = timeToMinutes('22:00');    // 10 PM
     $minUsableGap = timeToMinutes('02:00'); // Minimum useful gap (2 hours)
@@ -451,7 +502,7 @@ function findOptimalTimeSlot($existingSlots, $requiredDuration, $originalStart) 
     
     // Find the candidate with the highest score
     $bestCandidate = null;
-    $bestScore = -1;
+    $bestScore = PHP_INT_MIN;
     
     foreach ($candidates as $candidate) {
         // Double check that the slot is valid
@@ -469,15 +520,17 @@ function findOptimalTimeSlot($existingSlots, $requiredDuration, $originalStart) 
     return $bestCandidate;
 }
 
+// Separate scoring function to calculate time slot score
 function scoreTimeSlot($start, $end, $prevEnd, $nextStart, $originalStart = null) {
     $score = 0;
+    $ORIGINAL_TIME_PENALTY = 10000;
     $minUsableGap = timeToMinutes('02:00'); // Minimum useful gap (2 hours)
     
-    // If this is the original requested time slot, give it a very high base score
+    // HUGE penalty if not using original time
     if ($originalStart !== null) {
-        // Penalty for deviation from original time (progressive penalty)
         $timeDeviation = abs($start - $originalStart);
-        $score -= ($timeDeviation / 30) * 10; // Penalty increases with deviation
+        $score -= $ORIGINAL_TIME_PENALTY; // Hard penalty for changing time
+        $score -= ($timeDeviation / 15) * 50; // Progressive penalty for time deviation
     }
     
     // Score based on adjacency to existing schedules
