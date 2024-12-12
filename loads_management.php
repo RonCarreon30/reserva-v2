@@ -286,7 +286,7 @@ if ($row = $result->fetch_assoc()) {
 
                                     <th class="p-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                                 </tr>
-                                                                <?php
+                                <?php
                                     // Fetch unique sections
                                     $sectionQuery = "SELECT DISTINCT section FROM schedules ORDER BY section";
                                     $sectionResult = $conn->query($sectionQuery);
@@ -450,11 +450,11 @@ if ($row = $result->fetch_assoc()) {
                                             if ((strtolower($row['sched_status']) === 'assigned')) {
                                                 echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['building_name']) . ' - ' . htmlspecialchars($row['room_name']) . '</td>';
                                                 echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['class_type']) . '</td>';
-                                                echo '<td class="border p-2"><span class="inline-block px-2 py-1 text-sm font-normal text-white bg-green-600 rounded-full">' . htmlspecialchars($row['sched_status']) . '</span></td>';
+                                                echo '<td class="border p-2"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">' . htmlspecialchars($row['sched_status']) . '</span></td>';
                                             } else {
                                                 echo '<td class="border p-2 whitespace-nowrap text-sm font-semibold text-red-500">Not Assigned</td>';
                                                 echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['class_type']) . '</td>';
-                                                echo '<td class="border p-2 whitespace-nowrap text-sm text-gray-900">' . htmlspecialchars($row['sched_status']) . '</td>';
+                                                echo '<td class="border p-2><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-300 text-gray-800">' . htmlspecialchars($row['sched_status']) . '<span></td>';
                                             }
 
                                             // Add the "Uploaded by" column
@@ -467,7 +467,7 @@ if ($row = $result->fetch_assoc()) {
                                             // Room Assignment Button
                                             if ((strtolower($row['sched_status']) === 'assigned')) {
                                                 echo '<button class="text-gray-500 cursor-not-allowed" title="Already assigned" disabled>';
-                                                echo '<i class="fas fa-sync-alt fa-spin"></i>'; // Font Awesome Room Icon
+                                                echo '<i class="fas fa-sync-alt"></i>'; // Font Awesome Room Icon
                                                 echo '</button>';
 
                                                 echo '<button onclick="editSched(' . $schedId . ')" class="text-blue-500 hover:text-blue-600" title="Edit">';

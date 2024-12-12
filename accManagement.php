@@ -182,6 +182,7 @@ $role_result = $conn->query($role_sql);
                                 <th class="border-r border-white py-3 px-4 text-left">Deletion Request</th>
                                 <th class="py-3 px-4 text-left">Action</th>
                             </tr>
+
                         </thead>
                         <tbody id="userList" class="bg-white divide-y divide-gray-200">
                             <?php if ($result->num_rows > 0): ?>

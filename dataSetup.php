@@ -230,6 +230,41 @@
                                         <th class="px-4 py-2 border">Set Status</th>
                                         <th class="px-2 py-2 border">Actions</th>
                                     </tr>
+                                    <tr class="bg-gray-200 border-b">
+                                        <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                            <input type="text" id="searchAcadYear" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Search..." onkeyup="filterData()">
+                                        </td>
+                                        <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                            <!-- Academic Year Select (Always visible) -->
+                                            <select id="semFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                                                <option value="">All Semester</option>
+                                                <?php
+                                                    $query = "SELECT semester FROM terms_tbl";
+                                                    $result = $conn->query($query);
+                                                    if ($result->num_rows > 0) {
+                                                        while ($row = $result->fetch_assoc()) {
+                                                            echo '<option value="' . $row['term_id'] . '">' . $row['semester'] . '</option>';
+                                                        }
+                                                    }
+                                                ?>
+                                            </select>
+                                        </td>
+                                        <td class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                            <!-- Academic Year Select (Always visible) -->
+                                            <select id="semFilter" class="w-full py-2 border border-gray-300 rounded-md" onchange="filterSchedules()">
+                                                <option value="">All Status</option>
+
+                                            </select>
+                                        </td>
+                                        <td class="text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
+                                        <button id="resetFilters" 
+                                                class="w-1/2 p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                                                onclick="resetFilters()">
+                                            Reset Filters
+                                        </button>
+                                    </td>
+                                    </tr>
+
                                 </thead>
                                 <tbody id="academicYearTableBody">
                                     <!-- Data will be dynamically inserted here -->
